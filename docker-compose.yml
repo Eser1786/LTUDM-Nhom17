@@ -18,7 +18,7 @@ services:
       - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
     volumes:
       - tkb-mysql-data:/var/lib/mysql
-      - ./init-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./init-schema/01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 10s
