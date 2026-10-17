@@ -1,0 +1,23 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.tkb</groupId>
+    <artifactId>timetable</artifactId>
+    <version>1.0</version>
+  </parent>
+
+  <artifactId>frontend</artifactId>
+
+  <dependencies>
+    <!-- Giao thuc, ma hoa, DTO dung chung voi server -->
+    <dependency>
+      <groupId>com.tkb</groupId>
+      <artifactId>common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- Swing da co san trong JDK nen khong can them thu vien GUI.
+         Client KHONG duoc co MySQL connector hay HikariCP: moi truy cap CSDL di qua server. -->
+  </dependencies>
+</project>
