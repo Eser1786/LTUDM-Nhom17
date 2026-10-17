@@ -9,15 +9,54 @@
 
   <artifactId>frontend</artifactId>
 
+  <properties>
+    <!-- Phiên bản JavaFX dùng chung. Tra bản mới tại search.maven.org (org.openjfx) -->
+    <javafx.version>21.0.5</javafx.version>
+  </properties>
+
   <dependencies>
-    <!-- Giao thuc, ma hoa, DTO dung chung voi server -->
+    <!-- Giao thức, mã hóa, DTO dùng chung với server -->
     <dependency>
       <groupId>com.tkb</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>
     </dependency>
 
-    <!-- Swing da co san trong JDK nen khong can them thu vien GUI.
-         Client KHONG duoc co MySQL connector hay HikariCP: moi truy cap CSDL di qua server. -->
+    <!-- JavaFX: Maven tự chọn bản đúng hệ điều hành (Linux, Windows, macOS) -->
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-fxml</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+    <!-- Cần cho xuất ảnh PNG (SwingFXUtils.fromFXImage + ImageIO) -->
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-swing</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+
+    <!-- Client KHÔNG được có MySQL connector hay HikariCP: mọi truy cập CSDL đi qua server. -->
   </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Chạy thử: mvn javafx:run (chạy trong thư mục frontend, sau khi đã mvn install ở thư mục gốc) -->
+      <plugin>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-maven-plugin</artifactId>
+        <version>0.0.8</version>
+        <configuration>
+          <!-- Lớp Launcher KHÔNG extends Application, chỉ gọi App.main(args).
+               Nhờ vậy chạy từ IDE hoặc từ file .jar không bị lỗi
+               "JavaFX runtime components are missing". -->
+          <mainClass>com.tkb.frontend.Launcher</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
