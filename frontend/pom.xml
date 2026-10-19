@@ -1,62 +1,76 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0">
-  <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>com.tkb</groupId>
-    <artifactId>timetable</artifactId>
-    <version>1.0</version>
-  </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-  <artifactId>frontend</artifactId>
+    <modelVersion>4.0.0</modelVersion>
 
-  <properties>
-    <!-- Phiên bản JavaFX dùng chung. Tra bản mới tại search.maven.org (org.openjfx) -->
-    <javafx.version>21.0.5</javafx.version>
-  </properties>
+    <parent>
+        <groupId>com.tkb</groupId>
+        <artifactId>timetable</artifactId>
+        <version>1.0</version>
+    </parent>
 
-  <dependencies>
-    <!-- Giao thức, mã hóa, DTO dùng chung với server -->
-    <dependency>
-      <groupId>com.tkb</groupId>
-      <artifactId>common</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+    <artifactId>frontend</artifactId>
 
-    <!-- JavaFX: Maven tự chọn bản đúng hệ điều hành (Linux, Windows, macOS) -->
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-controls</artifactId>
-      <version>${javafx.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-fxml</artifactId>
-      <version>${javafx.version}</version>
-    </dependency>
-    <!-- Cần cho xuất ảnh PNG (SwingFXUtils.fromFXImage + ImageIO) -->
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-swing</artifactId>
-      <version>${javafx.version}</version>
-    </dependency>
+    <properties>
+        <javafx.version>21.0.5</javafx.version>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
-    <!-- Client KHÔNG được có MySQL connector hay HikariCP: mọi truy cập CSDL đi qua server. -->
-  </dependencies>
+    <dependencies>
+        <!-- Module dùng chung: DTO, protocol, dữ liệu -->
+        <dependency>
+            <groupId>com.tkb</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-  <build>
-    <plugins>
-      <!-- Chạy thử: mvn javafx:run (chạy trong thư mục frontend, sau khi đã mvn install ở thư mục gốc) -->
-      <plugin>
-        <groupId>org.openjfx</groupId>
-        <artifactId>javafx-maven-plugin</artifactId>
-        <version>0.0.8</version>
-        <configuration>
-          <!-- Lớp Launcher KHÔNG extends Application, chỉ gọi App.main(args).
-               Nhờ vậy chạy từ IDE hoặc từ file .jar không bị lỗi
-               "JavaFX runtime components are missing". -->
-          <mainClass>com.tkb.frontend.Launcher</mainClass>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+        <!-- JavaFX Controls: Button, TableView, TextField... -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- JavaFX FXML: tách giao diện ra khỏi mã Java -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- Chuyển JavaFX Node thành ảnh PNG nếu cần -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Biên dịch Java -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>17</release>
+                </configuration>
+            </plugin>
+
+            <!-- Chạy ứng dụng JavaFX -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>com.tkb.frontend.Launcher</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
