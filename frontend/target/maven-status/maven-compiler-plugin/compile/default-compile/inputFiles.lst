@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 D:\schools\mangMayTinh\timetable-work\timetable\frontend\src\main\java\com\tkb\frontend\Main.java
 D:\schools\mangMayTinh\timetable-work\timetable\frontend\src\main\java\com\tkb\frontend\model\ErrorCode.java
 D:\schools\mangMayTinh\timetable-work\timetable\frontend\src\main\java\com\tkb\frontend\model\Types.java
@@ -12,3 +13,8 @@ D:\schools\mangMayTinh\timetable-work\timetable\frontend\src\main\java\com\tkb\f
 D:\schools\mangMayTinh\timetable-work\timetable\frontend\src\main\java\com\tkb\frontend\ui\ResultPanel.java
 D:\schools\mangMayTinh\timetable-work\timetable\frontend\src\main\java\com\tkb\frontend\ui\SavedPlansPanel.java
 D:\schools\mangMayTinh\timetable-work\timetable\frontend\src\main\java\com\tkb\frontend\ui\TimetableGridPanel.java
+=======
+/home/eser/Projects/TimeTableManagement/frontend/src/main/java/com/tkb/frontend/App.java
+/home/eser/Projects/TimeTableManagement/frontend/src/main/java/com/tkb/frontend/HomeController.java
+/home/eser/Projects/TimeTableManagement/frontend/src/main/java/com/tkb/frontend/Launcher.java
+>>>>>>> 05f5e0e83a6f0080e4687b8aa210b0dffd5da367

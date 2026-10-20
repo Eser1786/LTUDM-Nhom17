@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 com\tkb\frontend\model\Types$JobStatus.class
 com\tkb\frontend\model\Types$Course.class
 com\tkb\frontend\model\Types$PlanRequest.class
@@ -18,3 +19,8 @@ com\tkb\frontend\ui\ErrorMessages.class
 com\tkb\frontend\model\Types$ClassSession.class
 com\tkb\frontend\ui\ErrorMessages$1.class
 com\tkb\frontend\model\Types$PlanDetail.class
+=======
+com/tkb/frontend/App.class
+com/tkb/frontend/HomeController.class
+com/tkb/frontend/Launcher.class
+>>>>>>> 05f5e0e83a6f0080e4687b8aa210b0dffd5da367

@@ -1,18 +1,24 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0">
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <groupId>com.tkb</groupId>
     <artifactId>timetable</artifactId>
     <version>1.0</version>
   </parent>
+
   <artifactId>backend</artifactId>
 
+  <!-- Số phiên bản chỉ là ví dụ ổn định tại thời điểm viết; tra bản mới tại search.maven.org -->
   <dependencies>
+    <!-- Giao thức, mã hóa, DTO dùng chung với client -->
     <dependency>
       <groupId>com.tkb</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+    <!-- CSDL: driver MySQL + connection pool -->
     <dependency>
       <groupId>com.mysql</groupId>
       <artifactId>mysql-connector-j</artifactId>
@@ -23,5 +29,81 @@
       <artifactId>HikariCP</artifactId>
       <version>5.1.0</version>
     </dependency>
+
+    <!-- Đọc file PDF thời khóa biểu (chữ có tọa độ và các ô bảng) -->
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+      <version>3.0.3</version>
+    </dependency>
+
+    <!-- Băm mật khẩu BCrypt -->
+    <dependency>
+      <groupId>at.favre.lib</groupId>
+      <artifactId>bcrypt</artifactId>
+      <version>0.10.2</version>
+    </dependency>
+
+    <!-- Log: HikariCP và PDFBox cần một bộ ghi log của SLF4J -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>2.0.13</version>
+    </dependency>
+
+    <!-- Unit test -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.10.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <!-- mvn test chạy được JUnit 5 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+      </plugin>
+
+      <!-- mvn package: gom code + toàn bộ thư viện thành MỘT file chạy được:
+           java -jar backend/target/backend-1.0.jar -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.3</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>com.tkb.backend.Main</mainClass>
+                </transformer>
+                <!-- Giữ file đăng ký dịch vụ (driver MySQL, SLF4J) khi gộp jar -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
