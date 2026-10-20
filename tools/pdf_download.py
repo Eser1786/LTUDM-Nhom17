@@ -1,4 +1,5 @@
 import requests as rq
+from pathlib import Path
 
 url = "https://daotao.sgu.edu.vn/images/pdf/sotaydkmh/261/"
 
@@ -6,11 +7,14 @@ courses = ["DKD", "DCM", "DCV", "DCT", "DDL", "DGD", "DGM", "DGT", "DKE", "DDU",
 
 semester = "2026-2027-1"
 
+path = Path(f"pdf/{semester}")
+path.mkdir(parents=True, exist_ok=True)
+
 for course in courses:
     try:
         response = rq.get(url + course + ".pdf")
         if response.status_code == 200:
-            with open(f"pdf/{course}_{semester}.pdf", "wb") as f:
+            with open(f"pdf/{semester}/{course}.pdf", "wb") as f:
                 f.write(response.content)
             print(f"Downloaded {course}.pdf")
         else:
@@ -21,3 +25,23 @@ for course in courses:
 
     except ValueError as error:
         print(f"Lỗi nội dung {course}.pdf: {error}")
+
+def download_pdf(semseter):
+    path = Path(f"pdf/{semester}")
+    path.mkdir(parents=True, exist_ok=True)
+
+    for course in courses:
+        try:
+            response = rq.get(url + course + ".pdf")
+            if response.status_code == 200:
+                with open(f"pdf/{semester}/{course}.pdf", "wb") as f:
+                    f.write(response.content)
+                print(f"Downloaded {course}.pdf")
+            else:
+                print(f"Failed to download {course}.pdf: Status code {response.status_code}")
+
+        except Exception as e:
+            print(f"Lỗi khi tải {course}.pdf: {e}")
+
+        except ValueError as error:
+            print(f"Lỗi nội dung {course}.pdf: {error}")
