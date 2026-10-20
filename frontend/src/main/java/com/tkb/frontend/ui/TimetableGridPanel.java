@@ -10,22 +10,21 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.RowConstraints;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class TimetableGridPanel extends VBox {
+    // This grid visualizes a student's weekly timetable by day and period.
     private final GridPane grid = new GridPane();
     private final ScrollPane scroll = new ScrollPane(grid);
     private final List<SectionSlot> slots = new ArrayList<>();
     private String tieuDe = "Thời khóa biểu";
 
     public TimetableGridPanel() {
+        // The timetable always starts with the standard 7-day by 9-period layout.
         setSpacing(12);
         setPadding(new Insets(12));
         scroll.setFitToWidth(true);
@@ -41,6 +40,7 @@ public class TimetableGridPanel extends VBox {
     }
 
     public void setSlots(List<SectionSlot> slots) {
+        // Replace the current schedule with the selected slot list and redraw the grid.
         this.slots.clear();
         if (slots != null) {
             this.slots.addAll(slots);
@@ -81,35 +81,48 @@ public class TimetableGridPanel extends VBox {
     }
 
     private void veLich() {
+        // Clear and rebuild the calendar grid using the current sections.
         grid.getChildren().clear();
+        grid.getColumnConstraints().clear();
+        grid.getRowConstraints().clear();
         veMacDinh();
+
+        // Group sessions by (day, start period) so classes on the same time cell are shown together.
         Map<String, List<SectionSlot>> groups = new HashMap<>();
         for (SectionSlot slot : slots) {
-            String key = slot.day() + "-" + slot.start();
-            groups.computeIfAbsent(key, k -> new ArrayList<>()).add(slot);
+            for (ClassSession session : slot.sessions()) {
+                String key = session.thu() + "-" + session.tietBd();
+                groups.computeIfAbsent(key, k -> new ArrayList<>()).add(slot);
+            }
         }
 
         for (Map.Entry<String, List<SectionSlot>> entry : groups.entrySet()) {
+            // Convert the day/period keys into the correct grid coordinates.
             String[] parts = entry.getKey().split("-");
-            int day = indexOfDay(parts[0]);
-            int hour = indexOfHour(parts[1]);
-            if (day < 0 || hour < 0) continue;
+            int day = Integer.parseInt(parts[0]);
+            int start = Integer.parseInt(parts[1]);
+            int col = dayToColumn(day);
+            int row = hourToRow(start);
+            if (col < 0 || row < 0) continue;
 
             List<SectionSlot> items = entry.getValue();
+            VBox cell = new VBox(4);
+            cell.setPadding(new Insets(6));
+            String bg = colorFor(items.get(0).section().maMh());
+            cell.setStyle("-fx-background-color: " + bg + "; -fx-border-color: #DDE7F0; -fx-background-radius: 8; -fx-border-radius: 8;");
+
             for (SectionSlot item : items) {
-                VBox cell = new VBox(4);
-                cell.setPadding(new Insets(6));
-                cell.setStyle("-fx-background-color: " + colorFor(item.courseCode()) + "; -fx-border-color: #DDE7F0; -fx-background-radius: 8; -fx-border-radius: 8;");
-                String label = item.courseCode() + "\n" + item.room();
-                Label l1 = new Label(item.courseCode());
+                // Each class cell displays the course code and room label for quick scanning.
+                String room = item.sessions().isEmpty() ? "" : item.sessions().get(0).phong();
+                Label l1 = new Label(item.section().maMh());
                 l1.setWrapText(true);
                 l1.setStyle("-fx-font-weight: bold; -fx-text-fill: white;");
-                Label l2 = new Label(item.room());
+                Label l2 = new Label(room == null ? "" : room);
                 l2.setWrapText(true);
                 l2.setStyle("-fx-text-fill: white;");
                 cell.getChildren().addAll(l1, l2);
-                grid.add(cell, day + 1, hour + 1);
             }
+            grid.add(cell, col + 1, row + 1);
         }
     }
 
@@ -122,58 +135,59 @@ public class TimetableGridPanel extends VBox {
         return palette[Math.abs(hash) % palette.length];
     }
 
-    private int indexOfDay(String day) {
-        return switch (day.toLowerCase()) {
-            case "mon" -> 0;
-            case "tue" -> 1;
-            case "wed" -> 2;
-            case "thu" -> 3;
-            case "fri" -> 4;
-            case "sat" -> 5;
-            case "sun" -> 6;
+    private int dayToColumn(int day) {
+        // Map the numeric weekday value used in the model to the grid's column index.
+        return switch (day) {
+            case 2 -> 0;
+            case 3 -> 1;
+            case 4 -> 2;
+            case 5 -> 3;
+            case 6 -> 4;
+            case 7 -> 5;
             default -> -1;
         };
     }
 
-    private int indexOfHour(String hour) {
+    private int hourToRow(int hour) {
+        // The schedule uses period numbers as row indices. This converts them to visible grid rows.
         return switch (hour) {
-            case "7:00" -> 0;
-            case "8:00" -> 1;
-            case "9:00" -> 2;
-            case "10:00" -> 3;
-            case "11:00" -> 4;
-            case "13:00" -> 5;
-            case "14:00" -> 6;
-            case "15:00" -> 7;
-            case "16:00" -> 8;
+            case 1 -> 0;
+            case 2 -> 1;
+            case 3 -> 2;
+            case 4 -> 3;
+            case 5 -> 4;
+            case 6 -> 5;
+            case 7 -> 6;
+            case 8 -> 7;
+            case 9 -> 8;
             default -> -1;
         };
     }
 
     private String dayLabel(int index) {
+        // These are the visible weekday headings for the timetable grid.
         return switch (index) {
-            case 0 -> "Mon";
-            case 1 -> "Tue";
-            case 2 -> "Wed";
-            case 3 -> "Thu";
-            case 4 -> "Fri";
-            case 5 -> "Sat";
-            case 6 -> "Sun";
+            case 0 -> "Thứ 2";
+            case 1 -> "Thứ 3";
+            case 2 -> "Thứ 4";
+            case 3 -> "Thứ 5";
+            case 4 -> "Thứ 6";
+            case 5 -> "Thứ 7";
             default -> "";
         };
     }
 
     private String timeLabel(int index) {
         return switch (index) {
-            case 1 -> "7:00";
-            case 2 -> "8:00";
-            case 3 -> "9:00";
-            case 4 -> "10:00";
-            case 5 -> "11:00";
-            case 6 -> "13:00";
-            case 7 -> "14:00";
-            case 8 -> "15:00";
-            case 9 -> "16:00";
+            case 1 -> "1";
+            case 2 -> "2";
+            case 3 -> "3";
+            case 4 -> "4";
+            case 5 -> "5";
+            case 6 -> "6";
+            case 7 -> "7";
+            case 8 -> "8";
+            case 9 -> "9";
             default -> "";
         };
     }

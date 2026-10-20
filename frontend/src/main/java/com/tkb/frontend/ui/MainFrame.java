@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class MainFrame extends BorderPane {
+    // This is the main shell of the JavaFX app. It owns the sidebar, header, and card stack
+    // that switch between the overview, requirements, priority, job, result, comparison, and saved-plan screens.
     static final String CARD_LOGIN = "LOGIN";
     static final String CARD_APP = "APP";
     static final String CARD_OVERVIEW = "TONG_QUAN";
@@ -44,6 +46,7 @@ public class MainFrame extends BorderPane {
     static final String CARD_CMP = "SO_SANH";
     static final String CARD_SAVED = "DA_LUU";
 
+    // Screen titles shown in the breadcrumb and sidebar navigation.
     private static final Map<String, String> TEN_TRANG = Map.of(
             CARD_OVERVIEW, "Tổng quan",
             CARD_REQ, "Nhóm lớp học phần",
@@ -53,6 +56,8 @@ public class MainFrame extends BorderPane {
             CARD_CMP, "So sánh lịch",
             CARD_SAVED, "Thời khóa biểu đã lưu");
 
+    // Shared frontend state is stored here so all UI screens can access the current student,
+    // selected semester, chosen sections, and generated scheduling results.
     private final TkbClient client = new MockNetworkClient();
     private final AppUiState trangThai = new AppUiState(client);
     private final Map<String, Node> cards = new LinkedHashMap<>();
@@ -76,6 +81,7 @@ public class MainFrame extends BorderPane {
     private String trangSoSanhQuayLai = CARD_SAVED;
 
     public MainFrame() {
+        // Build the shell and register each panel under a card key so navigation can switch scenes quickly.
         setPrefSize(1360, 860);
         setStyle("-fx-background-color: #F6F8FB;");
         panelOverview = new OverviewPanel(this);
@@ -84,8 +90,9 @@ public class MainFrame extends BorderPane {
         panelJob = new JobPanel(client, this);
         panelRes = new ResultPanel(client, this);
         panelSaved = new SavedPlansPanel(client, this);
-        panelCmp = new ComparePanel(client, this);
+        panelCmp = new ComparePanel(this);
 
+        // Sidebar and header sections are created here.
         VBox sidebar = new VBox(10);
         sidebar.setPrefWidth(244);
         sidebar.setPadding(new Insets(14, 10, 12, 10));
@@ -190,6 +197,7 @@ public class MainFrame extends BorderPane {
     }
 
     private Button taoNavItem(String card, String text) {
+        // Each navigation button maps to an existing screen card and updates the active styling.
         Button b = new Button(text);
         b.setMaxWidth(Double.MAX_VALUE);
         b.setAlignment(Pos.CENTER_LEFT);
@@ -200,6 +208,7 @@ public class MainFrame extends BorderPane {
     }
 
     void denTrang(String card) {
+        // Switch the visible card and refresh any screen-specific data that should be loaded on demand.
         Node node = cards.getOrDefault(card, panelOverview);
         centerStack.getChildren().setAll(node);
         crumb.setText("Trang chủ / " + TEN_TRANG.getOrDefault(card, ""));
@@ -223,6 +232,8 @@ public class MainFrame extends BorderPane {
     }
 
     private void sauDangNhap() {
+        // After login, the app loads the current student, semester list, default semester,
+        // and the initial requirement screen data used by the rest of the workflow.
         try {
             trangThai.sinhVien = client.sinhVien();
             trangThai.semesters = client.listSemesters();
@@ -265,6 +276,7 @@ public class MainFrame extends BorderPane {
     }
 
     void batDauXepLich() {
+        // Submit the selected class set and start the background scheduling process.
         if (trangThai.hocKy == null) {
             Functions.canhBao(getScene() == null ? null : getScene().getWindow(), "Vui lòng chọn học kỳ.");
             return;
@@ -285,17 +297,20 @@ public class MainFrame extends BorderPane {
     }
 
     void jobXong(JobResult result) {
+        // Once the scheduling job is done, display the generated result options to the user.
         trangThai.ketQua = result;
         panelRes.hienKetQua(result);
         denTrang(CARD_RES);
     }
 
     void jobHuy() {
+        // The schedule computation can be canceled without resetting the user's selection choices.
         Functions.thongTin(getScene() == null ? null : getScene().getWindow(), "Đã hủy xếp lịch. Các lựa chọn của bạn vẫn được giữ nguyên.");
         denTrang(CARD_PRIO);
     }
 
     void jobThatBai(String message) {
+        // Show the failure message then route the user back to the priority configuration step.
         if (message != null && !message.isBlank()) {
             Functions.loi(getScene() == null ? null : getScene().getWindow(), message);
         }
@@ -303,123 +318,15 @@ public class MainFrame extends BorderPane {
     }
 
     void moSoSanhPhuongAn(String quayLaiCard, List<ScheduleOption> ds) {
+        // Compare selected result options side by side using a dedicated comparison view.
         trangSoSanhQuayLai = quayLaiCard;
         panelCmp.napPhuongAn(ds);
         denTrang(CARD_CMP);
     }
 
     void moSoSanhDaLuu(String quayLaiCard, List<Long> ids) {
+        // Comparison can also be opened from saved plans using the selected saved-plan IDs.
         trangSoSanhQuayLai = quayLaiCard;
         panelCmp.napDaLuu(ids);
         denTrang(CARD_CMP);
     }
-
-    String trangSoSanhQuayLai() { return trangSoSanhQuayLai; }
-
-    AppUiState trangThai() { return trangThai; }
-
-    public static void main(String[] args) {
-        // no-op; launched by JavaFX entry point
-    }
-}
-
-class AppUiState {
-    static final Set<String> MON_MINH_HOA = Set.of("841109", "841215", "841401", "841501");
-    final TkbClient client;
-    Student sinhVien;
-    List<Semester> semesters = List.of();
-    Semester hocKy;
-    List<SectionSlot> tatCaNhom = List.of();
-    final Set<Integer> daChon = new LinkedHashSet<>();
-    Criteria criteria = Criteria.macDinh();
-    JobResult ketQua;
-
-    AppUiState(TkbClient client) {
-        this.client = client;
-    }
-
-    void chonMacDinh() {
-        if (!daChon.isEmpty()) return;
-        for (SectionSlot s : tatCaNhom) {
-            if (MON_MINH_HOA.contains(s.section().maMh())) {
-                daChon.add(s.section().id());
-            }
-        }
-    }
-
-    List<String> monDaChon() {
-        return new ArrayList<>(new LinkedHashMap<String, List<SectionSlot>>().keySet());
-    }
-}
-
-class AvatarPanel extends StackPane {
-    private String chu;
-    private final int kichThuoc;
-
-    AvatarPanel(String chu, int kichThuoc) {
-        this.chu = chu;
-        this.kichThuoc = kichThuoc;
-        setMinSize(kichThuoc, kichThuoc);
-        setPrefSize(kichThuoc, kichThuoc);
-        setMaxSize(kichThuoc, kichThuoc);
-        setAlignment(Pos.CENTER);
-        render();
-    }
-
-    void setChu(String chu) {
-        this.chu = chu;
-        render();
-    }
-
-    private void render() {
-        Circle circle = new Circle(kichThuoc / 2.0, Color.web("#1D4ED8"));
-        Label label = new Label(chu == null ? "?" : chu);
-        label.setTextFill(Color.WHITE);
-        label.setFont(Font.font("Segoe UI", FontWeight.BOLD, kichThuoc / 3));
-        getChildren().setAll(circle, label);
-    }
-}
-
-class LoginPanel extends VBox {
-    private final TextField txtEmail = Functions.oNhap();
-    private final PasswordField txtMatKhau = new PasswordField();
-
-    LoginPanel(AppUiState st, Runnable onLogin) {
-        setPadding(new Insets(32));
-        setSpacing(14);
-        setStyle("-fx-background-color: white; -fx-padding: 28 30 28 30;");
-        Label title = Functions.chuDe("Đăng nhập");
-        Label desc = Functions.moTa("Thông tin demo");
-        txtEmail.setText("minh.anh@sv.univ.edu.vn");
-        txtMatKhau.setText("demo1234");
-        txtMatKhau.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 8; -fx-padding: 7 10 7 10;");
-        Button login = Functions.nutChinh("Đăng nhập");
-        login.setOnAction(e -> onLogin.run());
-        getChildren().addAll(title, desc, txtEmail, txtMatKhau, login);
-    }
-}
-
-class OverviewPanel extends VBox {
-    private final MainFrame frame;
-    OverviewPanel(MainFrame frame) {
-        this.frame = frame;
-        setPadding(new Insets(24));
-        setSpacing(16);
-        getChildren().add(Functions.chuDe("Tổng quan"));
-    }
-    void taiLai() {}
-}
-
-class PriorityPanel extends VBox {
-    private final MainFrame frame;
-    PriorityPanel(MainFrame frame) { this.frame = frame; setPadding(new Insets(24)); }
-    void taiLai() {}
-}
-
-class ComparePanel extends VBox {
-    private final MainFrame frame;
-    ComparePanel(MainFrame frame) { this.frame = frame; setPadding(new Insets(24)); }
-    void taiDuLieu() {}
-    void napPhuongAn(List<ScheduleOption> ds) {}
-    void napDaLuu(List<Long> ids) {}
-}

@@ -1,6 +1,5 @@
 package com.tkb.frontend.ui;
 
-import com.tkb.frontend.model.Types.JobResult;
 import com.tkb.frontend.model.Types.JobStatus;
 import com.tkb.frontend.net.TkbClient;
 import javafx.geometry.Insets;
@@ -12,6 +11,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class JobPanel extends VBox {
+    // This panel shows the background scheduler status while the timetable solver is running.
     private final TkbClient client;
     private final MainFrame frame;
     private final ProgressBar progress = new ProgressBar(0);
@@ -26,11 +26,13 @@ public class JobPanel extends VBox {
         setSpacing(16);
         setStyle("-fx-background-color: #F6F8FB;");
 
+        // Header and status text explain the current scheduling step to the user.
         Label title = Functions.chuDe("Đang tối ưu thời khóa biểu");
         Label info = Functions.moTa("Thuật toán đang cân nhắc các tổ hợp nhóm lớp theo ưu tiên của bạn.");
         progress.setPrefWidth(620);
         progress.setProgress(0.4);
 
+        // Users can cancel the running optimization without losing their current selections.
         Button huy = Functions.nutPhu("Hủy xếp lịch");
         huy.setOnAction(e -> frame.jobHuy());
 
@@ -41,6 +43,7 @@ public class JobPanel extends VBox {
     }
 
     public void batDau(String jobId) {
+        // Start the progress display when a backend job begins.
         this.jobId = jobId;
         lblTrangThai.setText("Đang xử lý job " + jobId + "...");
         progress.setProgress(0.55);
@@ -56,9 +59,17 @@ public class JobPanel extends VBox {
     }
 
     public void capNhat(JobStatus jobStatus) {
+        // Keep the status label and progress bar synchronized with the latest backend job update.
         if (jobStatus == null) return;
-        lblTrangThai.setText(jobStatus.message());
-        if (jobStatus.status() == null) return;
-        progress.setProgress(Math.min(1.0, jobStatus.progress() / 100.0));
+        String thongBao = jobStatus.thongBaoLoi();
+        if (thongBao != null && !thongBao.isBlank()) {
+            lblTrangThai.setText(thongBao);
+            lblLoi.setText(thongBao);
+        } else {
+            lblTrangThai.setText("Đang xử lý...");
+            lblLoi.setText("");
+        }
+        if (jobStatus.state() == null) return;
+        progress.setProgress(Math.min(1.0, Math.max(0.0, jobStatus.phanTram() / 100.0)));
     }
 }

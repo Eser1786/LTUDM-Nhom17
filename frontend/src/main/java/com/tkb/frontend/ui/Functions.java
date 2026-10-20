@@ -23,6 +23,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Window;
 
 public final class Functions {
+    // Shared JavaFX color palette and style constants used across the application UI.
     public static final Color MA_NEN = Color.web("#F6F8FB");
     public static final Color MA_THE = Color.WHITE;
     public static final Color MA_VIEN = Color.web("#E2E8F0");
@@ -44,6 +45,7 @@ public final class Functions {
     public static final Color MA_SIDEBAR_CHU = Color.web("#CBD5E1");
     public static final Color MA_SIDEBAR_DANG_CHON = Color.web("#1D4ED8");
 
+    // Reusable fonts used by labels and cards throughout the JavaFX UI.
     public static final Font F_CHU = Font.font("Segoe UI", 13);
     public static final Font F_CHU_BOLD = Font.font("Segoe UI", FontWeight.BOLD, 13);
     public static final Font F_CHU_DE = Font.font("Segoe UI", FontWeight.BOLD, 20);
@@ -53,9 +55,8 @@ public final class Functions {
 
     private Functions() {}
 
-    public static Pane the() { return the(16); }
-
-    public static Pane the(int padding) {
+    public static VBox the(int padding) {
+        // Default card container for most panels. Keeps the visual layout consistent across screens.
         VBox v = new VBox();
         v.setPadding(new Insets(padding));
         v.setSpacing(8);
@@ -63,65 +64,18 @@ public final class Functions {
         return v;
     }
 
-    public static Label chuDe(String text) {
-        Label l = new Label(text);
-        l.setFont(F_CHU_DE);
-        l.setTextFill(MA_CHU);
-        return l;
-    }
-
-    public static Label moTa(String text) {
-        Label l = new Label(text);
-        l.setFont(F_MO_TA);
-        l.setTextFill(MA_CHU_PHU);
-        return l;
-    }
-
-    public static Label tieuDeThe(String text) {
-        Label l = new Label(text);
-        l.setFont(F_TIEU_DE_THE);
-        l.setTextFill(MA_CHU);
-        return l;
-    }
-
     public static Button nutChinh(String text) {
+        // Primary action button: used for important user actions like continue/save.
         return nut(text, MA_CHINH, MA_CHINH_DAM, Color.WHITE);
     }
 
     public static Button nutPhu(String text) {
+        // Secondary action button: less prominent than the main action.
         return nut(text, MA_THE, MA_VIEN, MA_CHU_DAM);
     }
 
-    public static Button nutXoa(String text) {
-        return nut(text, MA_THE, Color.web("#FECED3"), MA_LOI);
-    }
-
-    private static Button nut(String text, Color bg, Color border, Color fg) {
-        Button b = new Button(text);
-        b.setFont(F_CHU_BOLD);
-        b.setTextFill(fg);
-        b.setStyle("-fx-background-color: " + toWeb(bg) + "; -fx-border-color: " + toWeb(border) + "; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 7 16 7 16;");
-        return b;
-    }
-
-    public static VBox nhan(String text, Color bg, Color fg) {
-        Label l = new Label(text);
-        l.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
-        l.setTextFill(fg);
-        VBox box = new VBox(l);
-        box.setPadding(new Insets(3, 10, 3, 10));
-        box.setStyle("-fx-background-color: " + toWeb(bg) + "; -fx-background-radius: 10; -fx-border-color: transparent; -fx-border-radius: 10;");
-        return box;
-    }
-
-    public static VBox nhanHopLe(String text) { return nhan(text, MA_XANH_NEN, MA_XANH_DAM); }
-    public static VBox nhanDeXuat(String text) { return nhan(text, MA_CHINH, Color.WHITE); }
-    public static VBox nhanCanhBao(String text) { return nhan(text, MA_CANH_BAO_NEN, MA_CANH_BAO); }
-    public static VBox nhanXam(String text) { return nhan(text, MA_XAM_NEN, MA_CHU_PHU); }
-    public static VBox nhanLoi(String text) { return nhan(text, MA_LOI_NEN, MA_LOI); }
-    public static VBox nhanChinh(String text) { return nhan(text, Color.web("#DBEAFE"), MA_CHINH_DAM); }
-
     public static TextField oNhap() {
+        // Standard text input field used across forms and filters.
         TextField tf = new TextField();
         tf.setFont(F_CHU);
         tf.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 8; -fx-padding: 7 10 7 10;");
@@ -129,6 +83,7 @@ public final class Functions {
     }
 
     public static void thongTin(Window parent, String message) {
+        // Information dialog for confirmation/status messages.
         Alert a = new Alert(Alert.AlertType.INFORMATION, message);
         a.setTitle("Thông báo");
         a.initOwner(parent);
@@ -136,22 +91,16 @@ public final class Functions {
     }
 
     public static void canhBao(Window parent, String message) {
+        // Warning dialog for user-facing cautions and decisions.
         Alert a = new Alert(Alert.AlertType.WARNING, message);
         a.setTitle("Cảnh báo");
         a.initOwner(parent);
         a.showAndWait();
     }
 
-    public static void loi(Window parent, ApiException ex) {
-        showError(parent, ErrorMessages.thanThien(ex));
-    }
-
     public static void loi(Window parent, String message) {
+        // Error dialog used when backend or validation issues occur.
         showError(parent, message);
-    }
-
-    public static ErrorCode code(ApiException ex) {
-        return ex.code();
     }
 
     private static void showError(Window parent, String message) {

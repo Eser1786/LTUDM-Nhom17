@@ -19,6 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class SavedPlansPanel extends VBox {
+    // This panel lists previously saved timetable options and allows the user to reopen or compare them.
     private final TkbClient client;
     private final MainFrame frame;
     private final TextField txtTimKiem = Functions.oNhap();
@@ -33,6 +34,7 @@ public class SavedPlansPanel extends VBox {
         setSpacing(12);
         setStyle("-fx-background-color: #F6F8FB;");
 
+        // Header and controls for searching and comparing saved plans.
         HBox header = new HBox(12);
         header.setAlignment(Pos.CENTER_LEFT);
         Label title = Functions.chuDe("Thời khóa biểu đã lưu");
@@ -54,6 +56,7 @@ public class SavedPlansPanel extends VBox {
     }
 
     public void taiDanhSach() {
+        // Fetch the saved plans for the chosen semester before rendering the list.
         try {
             String ma = frame.trangThai().hocKy == null ? null : frame.trangThai().hocKy.ma();
             tatCa = client.listPlans(ma);
@@ -76,6 +79,7 @@ public class SavedPlansPanel extends VBox {
     }
 
     private void veDanhSach() {
+        // Rebuild the list every time the search text or selection changes.
         getChildren().removeIf(node -> getChildren().indexOf(node) > 1);
         List<SavedPlan> ds = loc();
         if (ds.isEmpty()) {
@@ -84,6 +88,7 @@ public class SavedPlansPanel extends VBox {
             return;
         }
         for (SavedPlan p : ds) {
+            // Each saved plan is rendered as a card with quick actions to open, rename, or delete it.
             VBox card = new VBox(6);
             card.setPadding(new Insets(12));
             card.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 10; -fx-background-radius: 10;");
@@ -109,12 +114,14 @@ public class SavedPlansPanel extends VBox {
     }
 
     private void capNhatNutSoSanh() {
+        // Compare button only enables when exactly two saved plans are selected.
         long selected = chkSoSanh.values().stream().filter(CheckBox::isSelected).count();
         btnSoSanh.setDisable(selected != 2);
         btnSoSanh.setText(selected == 2 ? "So sánh 2 lịch đã chọn" : "So sánh 2 lịch đã chọn");
     }
 
     private void moLich(SavedPlan p) {
+        // Open a saved plan and show the timetable details in a temporary grid view.
         try {
             PlanDetail d = client.getPlan(p.id());
             TimetableGridPanel g = new TimetableGridPanel();

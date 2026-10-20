@@ -13,6 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class ResultPanel extends VBox {
+    // This panel displays the produced scheduling options and lets the user choose one to inspect or save.
     private final TkbClient client;
     private final MainFrame frame;
     private final Label lblTieuDe = Functions.chuDe("Kết quả đề xuất");
@@ -27,6 +28,7 @@ public class ResultPanel extends VBox {
         setSpacing(12);
         setStyle("-fx-background-color: #F6F8FB;");
 
+        // Header row with the current result summary and action buttons.
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
         header.setSpacing(12);
@@ -46,6 +48,7 @@ public class ResultPanel extends VBox {
     }
 
     public void hienTrangThai() {
+        // If no result exists yet, show a clear empty state.
         if (ketQua == null) {
             getChildren().setAll(Functions.chuDe("Chưa có kết quả đề xuất"));
         } else {
@@ -54,6 +57,7 @@ public class ResultPanel extends VBox {
     }
 
     public void hienKetQua(JobResult result) {
+        // Store the latest result and reset the comparison state before rendering.
         this.ketQua = result;
         this.chiSo = 0;
         this.soSanhChon.clear();
