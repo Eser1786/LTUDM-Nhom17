@@ -152,4 +152,4 @@ CREATE TABLE phuong_an_bi_loai (
 -- 3. DỮ LIỆU KHỞI TẠO
 -- ---------------------------------------------------------------
 INSERT INTO hoc_ky (ma, ten, dang_dung)
-VALUES ('2025-2026-3', 'Học kỳ 3 - Năm học 2025-2026', TRUE);
+VALUES ('2026-2027-1', 'Học kỳ 1 - Năm học 2026-2027', TRUE);
