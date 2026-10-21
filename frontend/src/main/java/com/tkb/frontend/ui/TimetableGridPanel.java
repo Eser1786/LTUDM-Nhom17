@@ -4,6 +4,7 @@ import com.tkb.frontend.model.Types.ClassSession;
 import com.tkb.frontend.model.Types.SectionSlot;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.ColumnConstraints;
@@ -135,6 +136,9 @@ public class TimetableGridPanel extends VBox {
             }
         }
 
+        // Track occupied cells to avoid stacking empty Region on top of class cells
+        boolean[][] occupied = new boolean[6][TONG_GIO];
+
         for (Map.Entry<String, List<SectionSlot>> entry : groups.entrySet()) {
             String[] parts = entry.getKey().split("-");
             int day = Integer.parseInt(parts[0]);
@@ -148,6 +152,13 @@ public class TimetableGridPanel extends VBox {
                     .filter(s -> s.thu() == day && s.tietBd() == tiet).findFirst().orElse(null);
             int soTiet = cs == null ? 1 : cs.soTiet();
             int span = Math.max(1, Math.min(soTiet, TONG_GIO - row));
+
+            // Mark occupied cells
+            for (int r = 0; r < span; r++) {
+                if (row + r < TONG_GIO) {
+                    occupied[col][row + r] = true;
+                }
+            }
 
             VBox cell = new VBox(2);
             cell.setPadding(new Insets(6));
@@ -168,6 +179,21 @@ public class TimetableGridPanel extends VBox {
             }
             grid.add(cell, col + 1, row + 1, 1, span);
         }
+
+        // Remove empty Region cells that are covered by class cells
+        List<Node> toRemove = new ArrayList<>();
+        for (Node node : grid.getChildren()) {
+            Integer colIdx = GridPane.getColumnIndex(node);
+            Integer rowIdx = GridPane.getRowIndex(node);
+            if (colIdx != null && rowIdx != null && colIdx > 0 && colIdx <= 6 && rowIdx > 0 && rowIdx <= TONG_GIO) {
+                int c = colIdx - 1;
+                int r = rowIdx - 1;
+                if (occupied[c][r] && node instanceof Region && !(node instanceof VBox)) {
+                    toRemove.add(node);
+                }
+            }
+        }
+        grid.getChildren().removeAll(toRemove);
     }
 
     private String maNhom(SectionSlot item) {
