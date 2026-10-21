@@ -31,7 +31,11 @@ mvn clean compile
 (chạy file main tiếp theo)
 
 ```
+#### Dùng lệnh để vào được sql query
 
+```bash
+docker exec -it tkb-mysql mysql -u timetable_user -p
+```
 
 ## Ngọc Trân (Frontend):
 
