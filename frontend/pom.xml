@@ -1,4 +1,3 @@
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
@@ -6,63 +5,18 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-<<<<<<< HEAD
-  <properties>
-    <javafx.version>21.0.8</javafx.version>
-  </properties>
-
-  <dependencies>
-    <!-- Giao thuc, ma hoa, DTO dung chung voi server -->
-    <dependency>
-      <groupId>com.tkb</groupId>
-      <artifactId>common</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!-- Swing da co san trong JDK nen khong can them thu vien GUI.
-         Client KHONG duoc co MySQL connector hay HikariCP: moi truy cap CSDL di qua server. -->
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-controls</artifactId>
-      <version>${javafx.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-graphics</artifactId>
-      <version>${javafx.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-swing</artifactId>
-      <version>${javafx.version}</version>
-    </dependency>
-  </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.openjfx</groupId>
-        <artifactId>javafx-maven-plugin</artifactId>
-        <version>0.0.8</version>
-        <configuration>
-          <mainClass>com.tkb.frontend.Main</mainClass>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-</project>
-=======
     <parent>
         <groupId>com.tkb</groupId>
         <artifactId>timetable</artifactId>
         <version>1.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>frontend</artifactId>
 
     <properties>
-        <javafx.version>21.0.5</javafx.version>
-        <maven.compiler.release>17</maven.compiler.release>
+        <javafx.version>21.0.8</javafx.version>
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -104,7 +58,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <release>17</release>
+                    <release>${maven.compiler.release}</release>
                 </configuration>
             </plugin>
 
@@ -114,10 +68,9 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>com.tkb.frontend.Launcher</mainClass>
+                    <mainClass>com.tkb.frontend.Main</mainClass>
                 </configuration>
             </plugin>
         </plugins>
     </build>
 </project>
->>>>>>> 05f5e0e83a6f0080e4687b8aa210b0dffd5da367

@@ -9,38 +9,53 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Lưới thời khóa biểu tuần: trục dọc 07:00–21:00, trục ngang T2–T7.
+ * Mỗi buổi học là một block đặt đúng ngày và giờ, hiển thị học phần, mã nhóm và phòng.
+ */
 public class TimetableGridPanel extends VBox {
-    // This grid visualizes a student's weekly timetable by day and period.
+    private static final int GIO_BAT_DAU = 7;
+    private static final int GIO_KET_THUC = 21;
+    private static final int TONG_GIO = GIO_KET_THUC - GIO_BAT_DAU; // 14
+
     private final GridPane grid = new GridPane();
-    private final ScrollPane scroll = new ScrollPane(grid);
+    private final ScrollPane scroll = new ScrollPane();
     private final List<SectionSlot> slots = new ArrayList<>();
     private String tieuDe = "Thời khóa biểu";
 
     public TimetableGridPanel() {
-        // The timetable always starts with the standard 7-day by 9-period layout.
-        setSpacing(12);
-        setPadding(new Insets(12));
+        setSpacing(10);
+        setPadding(new Insets(4));
+        scroll.setContent(grid);
         scroll.setFitToWidth(true);
-        scroll.setFitToHeight(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
         getChildren().add(scroll);
         veMacDinh();
+        veLich();
     }
 
     public void setTieuDe(String tieuDe) {
         this.tieuDe = tieuDe;
     }
 
+    public String getTieuDe() {
+        return tieuDe;
+    }
+
     public void setSlots(List<SectionSlot> slots) {
-        // Replace the current schedule with the selected slot list and redraw the grid.
         this.slots.clear();
         if (slots != null) {
             this.slots.addAll(slots);
@@ -49,45 +64,69 @@ public class TimetableGridPanel extends VBox {
     }
 
     private void veMacDinh() {
-        grid.setHgap(8);
-        grid.setVgap(8);
-        grid.setPadding(new Insets(8));
-        grid.setStyle("-fx-background-color: white; -fx-border-color: #DDE7F0; -fx-border-radius: 10; -fx-background-radius: 10;");
-        for (int i = 0; i < 7; i++) {
-            ColumnConstraints cc = new ColumnConstraints();
-            cc.setPercentWidth(100.0 / 7);
-            cc.setHgrow(Priority.ALWAYS);
-            grid.getColumnConstraints().add(cc);
-        }
-        for (int i = 0; i < 9; i++) {
-            RowConstraints rc = new RowConstraints();
-            rc.setPercentHeight(100.0 / 9);
-            rc.setVgrow(Priority.ALWAYS);
-            grid.getRowConstraints().add(rc);
-        }
-        for (int c = 0; c < 7; c++) {
-            Label header = new Label(dayLabel(c));
-            header.setAlignment(Pos.CENTER);
-            header.setMaxWidth(Double.MAX_VALUE);
-            header.setStyle("-fx-background-color: #EFF6FF; -fx-padding: 8 12; -fx-font-weight: bold; -fx-text-fill: #1F2937");
-            grid.add(header, c + 1, 0);
-        }
-        for (int r = 1; r <= 8; r++) {
-            Label time = new Label(timeLabel(r));
-            time.setStyle("-fx-text-fill: #475569; -fx-font-size: 11px; -fx-padding: 6 8;");
-            grid.add(time, 0, r);
-        }
-        grid.add(new Label(""), 0, 0);
-    }
-
-    private void veLich() {
-        // Clear and rebuild the calendar grid using the current sections.
         grid.getChildren().clear();
         grid.getColumnConstraints().clear();
         grid.getRowConstraints().clear();
-        veMacDinh();
+        grid.setHgap(6);
+        grid.setVgap(4);
+        grid.setPadding(new Insets(10));
+        grid.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 12; "
+                + "-fx-background-radius: 12;");
 
-        // Group sessions by (day, start period) so classes on the same time cell are shown together.
+        ColumnConstraints gioCol = new ColumnConstraints();
+        gioCol.setMinWidth(56);
+        grid.getColumnConstraints().add(gioCol);
+        for (int i = 0; i < 6; i++) {
+            ColumnConstraints cc = new ColumnConstraints();
+            cc.setPrefWidth(150);
+            cc.setHgrow(Priority.ALWAYS);
+            grid.getColumnConstraints().add(cc);
+        }
+
+        RowConstraints headerRow = new RowConstraints();
+        headerRow.setMinHeight(34);
+        grid.getRowConstraints().add(headerRow);
+        for (int i = 0; i < TONG_GIO; i++) {
+            RowConstraints rc = new RowConstraints();
+            rc.setMinHeight(34);
+            grid.getRowConstraints().add(rc);
+        }
+
+        for (int c = 0; c < 6; c++) {
+            Label header = new Label(dayFull(c + 2));
+            header.setAlignment(Pos.CENTER);
+            header.setMaxWidth(Double.MAX_VALUE);
+            header.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+            header.setStyle("-fx-background-color: #EFF6FF; -fx-padding: 8 12; -fx-text-fill: #1E40AF; "
+                    + "-fx-background-radius: 6;");
+            grid.add(header, c + 1, 0);
+        }
+        grid.add(new Label(""), 0, 0);
+
+        for (int h = 0; h < TONG_GIO; h++) {
+            Label time = new Label(gioLabel(h));
+            time.setStyle("-fx-text-fill: #64748B; -fx-font-size: 11px; -fx-padding: 0 6 0 0;");
+            time.setAlignment(Pos.TOP_RIGHT);
+            time.setMaxWidth(Double.MAX_VALUE);
+            grid.add(time, 0, h + 1);
+
+            // Nền lưới trống để thể hiện rõ khoảng trống.
+            for (int c = 0; c < 6; c++) {
+                Region cell = new Region();
+                cell.setMinHeight(30);
+                cell.setStyle("-fx-background-color: #FAFBFC; -fx-background-radius: 6;");
+                grid.add(cell, c + 1, h + 1);
+            }
+        }
+    }
+
+    private void veLich() {
+        veMacDinh();
+        if (slots.isEmpty()) {
+            return;
+        }
+
+        // Gom theo (ngày, giờ bắt đầu) để xếp các block chồng thời gian thành 1 ô.
         Map<String, List<SectionSlot>> groups = new HashMap<>();
         for (SectionSlot slot : slots) {
             for (ClassSession session : slot.sessions()) {
@@ -97,98 +136,78 @@ public class TimetableGridPanel extends VBox {
         }
 
         for (Map.Entry<String, List<SectionSlot>> entry : groups.entrySet()) {
-            // Convert the day/period keys into the correct grid coordinates.
             String[] parts = entry.getKey().split("-");
             int day = Integer.parseInt(parts[0]);
-            int start = Integer.parseInt(parts[1]);
-            int col = dayToColumn(day);
-            int row = hourToRow(start);
-            if (col < 0 || row < 0) continue;
+            int tiet = Integer.parseInt(parts[1]);
+            int col = day - 2;
+            int row = tiet - 1;
+            if (col < 0 || col > 5 || row < 0) continue;
 
             List<SectionSlot> items = entry.getValue();
-            VBox cell = new VBox(4);
-            cell.setPadding(new Insets(6));
-            String bg = colorFor(items.get(0).section().maMh());
-            cell.setStyle("-fx-background-color: " + bg + "; -fx-border-color: #DDE7F0; -fx-background-radius: 8; -fx-border-radius: 8;");
+            ClassSession cs = items.get(0).sessions().stream()
+                    .filter(s -> s.thu() == day && s.tietBd() == tiet).findFirst().orElse(null);
+            int soTiet = cs == null ? 1 : cs.soTiet();
+            int span = Math.max(1, Math.min(soTiet, TONG_GIO - row));
 
+            VBox cell = new VBox(2);
+            cell.setPadding(new Insets(6));
+            cell.setStyle("-fx-background-color: " + colorFor(items.get(0).section().maMh(), false)
+                    + "; -fx-background-radius: 8; -fx-border-color: "
+                    + colorFor(items.get(0).section().maMh(), true) + "; -fx-border-radius: 8;");
             for (SectionSlot item : items) {
-                // Each class cell displays the course code and room label for quick scanning.
-                String room = item.sessions().isEmpty() ? "" : item.sessions().get(0).phong();
-                Label l1 = new Label(item.section().maMh());
+                Label l1 = new Label(item.tenHocPhan());
                 l1.setWrapText(true);
-                l1.setStyle("-fx-font-weight: bold; -fx-text-fill: white;");
-                Label l2 = new Label(room == null ? "" : room);
+                l1.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
+                l1.setTextFill(javafx.scene.paint.Color.WHITE);
+                Label l2 = new Label(item.section().maMh() + " · " + maNhom(item)
+                        + " · " + phong(item));
                 l2.setWrapText(true);
-                l2.setStyle("-fx-text-fill: white;");
+                l2.setFont(Font.font("Segoe UI", 10));
+                l2.setTextFill(javafx.scene.paint.Color.web("#EEF2FF"));
                 cell.getChildren().addAll(l1, l2);
             }
-            grid.add(cell, col + 1, row + 1);
+            grid.add(cell, col + 1, row + 1, 1, span);
         }
     }
 
-    private String colorFor(String code) {
+    private String maNhom(SectionSlot item) {
+        var s = item.section();
+        return "TH".equals(s.loai()) ? "TH" + s.nhom() + "." + s.toTh() : "LT" + s.nhom();
+    }
+
+    private String phong(SectionSlot item) {
+        for (ClassSession cs : item.sessions()) {
+            if (cs.phong() != null && !cs.phong().isBlank()) {
+                return cs.phong();
+            }
+        }
+        return "";
+    }
+
+    private String colorFor(String code, boolean dam) {
         int hash = code == null ? 0 : code.hashCode();
-        String[] palette = {
-            "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
-            "#14B8A6", "#F97316", "#EC4899", "#84CC16", "#06B6D4"
-        };
-        return palette[Math.abs(hash) % palette.length];
+        String[] palette = {"#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
+                "#14B8A6", "#EA580C", "#DB2777", "#65A30D", "#0891B2"};
+        String[] vien = {"#2563EB", "#059669", "#D97706", "#DC2626", "#7C3AED",
+                "#0D9488", "#C2410C", "#BE185D", "#4D7C0F", "#0E7490"};
+        int i = Math.abs(hash) % palette.length;
+        return dam ? vien[i] : palette[i];
     }
 
-    private int dayToColumn(int day) {
-        // Map the numeric weekday value used in the model to the grid's column index.
-        return switch (day) {
-            case 2 -> 0;
-            case 3 -> 1;
-            case 4 -> 2;
-            case 5 -> 3;
-            case 6 -> 4;
-            case 7 -> 5;
-            default -> -1;
-        };
-    }
-
-    private int hourToRow(int hour) {
-        // The schedule uses period numbers as row indices. This converts them to visible grid rows.
-        return switch (hour) {
-            case 1 -> 0;
-            case 2 -> 1;
-            case 3 -> 2;
-            case 4 -> 3;
-            case 5 -> 4;
-            case 6 -> 5;
-            case 7 -> 6;
-            case 8 -> 7;
-            case 9 -> 8;
-            default -> -1;
-        };
-    }
-
-    private String dayLabel(int index) {
-        // These are the visible weekday headings for the timetable grid.
-        return switch (index) {
-            case 0 -> "Thứ 2";
-            case 1 -> "Thứ 3";
-            case 2 -> "Thứ 4";
-            case 3 -> "Thứ 5";
-            case 4 -> "Thứ 6";
-            case 5 -> "Thứ 7";
+    private String dayFull(int thu) {
+        return switch (thu) {
+            case 2 -> "Thứ Hai";
+            case 3 -> "Thứ Ba";
+            case 4 -> "Thứ Tư";
+            case 5 -> "Thứ Năm";
+            case 6 -> "Thứ Sáu";
+            case 7 -> "Thứ Bảy";
             default -> "";
         };
     }
 
-    private String timeLabel(int index) {
-        return switch (index) {
-            case 1 -> "1";
-            case 2 -> "2";
-            case 3 -> "3";
-            case 4 -> "4";
-            case 5 -> "5";
-            case 6 -> "6";
-            case 7 -> "7";
-            case 8 -> "8";
-            case 9 -> "9";
-            default -> "";
-        };
+    private String gioLabel(int h) {
+        int gio = GIO_BAT_DAU + h;
+        return String.format("%02d:00", gio);
     }
 }

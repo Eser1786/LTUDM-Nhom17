@@ -546,7 +546,11 @@ public class MockNetworkClient implements TkbClient {
         for (SectionSlot s : slotsBySemester.getOrDefault(maHocKy, List.of())) {
             Section x = s.section();
             for (String ma : DEMO_MA) {
-                if (x.maMh().equals(ma)) {
+                if (!x.maMh().equals(ma)) {
+                    continue;
+                }
+                // Chi tinh cac nhom thuoc to hop 01 (phuong an A) lam bo minh hoa.
+                if ("01".equals(x.nhom())) {
                     ids.add(x.id());
                 }
             }
@@ -583,6 +587,18 @@ public class MockNetworkClient implements TkbClient {
                 if (!choPhep.contains(id)) {
                     dayDu = false;
                     break;
+                }
+            }
+            // Phuong an A phai nam trong bo da chon; phuong an B va C la cac to hop thay the
+            // cung hoc phan (khac nhom) de the hien su lua chon 2 ngay/khong gap.
+            if (i >= 1) {
+                dayDu = true;
+                for (Integer id : ids) {
+                    SectionSlot s = timSlot(id);
+                    if (s == null) {
+                        dayDu = false;
+                        break;
+                    }
                 }
             }
             if (!dayDu) {

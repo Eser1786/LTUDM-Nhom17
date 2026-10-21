@@ -37,3 +37,5 @@ mvn clean compile
 
 
 ## Quý (Frontend):
+
+### Cách chạy: mvn -pl frontend javafx:run

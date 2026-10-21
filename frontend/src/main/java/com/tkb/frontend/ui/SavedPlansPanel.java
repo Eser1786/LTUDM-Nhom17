@@ -9,69 +9,79 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class SavedPlansPanel extends VBox {
-    // This panel lists previously saved timetable options and allows the user to reopen or compare them.
+/** Màn hình Thời khóa biểu đã lưu: card lịch, xem nhanh, mở, đổi tên, xóa và so sánh 2 lịch. */
+public class SavedPlansPanel extends ScrollPane {
     private final TkbClient client;
     private final MainFrame frame;
+    private final MainFrame.AppUiState st;
     private final TextField txtTimKiem = Functions.oNhap();
     private final Button btnSoSanh = Functions.nutChinh("So sánh 2 lịch đã chọn");
     private final Map<Long, CheckBox> chkSoSanh = new LinkedHashMap<>();
+    private final VBox danhSach = new VBox(12);
+    private final VBox khung = new VBox(14);
     private List<SavedPlan> tatCa = List.of();
 
     public SavedPlansPanel(TkbClient client, MainFrame frame) {
         this.client = client;
         this.frame = frame;
-        setPadding(new Insets(22, 26, 18, 26));
-        setSpacing(12);
-        setStyle("-fx-background-color: #F6F8FB;");
+        this.st = frame.trangThai();
 
-        // Header and controls for searching and comparing saved plans.
-        HBox header = new HBox(12);
-        header.setAlignment(Pos.CENTER_LEFT);
-        Label title = Functions.chuDe("Thời khóa biểu đã lưu");
-        Label desc = Functions.moTa("Mở lại lịch, đổi tên hoặc chọn 2 lịch để so sánh chi tiết.");
-        header.getChildren().addAll(title, desc);
+        khung.setPadding(new Insets(22, 26, 20, 26));
+        khung.setSpacing(14);
+        khung.setStyle("-fx-background-color: #F6F8FB;");
 
-        HBox controls = new HBox(8);
-        controls.setAlignment(Pos.CENTER_RIGHT);
-        txtTimKiem.setPromptText("Tìm lịch...");
-        txtTimKiem.setPrefWidth(220);
+        VBox header = new VBox(4,
+                Functions.chuDe("Thời khóa biểu đã lưu"),
+                Functions.moTa("Mở lại lịch, đổi tên, xóa hoặc chọn 2 lịch để so sánh chi tiết."));
+
+        VBox thanhCongCu = Functions.the(12);
+        txtTimKiem.setPromptText("Tìm theo tên lịch...");
+        txtTimKiem.setPrefWidth(260);
         Button btnMoi = Functions.nutPhu("Tạo phương án mới");
         btnMoi.setOnAction(e -> frame.denTrang(MainFrame.CARD_PRIO));
         btnSoSanh.setDisable(true);
         btnSoSanh.setOnAction(e -> moSoSanh());
-        controls.getChildren().addAll(txtTimKiem, btnMoi, btnSoSanh);
+        HBox row = new HBox(10, txtTimKiem, Functions.khoangTrong(), btnMoi, btnSoSanh);
+        row.setAlignment(Pos.CENTER_LEFT);
+        thanhCongCu.getChildren().add(row);
 
-        getChildren().addAll(header, controls);
-        txtTimKiem.textProperty().addListener((obs, old, val) -> veDanhSach());
+        khung.getChildren().addAll(header, thanhCongCu, danhSach);
+        setContent(khung);
+        setFitToWidth(true);
+        setStyle("-fx-background-color: #F6F8FB;");
+        txtTimKiem.textProperty().addListener((o, a, b) -> veDanhSach());
     }
 
     public void taiDanhSach() {
-        // Fetch the saved plans for the chosen semester before rendering the list.
         try {
-            String ma = frame.trangThai().hocKy == null ? null : frame.trangThai().hocKy.ma();
+            String ma = st.hocKy == null ? null : st.hocKy.ma();
             tatCa = client.listPlans(ma);
         } catch (ApiException ex) {
-            Functions.loi(null, ex);
+            Functions.loi(frame.window(), ex);
             return;
         }
         veDanhSach();
     }
 
     private List<SavedPlan> loc() {
-        String tu = txtTimKiem.getText() == null ? "" : txtTimKiem.getText().trim().toLowerCase(Locale.ROOT);
+        String q = txtTimKiem.getText() == null ? "" : txtTimKiem.getText().trim().toLowerCase(Locale.ROOT);
         List<SavedPlan> out = new ArrayList<>();
         for (SavedPlan p : tatCa) {
-            if (tu.isEmpty() || p.ten().toLowerCase(Locale.ROOT).contains(tu)) {
+            if (q.isEmpty() || p.ten().toLowerCase(Locale.ROOT).contains(q)) {
                 out.add(p);
             }
         }
@@ -79,63 +89,118 @@ public class SavedPlansPanel extends VBox {
     }
 
     private void veDanhSach() {
-        // Rebuild the list every time the search text or selection changes.
-        getChildren().removeIf(node -> getChildren().indexOf(node) > 1);
+        danhSach.getChildren().clear();
+        chkSoSanh.clear();
         List<SavedPlan> ds = loc();
         if (ds.isEmpty()) {
-            Label empty = Functions.chuDe("Chưa có lịch nào được lưu");
-            getChildren().add(empty);
+            VBox empty = Functions.the(24);
+            empty.setAlignment(Pos.CENTER);
+            empty.getChildren().addAll(
+                    Functions.tieuDeThe(tatCa.isEmpty() ? "Chưa có lịch nào được lưu" : "Không tìm thấy lịch phù hợp"),
+                    Functions.moTa(tatCa.isEmpty()
+                            ? "Hãy tối ưu thời khóa biểu rồi lưu một phương án bạn thích."
+                            : "Thử từ khóa khác hoặc xóa ô tìm kiếm."));
+            Button moi = Functions.nutChinh("Tạo phương án mới");
+            moi.setOnAction(e -> frame.denTrang(MainFrame.CARD_PRIO));
+            empty.getChildren().add(moi);
+            danhSach.getChildren().add(empty);
+            capNhatNutSoSanh();
             return;
         }
         for (SavedPlan p : ds) {
-            // Each saved plan is rendered as a card with quick actions to open, rename, or delete it.
-            VBox card = new VBox(6);
-            card.setPadding(new Insets(12));
-            card.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 10; -fx-background-radius: 10;");
-            CheckBox chk = new CheckBox();
-            chk.setOnAction(e -> capNhatNutSoSanh());
-            chkSoSanh.put(p.id(), chk);
-            HBox top = new HBox(10, chk, new Label(p.ten()));
-            top.setAlignment(Pos.CENTER_LEFT);
-            Label meta = new Label("Tạo ngày " + p.ngayTao() + " · " + p.soHocPhan() + " học phần · " + p.soTinChi() + " tín chỉ · " + p.soBuoi() + " buổi");
-            meta.setTextFill(Functions.MA_CHU_PHU);
-            HBox actions = new HBox(8);
-            Button mo = Functions.nutPhu("Mở lịch");
-            Button doi = Functions.nutPhu("Đổi tên");
-            Button xoa = Functions.nutXoa("Xóa");
-            mo.setOnAction(e -> moLich(p));
-            doi.setOnAction(e -> doiTen(p));
-            xoa.setOnAction(e -> xoa(p));
-            actions.getChildren().addAll(mo, doi, xoa);
-            card.getChildren().addAll(top, meta, actions);
-            getChildren().add(card);
+            danhSach.getChildren().add(theLich(p));
         }
         capNhatNutSoSanh();
     }
 
+    private VBox theLich(SavedPlan p) {
+        VBox card = Functions.the(16);
+
+        CheckBox chk = new CheckBox();
+        chkSoSanh.put(p.id(), chk);
+        chk.setOnAction(e -> capNhatNutSoSanh());
+
+        HBox top = new HBox(10);
+        top.setAlignment(Pos.CENTER_LEFT);
+        Label ten = Functions.tieuDeThe(p.ten());
+        top.getChildren().addAll(chk, ten, Functions.khoangTrong(),
+                Functions.nhanChinh(Math.round(p.diem()) + "/100"));
+
+        String hocKy = st.hocKy == null ? p.maHocKy() : "Học kỳ I · 2026–2027";
+        Label meta = Functions.nhanNho(hocKy + " · Lưu ngày " + p.ngayTao());
+
+        FlowPane chiSo = new FlowPane(8, 8);
+        chiSo.getChildren().addAll(
+                Functions.nhanXam(p.soHocPhan() + " học phần"),
+                Functions.nhanXam(p.soTinChi() + " tín chỉ"),
+                Functions.nhanXam(p.stats().soNgayHoc() + " ngày học"),
+                Functions.nhanXam(p.stats().phutTrong() + " phút trống"),
+                Functions.nhanXam(p.soBuoi() + " buổi/tuần"));
+
+        HBox actions = new HBox(8);
+        Button mo = Functions.nutPhu("Mở lịch");
+        Button doi = Functions.nutPhu("Đổi tên");
+        Button xoa = Functions.nutXoa("Xóa");
+        mo.setOnAction(e -> moLich(p));
+        doi.setOnAction(e -> doiTen(p));
+        xoa.setOnAction(e -> xoa(p));
+        actions.getChildren().addAll(mo, doi, xoa);
+
+        card.getChildren().addAll(top, meta, chiSo, theXemNhanh(p), actions);
+        return card;
+    }
+
+    private VBox theXemNhanh(SavedPlan p) {
+        VBox box = new VBox(6);
+        Label t = Functions.nhanNho("Xem nhanh thời khóa biểu");
+        box.getChildren().add(t);
+        try {
+            PlanDetail d = client.getPlan(p.id());
+            TimetableGridPanel grid = new TimetableGridPanel();
+            grid.setTieuDe(p.ten());
+            grid.setSlots(d.slots());
+            grid.setPrefHeight(280);
+            box.getChildren().add(grid);
+        } catch (ApiException ex) {
+            box.getChildren().add(Functions.moTa("Không tải được chi tiết lịch."));
+        }
+        return box;
+    }
+
     private void capNhatNutSoSanh() {
-        // Compare button only enables when exactly two saved plans are selected.
-        long selected = chkSoSanh.values().stream().filter(CheckBox::isSelected).count();
-        btnSoSanh.setDisable(selected != 2);
-        btnSoSanh.setText(selected == 2 ? "So sánh 2 lịch đã chọn" : "So sánh 2 lịch đã chọn");
+        long n = chkSoSanh.values().stream().filter(CheckBox::isSelected).count();
+        btnSoSanh.setDisable(n != 2);
+        btnSoSanh.setText(n == 2 ? "So sánh 2 lịch đã chọn" : "Chọn đúng 2 lịch để so sánh");
     }
 
     private void moLich(SavedPlan p) {
-        // Open a saved plan and show the timetable details in a temporary grid view.
         try {
             PlanDetail d = client.getPlan(p.id());
-            TimetableGridPanel g = new TimetableGridPanel();
-            g.setTieuDe("Phương án đã lưu: " + d.ten());
-            g.setSlots(d.slots());
-            VBox box = new VBox(g);
-            box.setPadding(new Insets(8));
-            Functions.thongTin(null, d.ten() + " · " + d.maHocKy());
+            MoDals.xemLich(frame.window(), d);
         } catch (ApiException ex) {
-            Functions.loi(null, ex);
+            Functions.loi(frame.window(), ex);
         }
     }
 
-    private void doiTen(SavedPlan p) { }
-    private void xoa(SavedPlan p) { }
-    private void moSoSanh() { }
+    private void doiTen(SavedPlan p) {
+        MoDals.doiTen(frame.window(), client, p.id(), p.ten(), this::taiDanhSach);
+    }
+
+    private void xoa(SavedPlan p) {
+        MoDals.xacNhanXoa(frame.window(), client, p.id(), p.ten(), this::taiDanhSach);
+    }
+
+    private void moSoSanh() {
+        List<Long> ids = new ArrayList<>();
+        chkSoSanh.forEach((id, chk) -> {
+            if (chk.isSelected()) {
+                ids.add(id);
+            }
+        });
+        if (ids.size() != 2) {
+            Functions.canhBao(frame.window(), "Hãy chọn đúng 2 lịch để so sánh.");
+            return;
+        }
+        frame.moSoSanhDaLuu(MainFrame.CARD_SAVED, ids);
+    }
 }
