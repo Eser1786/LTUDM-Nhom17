@@ -38,4 +38,11 @@ mvn clean compile
 
 ## Quý (Frontend):
 
+### Cấu trúc frontend
+
+- `frontend/user/` – giao diện dành cho sinh viên (package `com.tkb.frontend.user`)
+- `frontend/admin/` – giao diện dành cho quản trị viên (package `com.tkb.frontend.admin`, thêm khi cần)
+
+Cả hai thư mục nguồn được biên dịch chung trong module `frontend`.
+
 ### Cách chạy: mvn -pl frontend javafx:run

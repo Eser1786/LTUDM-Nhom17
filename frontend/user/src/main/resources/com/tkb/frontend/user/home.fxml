@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.tkb.frontend.user.HomeController"
+      alignment="CENTER"
+      spacing="20"
+      style="-fx-padding: 30;">
+
+    <Label text="Há»† THá»NG QUáº¢N LÃ THá»œI KHÃ“A BIá»‚U"
+           style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+
+    <Label text="ChÃ o má»«ng báº¡n Ä‘áº¿n vá»›i há»‡ thá»‘ng."/>
+
+    <Button text="Xem thá»i khÃ³a biá»ƒu"
+            onAction="#handleViewSchedule"/>
+
+</VBox>
