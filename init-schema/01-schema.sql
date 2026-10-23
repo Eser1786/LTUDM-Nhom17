@@ -44,6 +44,7 @@ CREATE TABLE nhom_lop (
   id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
   ma_hoc_ky        VARCHAR(15)  NOT NULL,
   ma_mh            VARCHAR(10)  NOT NULL,
+  ten_mh           VARCHAR(150) NOT NULL,
   nhom             VARCHAR(5)   NOT NULL,
   si_so            INT UNSIGNED NULL,
   giang_vien       VARCHAR(100) NULL,                 -- môn Thực tập tốt nghiệp không có giảng viên
@@ -70,11 +71,11 @@ CREATE TABLE lich_hoc (
   tiet_bd      TINYINT UNSIGNED NOT NULL,
   so_tiet      TINYINT UNSIGNED NOT NULL,
   phong        VARCHAR(20) NULL,
-  to_th        VARCHAR(5)  NOT NULL DEFAULT '',       -- chỉ để hiển thị: '' hoặc số tổ thực hành trong PDF
-  tuan_hoc     VARCHAR(30) NULL,                      -- chuỗi dấu * nguyên bản trong PDF
+  -- to_th        VARCHAR(5)  NOT NULL DEFAULT '',       -- chỉ để hiển thị: '' hoặc số tổ thực hành trong PDF
+  -- tuan_hoc     VARCHAR(30) NULL,                      -- chuỗi dấu * nguyên bản trong PDF
   -- Mặt nạ tuần: bit 0 = tuần 1, bit 1 = tuần 2, ... (tối đa 62 tuần, dùng BIGINT có dấu cho dễ
   -- đọc bằng JDBC). Hai buổi chỉ trùng nhau khi cùng thứ, giao nhau về tiết VÀ (mask_a & mask_b) <> 0.
-  tuan_mask    BIGINT NOT NULL,
+  -- tuan_mask    BIGINT NOT NULL,
   PRIMARY KEY (id),
   KEY idx_lich_hoc_nhom (nhom_lop_id),
   CONSTRAINT fk_lich_hoc_nhom FOREIGN KEY (nhom_lop_id)
@@ -83,8 +84,10 @@ CREATE TABLE lich_hoc (
   -- Tiết 1-5 buổi sáng, tiết 6-10 buổi chiều; một buổi không được vượt quá tiết 10
   CONSTRAINT ck_lich_tiet CHECK (
     tiet_bd >= 1 AND so_tiet >= 1 AND tiet_bd + so_tiet - 1 <= 10
-  ),
-  CONSTRAINT ck_lich_tuan CHECK (tuan_mask > 0)
+  )
+  -- Mặt nạ tuần: bit 0 = tuần 1, bit 1 = tuần 2, ... (tối đa 62 tuần, dùng BIGINT có dấu cho dễ
+  -- đọc bằng JDBC). Hai buổi chỉ trùng nhau khi cùng thứ, giao nhau về tiết VÀ (mask_a & mask_b) <> 0.
+  -- CONSTRAINT ck_lich_tuan CHECK (tuan_mask > 0)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------
@@ -149,4 +152,4 @@ CREATE TABLE phuong_an_bi_loai (
 -- 3. DỮ LIỆU KHỞI TẠO
 -- ---------------------------------------------------------------
 INSERT INTO hoc_ky (ma, ten, dang_dung)
-VALUES ('2025-2026-3', 'Học kỳ 3 - Năm học 2025-2026', TRUE);
+VALUES ('2026-2027-1', 'Học kỳ 1 - Năm học 2026-2027', TRUE);
