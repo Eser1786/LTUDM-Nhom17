@@ -41,7 +41,7 @@ public class MockNetworkClient implements TkbClient {
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final String[] DEMO_MA = {"841109", "841215", "841401", "841501"};
 
-    private final Student sinhVien = new Student("Nguyá»…n Tháº£o Minh Anh", "22120045",
+    private final Student sinhVien = new Student("Nguyễn Thảo Minh Anh", "22120045",
             "CNTT-K67", "minh.anh@sv.univ.edu.vn");
     private final List<Semester> semesters = new ArrayList<>();
     private final List<Course> courses = new ArrayList<>();
@@ -61,21 +61,21 @@ public class MockNetworkClient implements TkbClient {
     // ------------------------------------------------------------------ seed
 
     private void seedSemesters() {
-        semesters.add(new Semester("2025-2026-1", "Há»c ká»³ I - NÄƒm há»c 2025-2026", false,
+        semesters.add(new Semester("2025-2026-1", "Học kỳ I - Năm học 2025-2026", false,
                 "01/09/2025", "14/12/2025"));
-        semesters.add(new Semester("2025-2026-2", "Há»c ká»³ II - NÄƒm há»c 2025-2026", false,
+        semesters.add(new Semester("2025-2026-2", "Học kỳ II - Năm học 2025-2026", false,
                 "02/03/2026", "24/05/2026"));
-        semesters.add(new Semester(CURRENT, "Há»c ká»³ I - NÄƒm há»c 2026-2027", true,
+        semesters.add(new Semester(CURRENT, "Học kỳ I - Năm học 2026-2027", true,
                 "14/09/2026", "20/12/2026"));
     }
 
     private void seedCourses() {
-        c("841109", "Ká»¹ thuáº­t láº­p trÃ¬nh", 3);
-        c("841215", "Cáº¥u trÃºc dá»¯ liá»‡u vÃ  giáº£i thuáº­t", 3);
-        c("841401", "TrÃ­ tuá»‡ nhÃ¢n táº¡o", 3);
-        c("841501", "CÃ´ng nghá»‡ pháº§n má»m", 3);
-        c("841216", "CÆ¡ sá»Ÿ dá»¯ liá»‡u", 3);
-        c("841301", "Máº¡ng mÃ¡y tÃ­nh", 3);
+        c("841109", "Kỹ thuật lập trình", 3);
+        c("841215", "Cấu trúc dữ liệu và giải thuật", 3);
+        c("841401", "Trí tuệ nhân tạo", 3);
+        c("841501", "Công nghệ phần mềm", 3);
+        c("841216", "Cơ sở dữ liệu", 3);
+        c("841301", "Mạng máy tính", 3);
     }
 
     private void c(String ma, String ten, int tc) {
@@ -102,7 +102,7 @@ public class MockNetworkClient implements TkbClient {
 
     /**
      * Lich mau (cac nhom duoc bien so de dung ra A/B/c):
-     * - 841109: LT01+TH01.1 T2 t1-4 (sang, liá»n máº¡ch); LT02+TH02.1 T2 t1-4.
+     * - 841109: LT01+TH01.1 T2 t1-4 (sang, liền mạch); LT02+TH02.1 T2 t1-4.
      * - 841215: LT01+TH01.1 T3 t1-4; LT02+TH02.1 T3 t1-4.
      * - 841401: LT01 T4 t2-3 (sang); LT02 T3 t9-10 (chieu).
      * - 841501: LT01 T4 t4-5 (sang); LT02 T3 t11-12 (chieu); LT03 T4 t6-7 (chieu).
@@ -114,25 +114,25 @@ public class MockNetworkClient implements TkbClient {
         for (Semester s : semesters) {
             String k = s.ma();
             List<SectionSlot> l = new ArrayList<>();
-            l.add(nhom(k, "841109", "01", "", "LT", 2, 1, 2, "P.201", "TS. Tráº§n Minh Äá»©c", 45));
-            l.add(nhom(k, "841109", "01", "1", "TH", 2, 3, 2, "P.304", "ThS. LÃª Thu HÃ ", 32));
-            l.add(nhom(k, "841109", "02", "", "LT", 2, 1, 2, "P.202", "TS. Tráº§n Minh Äá»©c", 44));
-            l.add(nhom(k, "841109", "02", "1", "TH", 2, 3, 2, "P.305", "ThS. LÃª Thu HÃ ", 31));
-            l.add(nhom(k, "841215", "01", "", "LT", 3, 1, 2, "P.205", "PGS. Nguyá»…n VÄƒn An", 50));
-            l.add(nhom(k, "841215", "01", "1", "TH", 3, 3, 2, "P.306", "ThS. Pháº¡m Quang Huy", 30));
-            l.add(nhom(k, "841215", "02", "", "LT", 3, 1, 2, "P.206", "PGS. Nguyá»…n VÄƒn An", 48));
-            l.add(nhom(k, "841215", "02", "1", "TH", 3, 3, 2, "P.307", "ThS. Pháº¡m Quang Huy", 29));
-            l.add(nhom(k, "841401", "01", "", "LT", 4, 2, 2, "P.207", "TS. Äá»— Minh QuÃ¢n", 40));
-            l.add(nhom(k, "841401", "02", "", "LT", 3, 9, 2, "P.208", "TS. Äá»— Minh QuÃ¢n", 38));
-            l.add(nhom(k, "841501", "01", "", "LT", 4, 4, 2, "P.209", "ThS. VÅ© Thanh TÃ¢m", 42));
-            l.add(nhom(k, "841501", "02", "", "LT", 3, 11, 2, "P.210", "ThS. VÅ© Thanh TÃ¢m", 41));
-            l.add(nhom(k, "841501", "03", "", "LT", 4, 6, 2, "P.211", "ThS. VÅ© Thanh TÃ¢m", 43));
-            l.add(nhom(k, "841216", "01", "", "LT", 5, 6, 2, "P.212", "TS. HoÃ ng Thá»‹ Mai", 39));
-            l.add(nhom(k, "841216", "01", "1", "TH", 6, 1, 2, "P.308", "ThS. Nguyá»…n Tháº¿ Anh", 30));
-            l.add(nhom(k, "841216", "02", "", "LT", 6, 6, 2, "P.213", "TS. HoÃ ng Thá»‹ Mai", 37));
-            l.add(nhom(k, "841216", "02", "1", "TH", 6, 3, 2, "P.309", "ThS. Nguyá»…n Tháº¿ Anh", 28));
-            l.add(nhom(k, "841301", "01", "", "LT", 2, 6, 2, "P.214", "PGS.TS LÃ½ Tuáº¥n Kiá»‡t", 46));
-            l.add(nhom(k, "841301", "01", "1", "TH", 5, 3, 2, "P.310", "ThS. Trá»‹nh BÃ­ch Ngá»c", 33));
+            l.add(nhom(k, "841109", "01", "", "LT", 2, 1, 2, "P.201", "TS. Trần Minh Đức", 45));
+            l.add(nhom(k, "841109", "01", "1", "TH", 2, 3, 2, "P.304", "ThS. Lê Thu Hà", 32));
+            l.add(nhom(k, "841109", "02", "", "LT", 2, 1, 2, "P.202", "TS. Trần Minh Đức", 44));
+            l.add(nhom(k, "841109", "02", "1", "TH", 2, 3, 2, "P.305", "ThS. Lê Thu Hà", 31));
+            l.add(nhom(k, "841215", "01", "", "LT", 3, 1, 2, "P.205", "PGS. Nguyễn Văn An", 50));
+            l.add(nhom(k, "841215", "01", "1", "TH", 3, 3, 2, "P.306", "ThS. Phạm Quang Huy", 30));
+            l.add(nhom(k, "841215", "02", "", "LT", 3, 1, 2, "P.206", "PGS. Nguyễn Văn An", 48));
+            l.add(nhom(k, "841215", "02", "1", "TH", 3, 3, 2, "P.307", "ThS. Phạm Quang Huy", 29));
+            l.add(nhom(k, "841401", "01", "", "LT", 4, 2, 2, "P.207", "TS. Đỗ Minh Quân", 40));
+            l.add(nhom(k, "841401", "02", "", "LT", 3, 9, 2, "P.208", "TS. Đỗ Minh Quân", 38));
+            l.add(nhom(k, "841501", "01", "", "LT", 4, 4, 2, "P.209", "ThS. Vũ Thanh Tâm", 42));
+            l.add(nhom(k, "841501", "02", "", "LT", 3, 11, 2, "P.210", "ThS. Vũ Thanh Tâm", 41));
+            l.add(nhom(k, "841501", "03", "", "LT", 4, 6, 2, "P.211", "ThS. Vũ Thanh Tâm", 43));
+            l.add(nhom(k, "841216", "01", "", "LT", 5, 6, 2, "P.212", "TS. Hoàng Thị Mai", 39));
+            l.add(nhom(k, "841216", "01", "1", "TH", 6, 1, 2, "P.308", "ThS. Nguyễn Thế Anh", 30));
+            l.add(nhom(k, "841216", "02", "", "LT", 6, 6, 2, "P.213", "TS. Hoàng Thị Mai", 37));
+            l.add(nhom(k, "841216", "02", "1", "TH", 6, 3, 2, "P.309", "ThS. Nguyễn Thế Anh", 28));
+            l.add(nhom(k, "841301", "01", "", "LT", 2, 6, 2, "P.214", "PGS.TS Lý Tuấn Kiệt", 46));
+            l.add(nhom(k, "841301", "01", "1", "TH", 5, 3, 2, "P.310", "ThS. Trịnh Bích Ngọc", 33));
             slotsBySemester.put(k, l);
         }
     }
@@ -145,11 +145,11 @@ public class MockNetworkClient implements TkbClient {
     }
 
     private void seedPlans() {
-        luuCungBo(CURRENT, "Lá»‹ch há»c táº­p trung", 89.0, "16/10/2026 20:15",
+        luuCungBo(CURRENT, "Lịch học tập trung", 89.0, "16/10/2026 20:15",
                 List.of(idOf(CURRENT, "841109", "01", ""), idOf(CURRENT, "841109", "01", "1"),
                         idOf(CURRENT, "841215", "01", ""), idOf(CURRENT, "841215", "01", "1"),
                         idOf(CURRENT, "841401", "01", ""), idOf(CURRENT, "841501", "01", "")));
-        luuCungBo(CURRENT, "Lá»‹ch 2 ngÃ y Ã­t nghá»‰", 80.0, "17/10/2026 08:40",
+        luuCungBo(CURRENT, "Lịch 2 ngày ít nghỉ", 80.0, "17/10/2026 08:40",
                 List.of(idOf(CURRENT, "841109", "02", ""), idOf(CURRENT, "841109", "02", "1"),
                         idOf(CURRENT, "841215", "02", ""), idOf(CURRENT, "841215", "02", "1"),
                         idOf(CURRENT, "841401", "02", ""), idOf(CURRENT, "841501", "02", "")));
@@ -240,7 +240,7 @@ public class MockNetworkClient implements TkbClient {
     public String submit(PlanRequest request) throws ApiException {
         List<SectionSlot> tatCa = slotsBySemester.get(request.maHocKy());
         if (tatCa == null) {
-            throw new ApiException(ErrorCode.SEMESTER_NOT_FOUND, "Há»c ká»³ khÃ´ng tá»“n táº¡i");
+            throw new ApiException(ErrorCode.SEMESTER_NOT_FOUND, "Học kỳ không tồn tại");
         }
         List<Integer> ids = request.sectionIds() == null ? List.of() : request.sectionIds();
         List<SectionSlot> candidates = new ArrayList<>();
@@ -251,7 +251,7 @@ public class MockNetworkClient implements TkbClient {
                 SectionSlot s = timSlot(id);
                 if (s == null || !s.section().maHocKy().equals(request.maHocKy())) {
                     throw new ApiException(ErrorCode.VALIDATION_ERROR,
-                            "NhÃ³m lá»›p khÃ´ng thuá»™c há»c ká»³ Ä‘Ã£ chá»n");
+                            "Nhóm lớp không thuộc học kỳ đã chọn");
                 }
                 candidates.add(s);
                 String ma = s.section().maMh();
@@ -261,7 +261,7 @@ public class MockNetworkClient implements TkbClient {
             }
         } else {
             if (monUuTien.isEmpty()) {
-                throw new ApiException(ErrorCode.VALIDATION_ERROR, "ChÆ°a chá»n nhÃ³m lá»›p há»c pháº§n nÃ o");
+                throw new ApiException(ErrorCode.VALIDATION_ERROR, "Chưa chọn nhóm lớp học phần nào");
             }
             for (SectionSlot s : tatCa) {
                 if (monUuTien.contains(s.section().maMh())) {
@@ -284,7 +284,7 @@ public class MockNetworkClient implements TkbClient {
         }
         if (!khongMo.isEmpty()) {
             throw new ApiException(ErrorCode.COURSE_NOT_OPEN,
-                    "CÃ³ há»c pháº§n khÃ´ng má»Ÿ trong há»c ká»³ nÃ y", khongMo);
+                    "Có học phần không mở trong học kỳ này", khongMo);
         }
         kiemTraPhoiHop(tatCa, candidates);
 
@@ -324,7 +324,7 @@ public class MockNetworkClient implements TkbClient {
                 }
                 if (!coLt) {
                     throw new ApiException(ErrorCode.VALIDATION_ERROR,
-                            "NhÃ³m thá»±c hÃ nh " + tenTh(x) + " pháº£i chá»n cÃ¹ng lÃ½ thuyáº¿t "
+                            "Nhóm thực hành " + tenTh(x) + " phải chọn cùng lý thuyết "
                                     + tenLt(x.maMh(), x.nhom()) + ".");
                 }
             } else {
@@ -349,8 +349,8 @@ public class MockNetworkClient implements TkbClient {
                     }
                     if (!coTh) {
                         throw new ApiException(ErrorCode.VALIDATION_ERROR,
-                                "NhÃ³m lÃ½ thuyáº¿t " + tenLt(x.maMh(), x.nhom())
-                                        + " pháº£i chá»n cÃ¹ng nhÃ³m thá»±c hÃ nh tÆ°Æ¡ng á»©ng.");
+                                "Nhóm lý thuyết " + tenLt(x.maMh(), x.nhom())
+                                        + " phải chọn cùng nhóm thực hành tương ứng.");
                     }
                 }
             }
@@ -396,7 +396,7 @@ public class MockNetworkClient implements TkbClient {
     public JobStatus jobStatus(String jobId) throws ApiException {
         JobState state = jobs.get(jobId);
         if (state == null) {
-            throw new ApiException(ErrorCode.JOB_NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y cÃ´ng viá»‡c " + jobId);
+            throw new ApiException(ErrorCode.JOB_NOT_FOUND, "Không tìm thấy công việc " + jobId);
         }
         return new JobStatus(jobId, state.state, state.progress, state.result, state.error);
     }
@@ -405,7 +405,7 @@ public class MockNetworkClient implements TkbClient {
     public void cancel(String jobId) throws ApiException {
         JobState state = jobs.get(jobId);
         if (state == null) {
-            throw new ApiException(ErrorCode.JOB_NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y cÃ´ng viá»‡c " + jobId);
+            throw new ApiException(ErrorCode.JOB_NOT_FOUND, "Không tìm thấy công việc " + jobId);
         }
         state.cancelled = true;
     }
@@ -576,9 +576,9 @@ public class MockNetworkClient implements TkbClient {
                         idOf(k, "841401", "01", ""), idOf(k, "841501", "03", "")));
         List<Double> diem = List.of(89.0, 80.0, 78.0);
         List<String> moTa = List.of(
-                "ToÃ n bá»™ buá»•i sÃ¡ng, khÃ´ng cÃ³ tiáº¿t trá»‘ng",
-                "Ãt ngÃ y Ä‘áº¿n trÆ°á»ng nháº¥t vá»›i 2 ngÃ y há»c",
-                "CÃ¢n báº±ng giá»¯a sá»‘ ngÃ y há»c vÃ  khoáº£ng nghá»‰");
+                "Toàn bộ buổi sáng, không có tiết trống",
+                "Ít ngày đến trường nhất với 2 ngày học",
+                "Cân bằng giữa số ngày học và khoảng nghỉ");
         List<ScheduleOption> out = new ArrayList<>();
         for (int i = 0; i < boBa.size(); i++) {
             List<Integer> ids = boBa.get(i);
@@ -653,7 +653,7 @@ public class MockNetworkClient implements TkbClient {
         }
         OptionStats stats = tinhChiSo(chon);
         double diem = tinhDiem(request.criteria(), stats, biLoai.size(), chon);
-        String moTa = String.format("%d ngÃ y há»c Â· %d phÃºt trá»‘ng Â· %d%% tiáº¿t buá»•i sÃ¡ng",
+        String moTa = String.format("%d ngày học · %d phút trống · %d%% tiết buổi sáng",
                 stats.soNgayHoc(), stats.phutTrong(), stats.tyLeSang());
         return new ScheduleOption(0, "", diem, stats, moTa, chon, biLoai, thayThe);
     }
@@ -788,7 +788,7 @@ public class MockNetworkClient implements TkbClient {
         for (StoredPlan p : plans) {
             if (p.ten.equalsIgnoreCase(ten)) {
                 throw new ApiException(ErrorCode.NAME_TAKEN,
-                        "TÃªn phÆ°Æ¡ng Ã¡n \"" + ten + "\" Ä‘Ã£ Ä‘Æ°á»£c dÃ¹ng");
+                        "Tên phương án \"" + ten + "\" đã được dùng");
             }
         }
         List<SectionSlot> slots = timSlots(maHocKy, sectionIds);
@@ -818,12 +818,12 @@ public class MockNetworkClient implements TkbClient {
         StoredPlan p = findPlan(planId);
         String ten = tenMoi == null ? "" : tenMoi.trim();
         if (ten.isEmpty()) {
-            throw new ApiException(ErrorCode.VALIDATION_ERROR, "TÃªn phÆ°Æ¡ng Ã¡n khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng");
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, "Tên phương án không được để trống");
         }
         for (StoredPlan khac : plans) {
             if (khac.id != planId && khac.ten.equalsIgnoreCase(ten)) {
                 throw new ApiException(ErrorCode.NAME_TAKEN,
-                        "TÃªn phÆ°Æ¡ng Ã¡n \"" + ten + "\" Ä‘Ã£ Ä‘Æ°á»£c dÃ¹ng");
+                        "Tên phương án \"" + ten + "\" đã được dùng");
             }
         }
         p.ten = ten;
@@ -835,7 +835,7 @@ public class MockNetworkClient implements TkbClient {
                 return p;
             }
         }
-        throw new ApiException(ErrorCode.PLAN_NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y phÆ°Æ¡ng Ã¡n Ä‘Ã£ lÆ°u");
+        throw new ApiException(ErrorCode.PLAN_NOT_FOUND, "Không tìm thấy phương án đã lưu");
     }
 
     private SectionSlot timSlot(int id) {

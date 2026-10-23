@@ -43,22 +43,22 @@ public class MainFrame extends BorderPane {
     static final String CARD_SAVED = "DA_LUU";
 
     private static final Map<String, String> TEN_TRANG = Map.of(
-            CARD_OVERVIEW, "Tá»•ng quan",
-            CARD_REQ, "NhÃ³m lá»›p há»c pháº§n",
-            CARD_PRIO, "Thiáº¿t láº­p Æ°u tiÃªn",
-            CARD_JOB, "Äang xá»­ lÃ½",
-            CARD_RES, "Káº¿t quáº£ Ä‘á» xuáº¥t",
-            CARD_CMP, "So sÃ¡nh lá»‹ch",
-            CARD_SAVED, "Thá»i khÃ³a biá»ƒu Ä‘Ã£ lÆ°u");
+            CARD_OVERVIEW, "Tổng quan",
+            CARD_REQ, "Nhóm lớp học phần",
+            CARD_PRIO, "Thiết lập ưu tiên",
+            CARD_JOB, "Đang xử lý",
+            CARD_RES, "Kết quả đề xuất",
+            CARD_CMP, "So sánh lịch",
+            CARD_SAVED, "Thời khóa biểu đã lưu");
 
     private final TkbClient client = new MockNetworkClient();
     private final AppUiState trangThai = new AppUiState(client);
     private final Map<String, Node> cards = new LinkedHashMap<>();
     private final Map<String, Button> navButtons = new LinkedHashMap<>();
     private final StackPane centerStack = new StackPane();
-    private final Label crumb = new Label("Trang chá»§");
-    private final Label lblSemSidebar = new Label("â€”");
-    private final Label lblSemNgaySidebar = new Label("â€”");
+    private final Label crumb = new Label("Trang chủ");
+    private final Label lblSemSidebar = new Label("—");
+    private final Label lblSemNgaySidebar = new Label("—");
     private final Label lblHeaderSem = new Label();
     private final Label lblHeaderTen = new Label();
     private final Label lblHeaderMssv = new Label();
@@ -121,24 +121,24 @@ public class MainFrame extends BorderPane {
         logo.setStyle("-fx-background-color: #1D4ED8; -fx-border-radius: 10; -fx-background-radius: 10;");
         VBox brand = new VBox(1);
         brand.setAlignment(Pos.CENTER_LEFT);
-        Label l1 = new Label("Tá»‘i Æ°u thá»i khÃ³a biá»ƒu");
+        Label l1 = new Label("Tối ưu thời khóa biểu");
         l1.setTextFill(Color.WHITE);
         l1.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
-        Label l2 = new Label("Project 15 Â· Sinh viÃªn");
+        Label l2 = new Label("Project 15 · Sinh viên");
         l2.setTextFill(Color.web("#94A3B8"));
         l2.setFont(Font.font("Segoe UI", 11));
         brand.getChildren().addAll(l1, l2);
         logoBox.getChildren().addAll(logo, brand);
 
-        Label nhom1 = nhanSidebar("KHÃ”NG GIAN SINH VIÃŠN");
-        Button overviewBtn = taoNavItem(CARD_OVERVIEW, "Tá»•ng quan");
-        Button reqBtn = taoNavItem(CARD_REQ, "NhÃ³m lá»›p há»c pháº§n");
-        Button prioBtn = taoNavItem(CARD_PRIO, "Tá»‘i Æ°u thá»i khÃ³a biá»ƒu");
-        Button resBtn = taoNavItem(CARD_RES, "Káº¿t quáº£ Ä‘á» xuáº¥t");
-        Button cmpBtn = taoNavItem(CARD_CMP, "So sÃ¡nh lá»‹ch");
-        Button savedBtn = taoNavItem(CARD_SAVED, "Thá»i khÃ³a biá»ƒu Ä‘Ã£ lÆ°u");
+        Label nhom1 = nhanSidebar("KHÔNG GIAN SINH VIÊN");
+        Button overviewBtn = taoNavItem(CARD_OVERVIEW, "Tổng quan");
+        Button reqBtn = taoNavItem(CARD_REQ, "Nhóm lớp học phần");
+        Button prioBtn = taoNavItem(CARD_PRIO, "Tối ưu thời khóa biểu");
+        Button resBtn = taoNavItem(CARD_RES, "Kết quả đề xuất");
+        Button cmpBtn = taoNavItem(CARD_CMP, "So sánh lịch");
+        Button savedBtn = taoNavItem(CARD_SAVED, "Thời khóa biểu đã lưu");
 
-        Label nhom2 = nhanSidebar("Há»ŒC Ká»² HIá»†N Táº I");
+        Label nhom2 = nhanSidebar("HỌC KỲ HIỆN TẠI");
         VBox semBox = new VBox(2);
         semBox.setStyle("-fx-background-color: #1E293B; -fx-background-radius: 10; -fx-border-radius: 10;");
         semBox.setPadding(new Insets(10, 12, 10, 12));
@@ -150,16 +150,16 @@ public class MainFrame extends BorderPane {
         lblSemNgaySidebar.setWrapText(true);
         semBox.getChildren().addAll(lblSemSidebar, lblSemNgaySidebar);
 
-        Button infoBtn = nutSidebarPhu("Dá»¯ liá»‡u há»c pháº§n minh há»a");
+        Button infoBtn = nutSidebarPhu("Dữ liệu học phần minh họa");
         infoBtn.setOnAction(e -> Functions.thongTin(window(),
-                "Báº£n demo dÃ¹ng dá»¯ liá»‡u há»c pháº§n giáº£ láº­p cho cÃ¡c há»c pháº§n vÃ  nhÃ³m lá»›p.\n"
-                        + "ChÆ°a káº¿t ná»‘i mÃ¡y chá»§ tháº­t â€” toÃ n bá»™ káº¿t quáº£ mang tÃ­nh mÃ´ phá»ng."));
-        Button helpBtn = nutSidebarPhu("HÆ°á»›ng dáº«n sá»­ dá»¥ng");
+                "Bản demo dùng dữ liệu học phần giả lập cho các học phần và nhóm lớp.\n"
+                        + "Chưa kết nối máy chủ thật — toàn bộ kết quả mang tính mô phỏng."));
+        Button helpBtn = nutSidebarPhu("Hướng dẫn sử dụng");
         helpBtn.setOnAction(e -> Functions.thongTin(window(),
-                "1. Chá»n nhÃ³m lá»›p há»c pháº§n (ghÃ©p LT vá»›i TH tÆ°Æ¡ng á»©ng).\n"
-                        + "2. Thiáº¿t láº­p má»©c Æ°u tiÃªn.\n"
-                        + "3. Cháº¡y tá»‘i Æ°u vÃ  xem cÃ¡c phÆ°Æ¡ng Ã¡n A/B/C.\n"
-                        + "4. LÆ°u hoáº·c so sÃ¡nh cÃ¡c lá»‹ch phÃ¹ há»£p."));
+                "1. Chọn nhóm lớp học phần (ghép LT với TH tương ứng).\n"
+                        + "2. Thiết lập mức ưu tiên.\n"
+                        + "3. Chạy tối ưu và xem các phương án A/B/C.\n"
+                        + "4. Lưu hoặc so sánh các lịch phù hợp."));
 
         sidebar.getChildren().addAll(logoBox, nhom1, overviewBtn, reqBtn, prioBtn, resBtn, cmpBtn, savedBtn,
                 nhom2, semBox, Functions.khoangTrong(), infoBtn, helpBtn);
@@ -215,7 +215,7 @@ public class MainFrame extends BorderPane {
         header.setPrefHeight(66);
         header.setMinHeight(66);
 
-        Button hamburger = new Button("â˜°");
+        Button hamburger = new Button("☰");
         hamburger.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; "
                 + "-fx-text-fill: #1E293B; -fx-font-size: 16; -fx-cursor: hand;");
         hamburger.setOnAction(e -> {
@@ -225,7 +225,7 @@ public class MainFrame extends BorderPane {
                 setLeft(null);
             }
         });
-        hamburger.setTooltip(new javafx.scene.control.Tooltip("Thu gá»n / má»Ÿ rá»™ng menu"));
+        hamburger.setTooltip(new javafx.scene.control.Tooltip("Thu gọn / mở rộng menu"));
         crumb.setTextFill(Color.web("#64748B"));
         crumb.setFont(Font.font("Segoe UI", 12));
         header.getChildren().addAll(hamburger, crumb);
@@ -253,7 +253,7 @@ public class MainFrame extends BorderPane {
         // Switch the visible card and refresh any screen-specific data that should be loaded on demand.
         Node node = cards.getOrDefault(card, panelOverview);
         centerStack.getChildren().setAll(node);
-        crumb.setText("Trang chá»§ / " + TEN_TRANG.getOrDefault(card, ""));
+        crumb.setText("Trang chủ / " + TEN_TRANG.getOrDefault(card, ""));
         for (Map.Entry<String, Button> e : navButtons.entrySet()) {
             e.getValue().setStyle(navStyle(e.getKey().equals(card)));
         }
@@ -272,7 +272,7 @@ public class MainFrame extends BorderPane {
         // Show the login screen and disable sidebar navigation until the user signs in.
         crum(true);
         centerStack.getChildren().setAll(new LoginPanel(trangThai, this::sauDangNhap));
-        crumb.setText("ÄÄƒng nháº­p");
+        crumb.setText("Đăng nhập");
     }
 
     private void crum(boolean an) {
@@ -316,21 +316,21 @@ public class MainFrame extends BorderPane {
         Student sv = trangThai.sinhVien;
         if (sv == null) return;
         lblHeaderTen.setText(sv.hoTen());
-        lblHeaderMssv.setText(sv.mssv() + " Â· " + sv.lop());
+        lblHeaderMssv.setText(sv.mssv() + " · " + sv.lop());
         avatar.setChu(sv.chuDau());
-        lblHeaderSem.setText("Há»c ká»³ I Â· 2026â€“2027");
+        lblHeaderSem.setText("Học kỳ I · 2026–2027");
     }
 
     private void capNhatSidebarHocKy() {
         Semester s = trangThai.hocKy;
         if (s == null) return;
-        lblSemSidebar.setText("Há»c ká»³ I Â· 2026â€“2027");
-        lblSemNgaySidebar.setText("Báº¯t Ä‘áº§u " + s.ngayBatDau() + "\nKáº¿t thÃºc " + s.ngayKetThuc());
+        lblSemSidebar.setText("Học kỳ I · 2026–2027");
+        lblSemNgaySidebar.setText("Bắt đầu " + s.ngayBatDau() + "\nKết thúc " + s.ngayKetThuc());
     }
 
     static String nganHocKy(Semester s) {
-        if (s == null) return "â€”";
-        return s.ten().replace(" - NÄƒm há»c ", " Â· ");
+        if (s == null) return "—";
+        return s.ten().replace(" - Năm học ", " · ");
     }
 
     // ------------------------------------------------------------------ flow
@@ -338,11 +338,11 @@ public class MainFrame extends BorderPane {
     void batDauXepLich() {
         // Submit the selected class set and start the background scheduling process.
         if (trangThai.hocKy == null) {
-            Functions.canhBao(window(), "Vui lÃ²ng chá»n há»c ká»³.");
+            Functions.canhBao(window(), "Vui lòng chọn học kỳ.");
             return;
         }
         if (trangThai.daChon.isEmpty()) {
-            Functions.canhBao(window(), "HÃ£y chá»n Ã­t nháº¥t má»™t nhÃ³m lá»›p há»c pháº§n.");
+            Functions.canhBao(window(), "Hãy chọn ít nhất một nhóm lớp học phần.");
             denTrang(CARD_REQ);
             return;
         }
@@ -366,7 +366,7 @@ public class MainFrame extends BorderPane {
 
     void jobHuy() {
         // The schedule computation can be canceled without resetting the user's selection choices.
-        Functions.thongTin(window(), "ÄÃ£ há»§y xáº¿p lá»‹ch. CÃ¡c lá»±a chá»n cá»§a báº¡n váº«n Ä‘Æ°á»£c giá»¯ nguyÃªn.");
+        Functions.thongTin(window(), "Đã hủy xếp lịch. Các lựa chọn của bạn vẫn được giữ nguyên.");
         denTrang(CARD_PRIO);
     }
 
@@ -434,7 +434,7 @@ public class MainFrame extends BorderPane {
             daChon.addAll(Bo());
         }
 
-        /** Bá»™ nhÃ³m lá»›p minh há»a: 4 há»c pháº§n 12 tÃ­n chá»‰, tÆ°Æ¡ng á»©ng phÆ°Æ¡ng Ã¡n A. */
+        /** Bộ nhóm lớp minh họa: 4 học phần 12 tín chỉ, tương ứng phương án A. */
         private List<Integer> Bo() {
             List<Integer> ids = new ArrayList<>();
             for (SectionSlot s : tatCaNhom) {

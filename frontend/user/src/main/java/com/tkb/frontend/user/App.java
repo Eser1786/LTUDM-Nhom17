@@ -15,7 +15,7 @@ public class App extends Application {
 
         Scene scene = new Scene(loader.load(), 900, 600);
 
-        stage.setTitle("Há»‡ thá»‘ng quáº£n lÃ½ thá»i khÃ³a biá»ƒu");
+        stage.setTitle("Hệ thống quản lý thời khóa biểu");
         stage.setScene(scene);
         stage.setMinWidth(700);
         stage.setMinHeight(450);

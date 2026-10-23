@@ -15,12 +15,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
-/** Tráº¡ng thÃ¡i â€œÄang xá»­ lÃ½â€: thÃ´ng bÃ¡o, thanh tiáº¿n trÃ¬nh, há»§y. KÃ¨m tráº¡ng thÃ¡i â€œLá»—i káº¿t ná»‘iâ€. */
+/** Trạng thái “Đang xử lý”: thông báo, thanh tiến trình, hủy. Kèm trạng thái “Lỗi kết nối”. */
 public class JobPanel extends VBox {
     private final TkbClient client;
     private final MainFrame frame;
     private final ProgressBar progress = new ProgressBar(0);
-    private final Label lblTrangThai = new Label("Äang chuáº©n bá»‹...");
+    private final Label lblTrangThai = new Label("Đang chuẩn bị...");
     private final Label lblPhanTram = Functions.nhanChinh("0%");
     private final VBox nutBox = new VBox(8);
     private final VBox loiBox = Functions.the(14);
@@ -40,9 +40,9 @@ public class JobPanel extends VBox {
         card.setMaxWidth(680);
         card.setSpacing(14);
 
-        Label td = Functions.chuDe("Äang tá»‘i Æ°u thá»i khÃ³a biá»ƒu");
-        Label mt = Functions.moTa("Há»‡ thá»‘ng Ä‘ang cÃ¢n nháº¯c cÃ¡c tá»• há»£p nhÃ³m lá»›p theo má»©c Æ°u tiÃªn cá»§a báº¡n. "
-                + "QuÃ¡ trÃ¬nh nÃ y chá»‰ mÃ´ phá»ng cá»¥c bá»™ trÃªn mÃ¡y cá»§a báº¡n.");
+        Label td = Functions.chuDe("Đang tối ưu thời khóa biểu");
+        Label mt = Functions.moTa("Hệ thống đang cân nhắc các tổ hợp nhóm lớp theo mức ưu tiên của bạn. "
+                + "Quá trình này chỉ mô phỏng cục bộ trên máy của bạn.");
 
         progress.setPrefWidth(600);
         progress.setPrefHeight(14);
@@ -56,11 +56,11 @@ public class JobPanel extends VBox {
         VBox bangTrong = Functions.the(14);
         bangTrong.setStyle("-fx-background-color: #F1F5F9; -fx-background-radius: 10;");
         bangTrong.getChildren().addAll(
-                Functions.tieuDeThe("CÃ¡c bÆ°á»›c Ä‘ang thá»±c hiá»‡n"),
-                Functions.moTa("1. Kiá»ƒm tra tá»• há»£p LTâ€“TH há»£p lá»‡.\n"
-                        + "2. Loáº¡i bá» phÆ°Æ¡ng Ã¡n trÃ¹ng giá».\n"
-                        + "3. Cháº¥m Ä‘iá»ƒm theo trá»ng sá»‘ Æ°u tiÃªn.\n"
-                        + "4. Xáº¿p háº¡ng vÃ  chuáº©n bá»‹ phÆ°Æ¡ng Ã¡n A/B/C."));
+                Functions.tieuDeThe("Các bước đang thực hiện"),
+                Functions.moTa("1. Kiểm tra tổ hợp LT–TH hợp lệ.\n"
+                        + "2. Loại bỏ phương án trùng giờ.\n"
+                        + "3. Chấm điểm theo trọng số ưu tiên.\n"
+                        + "4. Xếp hạng và chuẩn bị phương án A/B/C."));
 
         loiBox.setStyle("-fx-background-color: #FEF2F2; -fx-background-radius: 12; -fx-border-color: #FECACA; "
                 + "-fx-border-radius: 12; -fx-border-width: 1;");
@@ -72,7 +72,7 @@ public class JobPanel extends VBox {
     }
 
     private Button theNutHuy() {
-        Button huy = Functions.nutPhu("Há»§y xáº¿p lá»‹ch");
+        Button huy = Functions.nutPhu("Hủy xếp lịch");
         huy.setOnAction(e -> {
             dungPoll();
             try {
@@ -92,7 +92,7 @@ public class JobPanel extends VBox {
         this.jobId = jobId;
         this.onHuy = onHuy;
         hienLoi(false, null);
-        lblTrangThai.setText("Äang chuáº©n bá»‹ káº¿t quáº£...");
+        lblTrangThai.setText("Đang chuẩn bị kết quả...");
         progress.setProgress(0.02);
         lblPhanTram.setText("0%");
         dungPoll();
@@ -113,7 +113,7 @@ public class JobPanel extends VBox {
                 frame.jobHuy();
             } else if (status.state() == JobStatus.State.FAILED) {
                 dungPoll();
-                hienLoi(true, status.thongBaoLoi() == null ? "Xáº¿p lá»‹ch tháº¥t báº¡i." : status.thongBaoLoi());
+                hienLoi(true, status.thongBaoLoi() == null ? "Xếp lịch thất bại." : status.thongBaoLoi());
             }
         } catch (ApiException ex) {
             dungPoll();
@@ -145,16 +145,16 @@ public class JobPanel extends VBox {
                 nutBox.getChildren().setAll(theNutHuy());
                 return;
             }
-            lblTrangThai.setText("ChÆ°a thá»ƒ nháº­n káº¿t quáº£");
+            lblTrangThai.setText("Chưa thể nhận kết quả");
             progress.setProgress(0);
-            lblPhanTram.setText("â€”");
+            lblPhanTram.setText("—");
             loiBox.getChildren().setAll(
-                    Functions.nhanLoi("Lá»—i káº¿t ná»‘i"),
-                    Functions.moTa("ChÆ°a thá»ƒ nháº­n káº¿t quáº£ xáº¿p lá»‹ch. Dá»¯ liá»‡u báº¡n Ä‘Ã£ chá»n váº«n Ä‘Æ°á»£c giá»¯ nguyÃªn. "
-                            + (message == null ? "" : "\nChi tiáº¿t: " + message)));
+                    Functions.nhanLoi("Lỗi kết nối"),
+                    Functions.moTa("Chưa thể nhận kết quả xếp lịch. Dữ liệu bạn đã chọn vẫn được giữ nguyên. "
+                            + (message == null ? "" : "\nChi tiết: " + message)));
 
-            Button thuLai = Functions.nutChinh("Thá»­ láº¡i");
-            Button quayLai = Functions.nutPhu("Quay láº¡i thiáº¿t láº­p");
+            Button thuLai = Functions.nutChinh("Thử lại");
+            Button quayLai = Functions.nutPhu("Quay lại thiết lập");
             thuLai.setOnAction(e -> {
                 hienLoi(false, null);
                 frame.batDauXepLich();
@@ -173,10 +173,10 @@ public class JobPanel extends VBox {
         progress.setProgress(pt / 100.0);
         lblPhanTram.setText(pt + "%");
         if (jobStatus.state() == JobStatus.State.RUNNING) {
-            lblTrangThai.setText(pt < 30 ? "Äang kiá»ƒm tra tá»• há»£p há»£p lá»‡..."
-                    : pt < 60 ? "Äang loáº¡i bá» phÆ°Æ¡ng Ã¡n trÃ¹ng giá»..."
-                    : pt < 90 ? "Äang cháº¥m Ä‘iá»ƒm theo trá»ng sá»‘..."
-                    : "Äang xáº¿p háº¡ng phÆ°Æ¡ng Ã¡n...");
+            lblTrangThai.setText(pt < 30 ? "Đang kiểm tra tổ hợp hợp lệ..."
+                    : pt < 60 ? "Đang loại bỏ phương án trùng giờ..."
+                    : pt < 90 ? "Đang chấm điểm theo trọng số..."
+                    : "Đang xếp hạng phương án...");
         }
     }
 }

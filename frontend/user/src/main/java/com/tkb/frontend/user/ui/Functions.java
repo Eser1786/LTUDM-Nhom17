@@ -209,7 +209,7 @@ public final class Functions {
 
     public static void thongTin(Window parent, String message) {
         Alert a = new Alert(Alert.AlertType.INFORMATION, message);
-        a.setTitle("ThÃ´ng bÃ¡o");
+        a.setTitle("Thông báo");
         a.setHeaderText(null);
         if (parent != null) a.initOwner(parent);
         a.showAndWait();
@@ -217,7 +217,7 @@ public final class Functions {
 
     public static void canhBao(Window parent, String message) {
         Alert a = new Alert(Alert.AlertType.WARNING, message);
-        a.setTitle("Cáº£nh bÃ¡o");
+        a.setTitle("Cảnh báo");
         a.setHeaderText(null);
         if (parent != null) a.initOwner(parent);
         a.showAndWait();
@@ -228,16 +228,16 @@ public final class Functions {
     }
 
     public static void loi(Window parent, ApiException ex) {
-        String msg = ex == null ? "ÄÃ£ xáº£y ra lá»—i khÃ´ng xÃ¡c Ä‘á»‹nh." : ex.getMessage();
+        String msg = ex == null ? "Đã xảy ra lỗi không xác định." : ex.getMessage();
         if (ex != null && ex.details() != null && !ex.details().isEmpty()) {
-            msg = msg + "\nChi tiáº¿t: " + String.join(", ", ex.details());
+            msg = msg + "\nChi tiết: " + String.join(", ", ex.details());
         }
         showError(parent, msg);
     }
 
     private static void showError(Window parent, String message) {
         Alert a = new Alert(Alert.AlertType.ERROR, message);
-        a.setTitle("Lá»—i");
+        a.setTitle("Lỗi");
         a.setHeaderText(null);
         if (parent != null) a.initOwner(parent);
         a.showAndWait();

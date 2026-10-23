@@ -16,7 +16,7 @@ public final class Types {
                            String ngayBatDau, String ngayKetThuc) {
         @Override
         public String toString() {
-            return ten + (dangDung ? " (hiá»‡n táº¡i)" : "");
+            return ten + (dangDung ? " (hiện tại)" : "");
         }
     }
 

@@ -10,12 +10,12 @@
       spacing="20"
       style="-fx-padding: 30;">
 
-    <Label text="Há»† THá»NG QUáº¢N LÃ THá»œI KHÃ“A BIá»‚U"
+    <Label text="HỆ THỐNG QUẢN LÝ THỜI KHÓA BIỂU"
            style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
 
-    <Label text="ChÃ o má»«ng báº¡n Ä‘áº¿n vá»›i há»‡ thá»‘ng."/>
+    <Label text="Chào mừng bạn đến với hệ thống."/>
 
-    <Button text="Xem thá»i khÃ³a biá»ƒu"
+    <Button text="Xem thời khóa biểu"
             onAction="#handleViewSchedule"/>
 
 </VBox>

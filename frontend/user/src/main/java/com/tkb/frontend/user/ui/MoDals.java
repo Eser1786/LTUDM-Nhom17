@@ -18,12 +18,12 @@ import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import java.util.function.Consumer;
 
-/** CÃ¡c há»™p thoáº¡i dÃ¹ng chung: lÆ°u, Ä‘á»•i tÃªn, xÃ¡c nháº­n xÃ³a vÃ  xem nhanh thá»i khÃ³a biá»ƒu. */
+/** Các hộp thoại dùng chung: lưu, đổi tên, xác nhận xóa và xem nhanh thời khóa biểu. */
 public final class MoDals {
 
     private MoDals() {}
 
-    /** Modal ná»n má», ná»™i dung táº­p trung; giá»¯ nguyÃªn dá»¯ liá»‡u khi Ä‘Ã³ng ngoÃ i Ã½ muá»‘n. */
+    /** Modal nền mờ, nội dung tập trung; giữ nguyên dữ liệu khi đóng ngoài ý muốn. */
     private static Stage mo(Window owner, String tieuDe, VBox noiDung) {
         Stage stage = new Stage();
         stage.initStyle(StageStyle.TRANSPARENT);
@@ -50,30 +50,30 @@ public final class MoDals {
         return stage;
     }
 
-    /** Modal lÆ°u thá»i khÃ³a biá»ƒu: nháº­p tÃªn lá»‹ch, hiá»ƒn thá»‹ thÃ´ng tin phÆ°Æ¡ng Ã¡n, hai nÃºt há»§y/lÆ°u. */
+    /** Modal lưu thời khóa biểu: nhập tên lịch, hiển thị thông tin phương án, hai nút hủy/lưu. */
     public static void luuLich(Window owner, TkbClient client, String maHocKy, String tenGoiY,
                                java.util.List<Integer> sectionIds, Runnable sauKhiLuu) {
         TextField txtTen = Functions.oNhap();
         txtTen.setText(tenGoiY);
-        txtTen.setPromptText("VÃ­ dá»¥: Lá»‹ch há»c táº­p trung");
+        txtTen.setPromptText("Ví dụ: Lịch học tập trung");
         VBox nd = new VBox(10);
         nd.getChildren().addAll(
-                Functions.nhanNho("TÃªn lá»‹ch"),
+                Functions.nhanNho("Tên lịch"),
                 txtTen,
-                Functions.moTa("PhÆ°Æ¡ng Ã¡n sáº½ Ä‘Æ°á»£c lÆ°u vÃ o Thá»i khÃ³a biá»ƒu Ä‘Ã£ lÆ°u cá»§a há»c ká»³ hiá»‡n táº¡i."),
-                Functions.nhanCanhBao("Dá»¯ liá»‡u mÃ´ phá»ng Â· chÆ°a gá»­i lÃªn mÃ¡y chá»§ tháº­t"));
+                Functions.moTa("Phương án sẽ được lưu vào Thời khóa biểu đã lưu của học kỳ hiện tại."),
+                Functions.nhanCanhBao("Dữ liệu mô phỏng · chưa gửi lên máy chủ thật"));
 
-        Stage stage = mo(owner, "LÆ°u thá»i khÃ³a biá»ƒu", nd);
+        Stage stage = mo(owner, "Lưu thời khóa biểu", nd);
         Label loi = Functions.moTa("");
         loi.setTextFill(Functions.MA_LOI);
 
-        Button huy = Functions.nutPhu("Há»§y");
-        Button luu = Functions.nutChinh("LÆ°u lá»‹ch");
+        Button huy = Functions.nutPhu("Hủy");
+        Button luu = Functions.nutChinh("Lưu lịch");
         huy.setOnAction(e -> stage.close());
         luu.setOnAction(e -> {
             String ten = txtTen.getText() == null ? "" : txtTen.getText().trim();
             if (ten.isEmpty()) {
-                loi.setText("Vui lÃ²ng nháº­p tÃªn lá»‹ch.");
+                loi.setText("Vui lòng nhập tên lịch.");
                 return;
             }
             try {
@@ -90,27 +90,27 @@ public final class MoDals {
         stage.showAndWait();
     }
 
-    /** Modal Ä‘á»•i tÃªn: hiá»ƒn thá»‹ tÃªn hiá»‡n táº¡i, nháº­p tÃªn má»›i, nÃºt lÆ°u. */
+    /** Modal đổi tên: hiển thị tên hiện tại, nhập tên mới, nút lưu. */
     public static void doiTen(Window owner, TkbClient client, long planId, String tenHienTai, Runnable sauKhiDoi) {
         TextField txtTen = Functions.oNhap();
         txtTen.setText(tenHienTai);
         VBox nd = new VBox(10);
         nd.getChildren().addAll(
-                Functions.nhanNho("TÃªn hiá»‡n táº¡i: " + tenHienTai),
-                Functions.nhanNho("TÃªn má»›i"),
+                Functions.nhanNho("Tên hiện tại: " + tenHienTai),
+                Functions.nhanNho("Tên mới"),
                 txtTen);
 
-        Stage stage = mo(owner, "Äá»•i tÃªn lá»‹ch", nd);
+        Stage stage = mo(owner, "Đổi tên lịch", nd);
         Label loi = Functions.moTa("");
         loi.setTextFill(Functions.MA_LOI);
 
-        Button huy = Functions.nutPhu("Há»§y");
-        Button luu = Functions.nutChinh("LÆ°u tÃªn má»›i");
+        Button huy = Functions.nutPhu("Hủy");
+        Button luu = Functions.nutChinh("Lưu tên mới");
         huy.setOnAction(e -> stage.close());
         luu.setOnAction(e -> {
             String ten = txtTen.getText() == null ? "" : txtTen.getText().trim();
             if (ten.isEmpty()) {
-                loi.setText("TÃªn lá»‹ch khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+                loi.setText("Tên lịch không được để trống.");
                 return;
             }
             try {
@@ -127,16 +127,16 @@ public final class MoDals {
         stage.showAndWait();
     }
 
-    /** Modal xÃ¡c nháº­n xÃ³a: cáº£nh bÃ¡o khÃ´ng thá»ƒ hoÃ n tÃ¡c, nÃºt giá»¯ láº¡i vÃ  xÃ³a lá»‹ch. */
+    /** Modal xác nhận xóa: cảnh báo không thể hoàn tác, nút giữ lại và xóa lịch. */
     public static void xacNhanXoa(Window owner, TkbClient client, long planId, String ten,
                                   Runnable sauKhiXoa) {
         VBox nd = new VBox(10);
         nd.getChildren().addAll(
-                Functions.nhanLoi("Thao tÃ¡c khÃ´ng thá»ƒ hoÃ n tÃ¡c"),
-                Functions.moTa("Báº¡n sáº¯p xÃ³a lá»‹ch â€œ" + ten + "â€. Lá»‹ch Ä‘Ã£ xÃ³a sáº½ khÃ´ng thá»ƒ khÃ´i phá»¥c."));
-        Stage stage = mo(owner, "XÃ¡c nháº­n xÃ³a lá»‹ch", nd);
-        Button giu = Functions.nutPhu("Giá»¯ láº¡i");
-        Button xoa = Functions.nutXoa("XÃ³a lá»‹ch");
+                Functions.nhanLoi("Thao tác không thể hoàn tác"),
+                Functions.moTa("Bạn sắp xóa lịch “" + ten + "”. Lịch đã xóa sẽ không thể khôi phục."));
+        Stage stage = mo(owner, "Xác nhận xóa lịch", nd);
+        Button giu = Functions.nutPhu("Giữ lại");
+        Button xoa = Functions.nutXoa("Xóa lịch");
         giu.setOnAction(e -> stage.close());
         xoa.setOnAction(e -> {
             try {
@@ -153,13 +153,13 @@ public final class MoDals {
         stage.showAndWait();
     }
 
-    /** Modal xem nhanh má»™t phÆ°Æ¡ng Ã¡n Ä‘Ã£ lÆ°u dáº¡ng lÆ°á»›i thá»i khÃ³a biá»ƒu. */
+    /** Modal xem nhanh một phương án đã lưu dạng lưới thời khóa biểu. */
     public static void xemLich(Window owner, PlanDetail d) {
         VBox nd = new VBox(10);
         nd.getChildren().addAll(
-                Functions.moTa(d.maHocKy() + " Â· Äiá»ƒm " + String.format("%.0f/100", d.diem())
-                        + " Â· " + d.stats().soNgayHoc() + " ngÃ y Â· " + d.stats().phutTrong() + " phÃºt trá»‘ng"),
-                Functions.nhanCanhBao("Xem nhanh (mÃ´ phá»ng)"));
+                Functions.moTa(d.maHocKy() + " · Điểm " + String.format("%.0f/100", d.diem())
+                        + " · " + d.stats().soNgayHoc() + " ngày · " + d.stats().phutTrong() + " phút trống"),
+                Functions.nhanCanhBao("Xem nhanh (mô phỏng)"));
         TimetableGridPanel grid = new TimetableGridPanel();
         grid.setTieuDe(d.ten());
         grid.setSlots(d.slots());
@@ -167,7 +167,7 @@ public final class MoDals {
         nd.getChildren().add(grid);
 
         Stage stage = mo(owner, d.ten(), nd);
-        Button dong = Functions.nutChinh("ÄÃ³ng");
+        Button dong = Functions.nutChinh("Đóng");
         dong.setOnAction(e -> stage.close());
         HBox nut = new HBox(Functions.khoangTrong(), dong);
         nut.setAlignment(Pos.CENTER_RIGHT);
@@ -175,7 +175,7 @@ public final class MoDals {
         stage.showAndWait();
     }
 
-    /** Tiá»‡n Ã­ch cho panel khÃ¡c náº¿u cáº§n má»Ÿ modal tÃ¹y biáº¿n. */
+    /** Tiện ích cho panel khác nếu cần mở modal tùy biến. */
     public static Stage moTuyBien(Window owner, String tieuDe, VBox noiDung, Consumer<Stage> ganNut) {
         Stage stage = mo(owner, tieuDe, noiDung);
         if (ganNut != null) ganNut.accept(stage);

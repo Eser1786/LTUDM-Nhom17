@@ -24,8 +24,8 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
- * MÃ n hÃ¬nh NhÃ³m lá»›p há»c pháº§n: báº£ng danh sÃ¡ch nhÃ³m lá»›p vá»›i bá»™ lá»c, phÃ¢n trang,
- * vÃ  thá»ƒ hiá»‡n cáº·p tÆ°Æ¡ng thÃ­ch giá»¯a lÃ½ thuyáº¿t (LT) vÃ  thá»±c hÃ nh (TH).
+ * Màn hình Nhóm lớp học phần: bảng danh sách nhóm lớp với bộ lọc, phân trang,
+ * và thể hiện cặp tương thích giữa lý thuyết (LT) và thực hành (TH).
  */
 public class RequirementPanel extends ScrollPane {
     private static final int MOI_TRANG = 8;
@@ -37,8 +37,8 @@ public class RequirementPanel extends ScrollPane {
     private final ComboBox<String> cbLoai = new ComboBox<>();
     private final ComboBox<String> cbNgay = new ComboBox<>();
     private final ComboBox<String> cbKhung = new ComboBox<>();
-    private final Button btnDatLai = Functions.nutPhu("Äáº·t láº¡i bá»™ lá»c");
-    private final Button btnTiep = Functions.nutChinh("Tiáº¿p tá»¥c: Thiáº¿t láº­p Æ°u tiÃªn");
+    private final Button btnDatLai = Functions.nutPhu("Đặt lại bộ lọc");
+    private final Button btnTiep = Functions.nutChinh("Tiếp tục: Thiết lập ưu tiên");
     private final VBox bang = new VBox(0);
     private final VBox khung = new VBox(14);
     private final Label lblDem = Functions.moTa("");
@@ -56,9 +56,9 @@ public class RequirementPanel extends ScrollPane {
         khung.setStyle("-fx-background-color: #F6F8FB;");
 
         VBox header = new VBox(4,
-                Functions.chuDe("NhÃ³m lá»›p há»c pháº§n"),
-                Functions.moTa("TÃ¬m kiáº¿m vÃ  chá»n cÃ¡c nhÃ³m lá»›p báº¡n Ä‘Æ°á»£c phÃ©p tham gia. "
-                        + "NhÃ³m lÃ½ thuyáº¿t cáº§n Ä‘Æ°á»£c chá»n cÃ¹ng nhÃ³m thá»±c hÃ nh tÆ°Æ¡ng á»©ng (LT01 ghÃ©p TH01.1)."));
+                Functions.chuDe("Nhóm lớp học phần"),
+                Functions.moTa("Tìm kiếm và chọn các nhóm lớp bạn được phép tham gia. "
+                        + "Nhóm lý thuyết cần được chọn cùng nhóm thực hành tương ứng (LT01 ghép TH01.1)."));
 
         khung.getChildren().addAll(header, theBoLoc(), theBang());
 
@@ -70,25 +70,25 @@ public class RequirementPanel extends ScrollPane {
 
     private VBox theBoLoc() {
         VBox card = Functions.the(14);
-        cbLoai.getItems().addAll("Táº¥t cáº£ loáº¡i lá»›p", "LÃ½ thuyáº¿t (LT)", "Thá»±c hÃ nh (TH)");
-        cbNgay.getItems().addAll("Táº¥t cáº£ cÃ¡c ngÃ y", "Thá»© 2", "Thá»© 3", "Thá»© 4", "Thá»© 5", "Thá»© 6", "Thá»© 7");
-        cbKhung.getItems().addAll("Táº¥t cáº£ khung giá»", "Buá»•i sÃ¡ng (tiáº¿t 1â€“5)", "Buá»•i chiá»u (tiáº¿t 6â€“12)");
-        cbLoai.setValue("Táº¥t cáº£ loáº¡i lá»›p");
-        cbNgay.setValue("Táº¥t cáº£ cÃ¡c ngÃ y");
-        cbKhung.setValue("Táº¥t cáº£ khung giá»");
-        txtTimKiem.setPromptText("TÃ¬m theo tÃªn hoáº·c mÃ£ há»c pháº§n...");
+        cbLoai.getItems().addAll("Tất cả loại lớp", "Lý thuyết (LT)", "Thực hành (TH)");
+        cbNgay.getItems().addAll("Tất cả các ngày", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7");
+        cbKhung.getItems().addAll("Tất cả khung giờ", "Buổi sáng (tiết 1–5)", "Buổi chiều (tiết 6–12)");
+        cbLoai.setValue("Tất cả loại lớp");
+        cbNgay.setValue("Tất cả các ngày");
+        cbKhung.setValue("Tất cả khung giờ");
+        txtTimKiem.setPromptText("Tìm theo tên hoặc mã học phần...");
         txtTimKiem.setPrefWidth(280);
 
         GridPane grid = new GridPane();
         grid.setHgap(14);
         grid.setVgap(10);
-        grid.add(Functions.nhanNho("TÃ¬m kiáº¿m"), 0, 0);
+        grid.add(Functions.nhanNho("Tìm kiếm"), 0, 0);
         grid.add(txtTimKiem, 0, 1);
-        grid.add(Functions.nhanNho("Loáº¡i lá»›p"), 1, 0);
+        grid.add(Functions.nhanNho("Loại lớp"), 1, 0);
         grid.add(cbLoai, 1, 1);
-        grid.add(Functions.nhanNho("NgÃ y há»c"), 2, 0);
+        grid.add(Functions.nhanNho("Ngày học"), 2, 0);
         grid.add(cbNgay, 2, 1);
-        grid.add(Functions.nhanNho("Khung giá»"), 3, 0);
+        grid.add(Functions.nhanNho("Khung giờ"), 3, 0);
         grid.add(cbKhung, 3, 1);
 
         HBox dong2 = new HBox(10, Functions.khoangTrong(), btnDatLai);
@@ -118,14 +118,14 @@ public class RequirementPanel extends ScrollPane {
 
     private VBox theBang() {
         VBox card = Functions.the(14);
-        HBox tieuDe = new HBox(10, Functions.tieuDeThe("Danh sÃ¡ch nhÃ³m lá»›p"));
+        HBox tieuDe = new HBox(10, Functions.tieuDeThe("Danh sách nhóm lớp"));
         tieuDe.setAlignment(Pos.CENTER_LEFT);
         tieuDe.getChildren().addAll(Functions.khoangTrong(), lblDem);
 
         GridPane hang = new GridPane();
         hang.setMaxWidth(Double.MAX_VALUE);
         hang.setStyle("-fx-background-color: #F1F5F9; -fx-background-radius: 8;");
-        String[] cot = {"Chá»n", "Há»c pháº§n", "NhÃ³m", "Loáº¡i", "NgÃ y", "Thá»i gian", "PhÃ²ng", "NhÃ³m Ä‘i cÃ¹ng"};
+        String[] cot = {"Chọn", "Học phần", "Nhóm", "Loại", "Ngày", "Thời gian", "Phòng", "Nhóm đi cùng"};
         for (int i = 0; i < cot.length; i++) {
             Label l = new Label(cot[i]);
             l.setFont(Functions.F_NHO);
@@ -192,13 +192,13 @@ public class RequirementPanel extends ScrollPane {
             VBox empty = new VBox(6);
             empty.setPadding(new Insets(30));
             empty.setAlignment(Pos.CENTER);
-            Label t = Functions.tieuDeThe("KhÃ´ng cÃ³ nhÃ³m lá»›p nÃ o phÃ¹ há»£p");
-            Label m = Functions.moTa("HÃ£y thá»­ ná»›i lá»ng bá»™ lá»c hoáº·c nháº¥n â€œÄáº·t láº¡i bá»™ lá»câ€ Ä‘á»ƒ xem toÃ n bá»™ danh sÃ¡ch.");
-            Button reset = Functions.nutPhu("Äáº·t láº¡i bá»™ lá»c");
+            Label t = Functions.tieuDeThe("Không có nhóm lớp nào phù hợp");
+            Label m = Functions.moTa("Hãy thử nới lỏng bộ lọc hoặc nhấn “Đặt lại bộ lọc” để xem toàn bộ danh sách.");
+            Button reset = Functions.nutPhu("Đặt lại bộ lọc");
             reset.setOnAction(e -> datLaiBoLoc());
             empty.getChildren().addAll(t, m, reset);
             bang.getChildren().add(empty);
-            lblDem.setText("0 nhÃ³m");
+            lblDem.setText("0 nhóm");
             phanTrang.getChildren().clear();
             return;
         }
@@ -210,7 +210,7 @@ public class RequirementPanel extends ScrollPane {
         int den = Math.min(tu + MOI_TRANG, tong);
         List<SectionSlot> trang = ds.subList(tu, den);
 
-        String tongKet = "Hiá»ƒn thá»‹ " + (tu + 1) + "â€“" + den + " trong " + tong + " nhÃ³m lá»›p";
+        String tongKet = "Hiển thị " + (tu + 1) + "–" + den + " trong " + tong + " nhóm lớp";
         lblDem.setText(tongKet);
 
         for (int i = 0; i < trang.size(); i++) {
@@ -256,7 +256,7 @@ public class RequirementPanel extends ScrollPane {
         hocPhan.setPadding(new Insets(7, 8, 7, 8));
         Label ten = new Label(slot.tenHocPhan());
         ten.setWrapText(true);
-        Label ma = Functions.nhanNho(s.maMh() + " Â· " + slot.soTc() + " tÃ­n chá»‰");
+        Label ma = Functions.nhanNho(s.maMh() + " · " + slot.soTc() + " tín chỉ");
         hocPhan.getChildren().addAll(ten, ma);
         row.add(hocPhan, 1, 0);
 
@@ -274,7 +274,7 @@ public class RequirementPanel extends ScrollPane {
         if (badge) {
             if (text.startsWith("LT")) noiDung = Functions.nhanF("LT", "#DBEAFE", "#1D4ED8");
             else if (text.startsWith("TH")) noiDung = Functions.nhanF("TH", "#FEF3C7", "#B45309");
-            else if (text.startsWith("Cáº§n")) noiDung = Functions.nhanCanhBao(text);
+            else if (text.startsWith("Cần")) noiDung = Functions.nhanCanhBao(text);
             else noiDung = Functions.nhanXam(text);
         } else {
             Label l = new Label(text);
@@ -303,7 +303,7 @@ public class RequirementPanel extends ScrollPane {
     private String thoiGianCua(SectionSlot slot) {
         List<String> gio = new ArrayList<>();
         for (ClassSession cs : slot.sessions()) {
-            gio.add("Tiáº¿t " + cs.tietBd() + "â€“" + (cs.tietBd() + cs.soTiet() - 1));
+            gio.add("Tiết " + cs.tietBd() + "–" + (cs.tietBd() + cs.soTiet() - 1));
         }
         return String.join(", ", gio);
     }
@@ -319,7 +319,7 @@ public class RequirementPanel extends ScrollPane {
     }
 
     /**
-     * Tráº£ vá» nhÃ³m Ä‘i cÃ¹ng Ä‘á»ƒ báº£o Ä‘áº£m cáº·p tÆ°Æ¡ng thÃ­ch: LT01 -> TH01.1, TH01.1 -> LT01.
+     * Trả về nhóm đi cùng để bảo đảm cặp tương thích: LT01 -> TH01.1, TH01.1 -> LT01.
      */
     private String nhomDiCung(Section s) {
         List<String> cap = new ArrayList<>();
@@ -334,14 +334,14 @@ public class RequirementPanel extends ScrollPane {
             }
         }
         if (cap.isEmpty()) {
-            return "â€”";
+            return "—";
         }
-        return "Cáº§n kÃ¨m " + String.join(", ", cap);
+        return "Cần kèm " + String.join(", ", cap);
     }
 
     private void vePhanTrang(int soTrang, int tong) {
         phanTrang.getChildren().clear();
-        Button nhau = Functions.nutPhu("â€¹");
+        Button nhau = Functions.nutPhu("‹");
         nhau.setDisable(trangHienTai == 0);
         nhau.setOnAction(e -> {
             trangHienTai--;
@@ -361,13 +361,13 @@ public class RequirementPanel extends ScrollPane {
             });
             phanTrang.getChildren().add(b);
         }
-        Button sau = Functions.nutPhu("â€º");
+        Button sau = Functions.nutPhu("›");
         sau.setDisable(trangHienTai >= soTrang - 1);
         sau.setOnAction(e -> {
             trangHienTai++;
             veBang();
         });
-        phanTrang.getChildren().addAll(sau, Functions.nhanXam(tong + " nhÃ³m"));
+        phanTrang.getChildren().addAll(sau, Functions.nhanXam(tong + " nhóm"));
     }
 
     private boolean matchSearch(SectionSlot slot) {
@@ -379,13 +379,13 @@ public class RequirementPanel extends ScrollPane {
 
     private boolean matchLoai(SectionSlot slot) {
         String val = cbLoai.getValue();
-        if (val == null || "Táº¥t cáº£ loáº¡i lá»›p".equals(val)) return true;
+        if (val == null || "Tất cả loại lớp".equals(val)) return true;
         return val.contains(slot.section().loai());
     }
 
     private boolean matchNgay(SectionSlot slot) {
         String val = cbNgay.getValue();
-        if (val == null || "Táº¥t cáº£ cÃ¡c ngÃ y".equals(val)) return true;
+        if (val == null || "Tất cả các ngày".equals(val)) return true;
         for (ClassSession s : slot.sessions()) {
             if (dayLabel(s.thu()).equals(val)) return true;
         }
@@ -394,31 +394,31 @@ public class RequirementPanel extends ScrollPane {
 
     private boolean matchKhung(SectionSlot slot) {
         String val = cbKhung.getValue();
-        if (val == null || "Táº¥t cáº£ khung giá»".equals(val)) return true;
+        if (val == null || "Tất cả khung giờ".equals(val)) return true;
         for (ClassSession s : slot.sessions()) {
-            if ("Buá»•i sÃ¡ng (tiáº¿t 1â€“5)".equals(val) && s.tietBd() <= 5) return true;
-            if ("Buá»•i chiá»u (tiáº¿t 6â€“12)".equals(val) && s.tietBd() >= 6) return true;
+            if ("Buổi sáng (tiết 1–5)".equals(val) && s.tietBd() <= 5) return true;
+            if ("Buổi chiều (tiết 6–12)".equals(val) && s.tietBd() >= 6) return true;
         }
         return false;
     }
 
     private String dayLabel(int thu) {
         return switch (thu) {
-            case 2 -> "Thá»© 2";
-            case 3 -> "Thá»© 3";
-            case 4 -> "Thá»© 4";
-            case 5 -> "Thá»© 5";
-            case 6 -> "Thá»© 6";
-            case 7 -> "Thá»© 7";
+            case 2 -> "Thứ 2";
+            case 3 -> "Thứ 3";
+            case 4 -> "Thứ 4";
+            case 5 -> "Thứ 5";
+            case 6 -> "Thứ 6";
+            case 7 -> "Thứ 7";
             default -> "";
         };
     }
 
     private void datLaiBoLoc() {
         txtTimKiem.clear();
-        cbLoai.setValue("Táº¥t cáº£ loáº¡i lá»›p");
-        cbNgay.setValue("Táº¥t cáº£ cÃ¡c ngÃ y");
-        cbKhung.setValue("Táº¥t cáº£ khung giá»");
+        cbLoai.setValue("Tất cả loại lớp");
+        cbNgay.setValue("Tất cả các ngày");
+        cbKhung.setValue("Tất cả khung giờ");
         trangHienTai = 0;
         veBang();
     }

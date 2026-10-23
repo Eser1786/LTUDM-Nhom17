@@ -9,9 +9,9 @@ public class HomeController {
     private void handleViewSchedule() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
 
-        alert.setTitle("Thá»i khÃ³a biá»ƒu");
-        alert.setHeaderText("Chá»©c nÄƒng thá»i khÃ³a biá»ƒu");
-        alert.setContentText("Báº¡n Ä‘Ã£ nháº¥n nÃºt xem thá»i khÃ³a biá»ƒu.");
+        alert.setTitle("Thời khóa biểu");
+        alert.setHeaderText("Chức năng thời khóa biểu");
+        alert.setContentText("Bạn đã nhấn nút xem thời khóa biểu.");
 
         alert.showAndWait();
     }

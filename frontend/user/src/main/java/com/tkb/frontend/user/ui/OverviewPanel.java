@@ -20,7 +20,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import java.util.List;
 
-/** MÃ n hÃ¬nh Tá»•ng quan: lá»i chÃ o, 4 tháº» thá»‘ng kÃª, thanh tiáº¿n trÃ¬nh 3 bÆ°á»›c vÃ  hai khu vá»±c thÃ´ng tin. */
+/** Màn hình Tổng quan: lời chào, 4 thẻ thống kê, thanh tiến trình 3 bước và hai khu vực thông tin. */
 public class OverviewPanel extends VBox {
     private final MainFrame frame;
     private final HBox thongKe = new HBox(14);
@@ -35,8 +35,8 @@ public class OverviewPanel extends VBox {
         setStyle("-fx-background-color: #F6F8FB;");
 
         lblChao.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
-        Label moTa = Functions.moTa("ÄÃ¢y lÃ  káº¿ hoáº¡ch há»c táº­p tá»•ng quan cá»§a báº¡n. "
-                + "HoÃ n thÃ nh láº§n lÆ°á»£t cÃ¡c bÆ°á»›c Ä‘á»ƒ cÃ³ má»™t thá»i khÃ³a biá»ƒu gá»n gÃ ng, Ã­t khoáº£ng trá»‘ng.");
+        Label moTa = Functions.moTa("Đây là kế hoạch học tập tổng quan của bạn. "
+                + "Hoàn thành lần lượt các bước để có một thời khóa biểu gọn gàng, ít khoảng trống.");
         VBox header = new VBox(4, lblChao, moTa);
 
         thongKe.setAlignment(Pos.CENTER_LEFT);
@@ -46,21 +46,21 @@ public class OverviewPanel extends VBox {
 
         VBox trai = Functions.the(16);
         HBox.setHgrow(trai, Priority.ALWAYS);
-        trai.getChildren().addAll(Functions.tieuDeThe("Há»c pháº§n trong káº¿ hoáº¡ch"), hocPhanBox);
+        trai.getChildren().addAll(Functions.tieuDeThe("Học phần trong kế hoạch"), hocPhanBox);
 
         VBox phai = Functions.the(16);
         phai.setPrefWidth(420);
         phai.setMinWidth(360);
-        phai.getChildren().addAll(Functions.tieuDeThe("Lá»‹ch há»c gáº§n Ä‘Ã¢y"), lichGanDayBox);
+        phai.getChildren().addAll(Functions.tieuDeThe("Lịch học gần đây"), lichGanDayBox);
 
         HBox haiCot = new HBox(16, trai, phai);
 
         VBox ghiChu = Functions.the(12);
         ghiChu.setStyle("-fx-background-color: #FFF7ED; -fx-background-radius: 12; -fx-border-color: #FED7AA; "
                 + "-fx-border-radius: 12; -fx-border-width: 1;");
-        Label lg = Functions.nhanCanhBao("LÆ°u Ã½");
-        Label lgTxt = Functions.moTa("CÃ¡c lá»‹ch há»c Ä‘á» xuáº¥t chá»‰ mang tÃ­nh tham kháº£o cho viá»‡c sáº¯p xáº¿p cÃ¡ nhÃ¢n vÃ  "
-                + "khÃ´ng thay tháº¿ Ä‘Äƒng kÃ½ há»c pháº§n chÃ­nh thá»©c. Vui lÃ²ng xÃ¡c nháº­n vá»›i phÃ²ng ÄÃ o táº¡o.");
+        Label lg = Functions.nhanCanhBao("Lưu ý");
+        Label lgTxt = Functions.moTa("Các lịch học đề xuất chỉ mang tính tham khảo cho việc sắp xếp cá nhân và "
+                + "không thay thế đăng ký học phần chính thức. Vui lòng xác nhận với phòng Đào tạo.");
         ghiChu.getChildren().addAll(lg, lgTxt);
 
         getChildren().addAll(header, thongKe, tienTrinh, haiCot, ghiChu);
@@ -68,15 +68,15 @@ public class OverviewPanel extends VBox {
 
     public void taiLai() {
         MainFrame.AppUiState st = frame.trangThai();
-        String ten = st.sinhVien == null ? "báº¡n" : tenNgan(st.sinhVien.hoTen());
-        lblChao.setText("ChÃ o " + ten + ", sáºµn sÃ ng cho há»c ká»³ má»›i?");
+        String ten = st.sinhVien == null ? "bạn" : tenNgan(st.sinhVien.hoTen());
+        lblChao.setText("Chào " + ten + ", sẵn sàng cho học kỳ mới?");
 
         List<SectionSlot> tatCa = frame.trangThai().tatCaNhom;
         int soHocPhan = st.monDaChon().size();
         int soTinChi = 0;
         for (SectionSlot s : tatCa) {
             if (st.daChon.contains(s.section().id()) && st.monDaChon().contains(s.section().maMh())) {
-                // Äáº¿m tÃ­n chá»‰ má»—i há»c pháº§n má»™t láº§n.
+                // Đếm tín chỉ mỗi học phần một lần.
             }
         }
         for (String ma : st.monDaChon()) {
@@ -96,10 +96,10 @@ public class OverviewPanel extends VBox {
         }
 
         thongKe.getChildren().setAll(
-                theThongKe("Há»c pháº§n Ä‘Ã£ chá»n", soHocPhan + "", "há»c pháº§n", Functions.MA_CHINH_NEN, Functions.MA_CHINH_DAM),
-                theThongKe("Khá»‘i lÆ°á»£ng há»c táº­p", soTinChi + "", "tÃ­n chá»‰", Functions.MA_CHINH_NEN, Functions.MA_CHINH_DAM),
-                theThongKe("PhÆ°Æ¡ng Ã¡n mÃ´ phá»ng", soPhuongAn + "", "lá»‹ch há»£p lá»‡", Functions.MA_XANH_NEN, Functions.MA_XANH_DAM),
-                theThongKe("Thá»i khÃ³a biá»ƒu Ä‘Ã£ lÆ°u", soDaLuu + "", "lá»‹ch", Functions.MA_XAM_NEN, Functions.MA_CHU_DAM));
+                theThongKe("Học phần đã chọn", soHocPhan + "", "học phần", Functions.MA_CHINH_NEN, Functions.MA_CHINH_DAM),
+                theThongKe("Khối lượng học tập", soTinChi + "", "tín chỉ", Functions.MA_CHINH_NEN, Functions.MA_CHINH_DAM),
+                theThongKe("Phương án mô phỏng", soPhuongAn + "", "lịch hợp lệ", Functions.MA_XANH_NEN, Functions.MA_XANH_DAM),
+                theThongKe("Thời khóa biểu đã lưu", soDaLuu + "", "lịch", Functions.MA_XAM_NEN, Functions.MA_CHU_DAM));
 
         veHocPhan();
         veLichGanDay();
@@ -128,7 +128,7 @@ public class OverviewPanel extends VBox {
 
     private VBox theTienTrinh() {
         VBox v = Functions.the(16);
-        v.getChildren().add(Functions.tieuDeThe("Tiáº¿n trÃ¬nh chuáº©n bá»‹"));
+        v.getChildren().add(Functions.tieuDeThe("Tiến trình chuẩn bị"));
         GridPane g = new GridPane();
         g.setHgap(12);
         for (int i = 0; i < 3; i++) {
@@ -138,10 +138,10 @@ public class OverviewPanel extends VBox {
             g.getColumnConstraints().add(cc);
         }
         String[] nhan = {"1", "2", "3"};
-        String[] td = {"Chá»n nhÃ³m lá»›p", "Thiáº¿t láº­p Æ°u tiÃªn", "Xem vÃ  lÆ°u káº¿t quáº£"};
-        String[] mt = {"GhÃ©p nhÃ³m lÃ½ thuyáº¿t vá»›i thá»±c hÃ nh tÆ°Æ¡ng á»©ng.",
-                "Äiá»u chá»‰nh má»©c Æ°u tiÃªn cho tá»«ng tiÃªu chÃ­.",
-                "Chá»n phÆ°Æ¡ng Ã¡n phÃ¹ há»£p vÃ  lÆ°u láº¡i."};
+        String[] td = {"Chọn nhóm lớp", "Thiết lập ưu tiên", "Xem và lưu kết quả"};
+        String[] mt = {"Ghép nhóm lý thuyết với thực hành tương ứng.",
+                "Điều chỉnh mức ưu tiên cho từng tiêu chí.",
+                "Chọn phương án phù hợp và lưu lại."};
         MainFrame.AppUiState st = frame.trangThai();
         boolean buoc1 = !st.daChon.isEmpty();
         boolean buoc2 = buoc1;
@@ -153,7 +153,7 @@ public class OverviewPanel extends VBox {
                 step.setStyle("-fx-background-color: #F0FDF4; -fx-background-radius: 12; -fx-border-color: #16A34A; "
                         + "-fx-border-radius: 12; -fx-border-width: 1;");
             }
-            Label badge = xong[i] ? Functions.nhanHopLe("ÄÃ£ xong") : Functions.nhanXam("BÆ°á»›c " + nhan[i]);
+            Label badge = xong[i] ? Functions.nhanHopLe("Đã xong") : Functions.nhanXam("Bước " + nhan[i]);
             Label t = Functions.tieuDeThe(td[i]);
             Label m = Functions.moTa(mt[i]);
             step.getChildren().addAll(badge, t, m);
@@ -168,8 +168,8 @@ public class OverviewPanel extends VBox {
         MainFrame.AppUiState st = frame.trangThai();
         List<String> mon = st.monDaChon();
         if (mon.isEmpty()) {
-            hocPhanBox.getChildren().add(Functions.moTa("ChÆ°a cÃ³ há»c pháº§n nÃ o Ä‘Æ°á»£c chá»n. "
-                    + "HÃ£y vÃ o má»¥c â€œNhÃ³m lá»›p há»c pháº§nâ€ Ä‘á»ƒ báº¯t Ä‘áº§u."));
+            hocPhanBox.getChildren().add(Functions.moTa("Chưa có học phần nào được chọn. "
+                    + "Hãy vào mục “Nhóm lớp học phần” để bắt đầu."));
             return;
         }
         for (String ma : mon) {
@@ -196,8 +196,8 @@ public class OverviewPanel extends VBox {
             maLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
             maLbl.setTextFill(Functions.MA_CHINH_DAM);
             maLbl.setMinWidth(78);
-            VBox info = new VBox(2, new Label(ten), Functions.nhanNho(tc + " tÃ­n chá»‰"));
-            Label nhom = Functions.nhanXam(soNhomDuDieuKien + " nhÃ³m Ä‘á»§ Ä‘iá»u kiá»‡n");
+            VBox info = new VBox(2, new Label(ten), Functions.nhanNho(tc + " tín chỉ"));
+            Label nhom = Functions.nhanXam(soNhomDuDieuKien + " nhóm đủ điều kiện");
             row.getChildren().addAll(maLbl, info, Functions.khoangTrong(), nhom);
             hocPhanBox.getChildren().add(row);
         }
@@ -210,15 +210,15 @@ public class OverviewPanel extends VBox {
             plans = frame.trangThai().client.listPlans(frame.trangThai().hocKy == null
                     ? null : frame.trangThai().hocKy.ma());
         } catch (ApiException ex) {
-            lichGanDayBox.getChildren().add(Functions.moTa("KhÃ´ng táº£i Ä‘Æ°á»£c danh sÃ¡ch lá»‹ch Ä‘Ã£ lÆ°u."));
+            lichGanDayBox.getChildren().add(Functions.moTa("Không tải được danh sách lịch đã lưu."));
             return;
         }
         if (plans.isEmpty()) {
-            lichGanDayBox.getChildren().add(Functions.moTa("Báº¡n chÆ°a lÆ°u lá»‹ch nÃ o."));
+            lichGanDayBox.getChildren().add(Functions.moTa("Bạn chưa lưu lịch nào."));
             return;
         }
         plans.stream().limit(2).forEach(p -> lichGanDayBox.getChildren().add(theLich(p)));
-        Button moTatCa = Functions.nutPhu("Má»Ÿ danh sÃ¡ch Ä‘Ã£ lÆ°u");
+        Button moTatCa = Functions.nutPhu("Mở danh sách đã lưu");
         moTatCa.setOnAction(e -> frame.denTrang(MainFrame.CARD_SAVED));
         lichGanDayBox.getChildren().add(moTatCa);
     }
@@ -233,11 +233,11 @@ public class OverviewPanel extends VBox {
 
         FlowPane chiSo = new FlowPane(8, 6);
         chiSo.getChildren().addAll(
-                Functions.nhanXam(p.stats().soNgayHoc() + " ngÃ y Ä‘áº¿n trÆ°á»ng"),
-                Functions.nhanXam(p.stats().phutTrong() + " phÃºt trá»‘ng"),
-                Functions.nhanXam(p.soBuoi() + " buá»•i/tuáº§n"));
+                Functions.nhanXam(p.stats().soNgayHoc() + " ngày đến trường"),
+                Functions.nhanXam(p.stats().phutTrong() + " phút trống"),
+                Functions.nhanXam(p.soBuoi() + " buổi/tuần"));
 
-        Button mo = Functions.nutPhu("Má»Ÿ lá»‹ch");
+        Button mo = Functions.nutPhu("Mở lịch");
         mo.setOnAction(e -> {
             try {
                 PlanDetail d = frame.trangThai().client.getPlan(p.id());

@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * LÆ°á»›i thá»i khÃ³a biá»ƒu tuáº§n: trá»¥c dá»c 07:00â€“21:00, trá»¥c ngang T2â€“T7.
- * Má»—i buá»•i há»c lÃ  má»™t block Ä‘áº·t Ä‘Ãºng ngÃ y vÃ  giá», hiá»ƒn thá»‹ há»c pháº§n, mÃ£ nhÃ³m vÃ  phÃ²ng.
+ * Lưới thời khóa biểu tuần: trục dọc 07:00–21:00, trục ngang T2–T7.
+ * Mỗi buổi học là một block đặt đúng ngày và giờ, hiển thị học phần, mã nhóm và phòng.
  */
 public class TimetableGridPanel extends VBox {
     private static final int GIO_BAT_DAU = 7;
@@ -32,7 +32,7 @@ public class TimetableGridPanel extends VBox {
     private final GridPane grid = new GridPane();
     private final ScrollPane scroll = new ScrollPane();
     private final List<SectionSlot> slots = new ArrayList<>();
-    private String tieuDe = "Thá»i khÃ³a biá»ƒu";
+    private String tieuDe = "Thời khóa biểu";
 
     public TimetableGridPanel() {
         setSpacing(10);
@@ -111,7 +111,7 @@ public class TimetableGridPanel extends VBox {
             time.setMaxWidth(Double.MAX_VALUE);
             grid.add(time, 0, h + 1);
 
-            // Ná»n lÆ°á»›i trá»‘ng Ä‘á»ƒ thá»ƒ hiá»‡n rÃµ khoáº£ng trá»‘ng.
+            // Nền lưới trống để thể hiện rõ khoảng trống.
             for (int c = 0; c < 6; c++) {
                 Region cell = new Region();
                 cell.setMinHeight(30);
@@ -127,7 +127,7 @@ public class TimetableGridPanel extends VBox {
             return;
         }
 
-        // Gom theo (ngÃ y, giá» báº¯t Ä‘áº§u) Ä‘á»ƒ xáº¿p cÃ¡c block chá»“ng thá»i gian thÃ nh 1 Ã´.
+        // Gom theo (ngày, giờ bắt đầu) để xếp các block chồng thời gian thành 1 ô.
         Map<String, List<SectionSlot>> groups = new HashMap<>();
         for (SectionSlot slot : slots) {
             for (ClassSession session : slot.sessions()) {
@@ -170,8 +170,8 @@ public class TimetableGridPanel extends VBox {
                 l1.setWrapText(true);
                 l1.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
                 l1.setTextFill(javafx.scene.paint.Color.WHITE);
-                Label l2 = new Label(item.section().maMh() + " Â· " + maNhom(item)
-                        + " Â· " + phong(item));
+                Label l2 = new Label(item.section().maMh() + " · " + maNhom(item)
+                        + " · " + phong(item));
                 l2.setWrapText(true);
                 l2.setFont(Font.font("Segoe UI", 10));
                 l2.setTextFill(javafx.scene.paint.Color.web("#EEF2FF"));
@@ -222,12 +222,12 @@ public class TimetableGridPanel extends VBox {
 
     private String dayFull(int thu) {
         return switch (thu) {
-            case 2 -> "Thá»© Hai";
-            case 3 -> "Thá»© Ba";
-            case 4 -> "Thá»© TÆ°";
-            case 5 -> "Thá»© NÄƒm";
-            case 6 -> "Thá»© SÃ¡u";
-            case 7 -> "Thá»© Báº£y";
+            case 2 -> "Thứ Hai";
+            case 3 -> "Thứ Ba";
+            case 4 -> "Thứ Tư";
+            case 5 -> "Thứ Năm";
+            case 6 -> "Thứ Sáu";
+            case 7 -> "Thứ Bảy";
             default -> "";
         };
     }

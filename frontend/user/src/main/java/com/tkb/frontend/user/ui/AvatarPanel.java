@@ -8,7 +8,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
-/** Avatar hÃ¬nh trÃ²n hiá»ƒn thá»‹ chá»¯ viáº¿t táº¯t cá»§a sinh viÃªn. */
+/** Avatar hình tròn hiển thị chữ viết tắt của sinh viên. */
 public class AvatarPanel extends StackPane {
     private final Circle circle = new Circle();
     private final Label label = new Label("?");

@@ -20,7 +20,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 
-/** MÃ n hÃ¬nh Ä‘Äƒng nháº­p: hai cá»™t, cÃ³ hiá»‡n/áº©n máº­t kháº©u, ghi nhá»› Ä‘Äƒng nháº­p vÃ  liÃªn káº¿t quÃªn máº­t kháº©u. */
+/** Màn hình đăng nhập: hai cột, có hiện/ẩn mật khẩu, ghi nhớ đăng nhập và liên kết quên mật khẩu. */
 public class LoginPanel extends HBox {
 
     public LoginPanel(AppUiState st, Runnable onLogin) {
@@ -32,16 +32,16 @@ public class LoginPanel extends HBox {
         trai.setPrefWidth(720);
         trai.setStyle("-fx-background-color: linear-gradient(to bottom right, #0F172A, #1E3A8A);");
 
-        Label nhanDau = new Label("PROJECT 15 Â· SINH VIÃŠN");
+        Label nhanDau = new Label("PROJECT 15 · SINH VIÊN");
         nhanDau.setTextFill(Color.web("#93C5FD"));
         nhanDau.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
 
-        Label tieuDe = new Label("Lá»‹ch há»c há»£p lÃ½.");
+        Label tieuDe = new Label("Lịch học hợp lý.");
         tieuDe.setTextFill(Color.WHITE);
         tieuDe.setFont(Font.font("Segoe UI", FontWeight.BOLD, 42));
 
-        Label moTa = new Label("Chá»n nhÃ³m lá»›p há»c pháº§n, Ä‘áº·t má»©c Æ°u tiÃªn cÃ¡ nhÃ¢n vÃ  Ä‘á»ƒ há»‡ thá»‘ng "
-                + "tÃ¬m nhá»¯ng phÆ°Æ¡ng Ã¡n thá»i khÃ³a biá»ƒu phÃ¹ há»£p nháº¥t vá»›i báº¡n.");
+        Label moTa = new Label("Chọn nhóm lớp học phần, đặt mức ưu tiên cá nhân và để hệ thống "
+                + "tìm những phương án thời khóa biểu phù hợp nhất với bạn.");
         moTa.setTextFill(Color.web("#CBD5E1"));
         moTa.setFont(Font.font("Segoe UI", 14));
         moTa.setWrapText(true);
@@ -50,7 +50,7 @@ public class LoginPanel extends HBox {
         StackPane minhHoa = minhHoaLich();
         VBox.setVgrow(minhHoa, Priority.ALWAYS);
 
-        Label thongDiep = new Label("Ãt khoáº£ng trá»‘ng hÆ¡n  Â·  KhÃ´ng trÃ¹ng giá» há»c");
+        Label thongDiep = new Label("Ít khoảng trống hơn  ·  Không trùng giờ học");
         thongDiep.setTextFill(Color.web("#93C5FD"));
         thongDiep.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
 
@@ -66,17 +66,17 @@ public class LoginPanel extends HBox {
         theForm.setSpacing(14);
         theForm.setMaxWidth(420);
 
-        Label tieuDeForm = Functions.chuDe("ChÃ o má»«ng trá»Ÿ láº¡i");
-        Label moTaForm = Functions.moTa("ÄÄƒng nháº­p Ä‘á»ƒ tiáº¿p tá»¥c xÃ¢y dá»±ng thá»i khÃ³a biá»ƒu há»c ká»³ nÃ y.");
+        Label tieuDeForm = Functions.chuDe("Chào mừng trở lại");
+        Label moTaForm = Functions.moTa("Đăng nhập để tiếp tục xây dựng thời khóa biểu học kỳ này.");
 
         TextField txtEmail = Functions.oNhap();
         txtEmail.setPromptText("email@sv.univ.edu.vn");
         txtEmail.setText("minh.anh@sv.univ.edu.vn");
-        VBox nhomEmail = new VBox(4, Functions.nhanNho("Email sinh viÃªn"), txtEmail);
+        VBox nhomEmail = new VBox(4, Functions.nhanNho("Email sinh viên"), txtEmail);
 
         PasswordField txtMatKhau = new PasswordField();
         txtMatKhau.setFont(Functions.F_CHU);
-        txtMatKhau.setPromptText("Máº­t kháº©u");
+        txtMatKhau.setPromptText("Mật khẩu");
         txtMatKhau.setText("12345678");
         txtMatKhau.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 8; "
                 + "-fx-background-radius: 8; -fx-padding: 8 10 8 10;");
@@ -88,7 +88,7 @@ public class LoginPanel extends HBox {
         txtMatKhau.textProperty().addListener((o, a, b) -> txtHien.setText(b));
         txtHien.textProperty().addListener((o, a, b) -> txtMatKhau.setText(b));
 
-        Button nutHien = Functions.nutPhu("Hiá»‡n");
+        Button nutHien = Functions.nutPhu("Hiện");
         nutHien.setMinWidth(64);
         nutHien.setOnAction(e -> {
             boolean hien = !txtHien.isVisible();
@@ -101,41 +101,41 @@ public class LoginPanel extends HBox {
             } else {
                 txtMatKhau.setText(txtHien.getText());
             }
-            nutHien.setText(hien ? "áº¨n" : "Hiá»‡n");
+            nutHien.setText(hien ? "Ẩn" : "Hiện");
         });
         HBox khauRow = new HBox(8, khauStack, nutHien);
         HBox.setHgrow(khauStack, Priority.ALWAYS);
-        VBox nhomKhau = new VBox(4, Functions.nhanNho("Máº­t kháº©u"), khauRow);
+        VBox nhomKhau = new VBox(4, Functions.nhanNho("Mật khẩu"), khauRow);
 
-        CheckBox chkGhiNho = new CheckBox("Ghi nhá»› Ä‘Äƒng nháº­p");
+        CheckBox chkGhiNho = new CheckBox("Ghi nhớ đăng nhập");
         chkGhiNho.setSelected(true);
-        Button lienKetQuen = new Button("QuÃªn máº­t kháº©u?");
+        Button lienKetQuen = new Button("Quên mật khẩu?");
         lienKetQuen.setStyle("-fx-background-color: transparent; -fx-text-fill: #1D4ED8; -fx-cursor: hand;");
         lienKetQuen.setOnAction(e -> Functions.thongTin(st == null ? null : window(),
-                "Vui lÃ²ng liÃªn há»‡ phÃ²ng ÄÃ o táº¡o Ä‘á»ƒ Ä‘Æ°á»£c cáº¥p láº¡i máº­t kháº©u.\nEmail: daotao@univ.edu.vn"));
+                "Vui lòng liên hệ phòng Đào tạo để được cấp lại mật khẩu.\nEmail: daotao@univ.edu.vn"));
         HBox rowGhiNho = new HBox(chkGhiNho, Functions.khoangTrong(), lienKetQuen);
         rowGhiNho.setAlignment(Pos.CENTER_LEFT);
 
-        Button nutDangNhap = Functions.nutChinh("ÄÄƒng nháº­p");
+        Button nutDangNhap = Functions.nutChinh("Đăng nhập");
         nutDangNhap.setMaxWidth(Double.MAX_VALUE);
         nutDangNhap.setPadding(new Insets(10));
         nutDangNhap.setOnAction(e -> {
             if (txtEmail.getText() == null || txtEmail.getText().isBlank()) {
-                Functions.canhBao(window(), "Vui lÃ²ng nháº­p email sinh viÃªn.");
+                Functions.canhBao(window(), "Vui lòng nhập email sinh viên.");
                 return;
             }
             if (txtMatKhau.getText() == null || txtMatKhau.getText().isBlank()) {
-                Functions.canhBao(window(), "Vui lÃ²ng nháº­p máº­t kháº©u.");
+                Functions.canhBao(window(), "Vui lòng nhập mật khẩu.");
                 return;
             }
             onLogin.run();
         });
 
-        Label ghiChu = Functions.moTa("Sá»­ dá»¥ng tÃ i khoáº£n sinh viÃªn do nhÃ  trÆ°á»ng cáº¥p. "
-                + "Cáº§n há»— trá»£? Gá»i 1900 0000 hoáº·c email hotro@univ.edu.vn.");
+        Label ghiChu = Functions.moTa("Sử dụng tài khoản sinh viên do nhà trường cấp. "
+                + "Cần hỗ trợ? Gọi 1900 0000 hoặc email hotro@univ.edu.vn.");
         ghiChu.setTextAlignment(TextAlignment.LEFT);
 
-        Label moPhong = Functions.nhanCanhBao("Cháº¿ Ä‘á»™ mÃ´ phá»ng Â· chÆ°a káº¿t ná»‘i mÃ¡y chá»§ tháº­t");
+        Label moPhong = Functions.nhanCanhBao("Chế độ mô phỏng · chưa kết nối máy chủ thật");
 
         theForm.getChildren().addAll(tieuDeForm, moTaForm, Functions.vach(), nhomEmail, nhomKhau,
                 rowGhiNho, nutDangNhap, ghiChu, moPhong);
@@ -145,7 +145,7 @@ public class LoginPanel extends HBox {
     }
 
     private StackPane minhHoaLich() {
-        // Card minh há»a lá»‹ch há»c tá»‘i giáº£n dáº¡ng lÆ°á»›i tuáº§n.
+        // Card minh họa lịch học tối giản dạng lưới tuần.
         GridPane grid = new GridPane();
         grid.setHgap(8);
         grid.setVgap(8);

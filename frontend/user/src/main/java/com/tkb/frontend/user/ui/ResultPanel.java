@@ -22,7 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** MÃ n hÃ¬nh Káº¿t quáº£ Ä‘á» xuáº¥t: ba card phÆ°Æ¡ng Ã¡n A/B/C, lÆ°á»›i thá»i khÃ³a biá»ƒu vÃ  Ä‘iá»ƒm Ä‘Ã¡p á»©ng tiÃªu chÃ­. */
+/** Màn hình Kết quả đề xuất: ba card phương án A/B/C, lưới thời khóa biểu và điểm đáp ứng tiêu chí. */
 public class ResultPanel extends ScrollPane {
     private final TkbClient client;
     private final MainFrame frame;
@@ -31,7 +31,7 @@ public class ResultPanel extends ScrollPane {
     private final VBox chiTiet = new VBox(14);
     private final VBox khung = new VBox(16);
     private final Map<String, CheckBox> chkSoSanh = new LinkedHashMap<>();
-    private final Button btnSoSanh = Functions.nutPhu("So sÃ¡nh phÆ°Æ¡ng Ã¡n Ä‘Ã£ chá»n");
+    private final Button btnSoSanh = Functions.nutPhu("So sánh phương án đã chọn");
     private JobResult ketQua;
     private int chiSoDangXem = 0;
 
@@ -45,9 +45,9 @@ public class ResultPanel extends ScrollPane {
         khung.setStyle("-fx-background-color: #F6F8FB;");
 
         VBox header = new VBox(4,
-                Functions.chuDe("Káº¿t quáº£ Ä‘á» xuáº¥t"),
-                Functions.moTa("Há»‡ thá»‘ng Ä‘á» xuáº¥t cÃ¡c phÆ°Æ¡ng Ã¡n há»£p lá»‡ (khÃ´ng trÃ¹ng giá», Ä‘Ãºng cáº·p LTâ€“TH). "
-                        + "Chá»n má»™t phÆ°Æ¡ng Ã¡n Ä‘á»ƒ xem lá»‹ch chi tiáº¿t."));
+                Functions.chuDe("Kết quả đề xuất"),
+                Functions.moTa("Hệ thống đề xuất các phương án hợp lệ (không trùng giờ, đúng cặp LT–TH). "
+                        + "Chọn một phương án để xem lịch chi tiết."));
 
         cardsBox.setAlignment(Pos.TOP_LEFT);
 
@@ -63,8 +63,8 @@ public class ResultPanel extends ScrollPane {
 
     public void hienTrangThai() {
         if (ketQua == null) {
-            khung.getChildren().setAll(Functions.chuDe("ChÆ°a cÃ³ káº¿t quáº£ Ä‘á» xuáº¥t"),
-                    Functions.moTa("HÃ£y thiáº¿t láº­p Æ°u tiÃªn vÃ  cháº¡y â€œTá»‘i Æ°u thá»i khÃ³a biá»ƒuâ€ Ä‘á»ƒ nháº­n cÃ¡c phÆ°Æ¡ng Ã¡n."),
+            khung.getChildren().setAll(Functions.chuDe("Chưa có kết quả đề xuất"),
+                    Functions.moTa("Hãy thiết lập ưu tiên và chạy “Tối ưu thời khóa biểu” để nhận các phương án."),
                     theNutChay());
         } else {
             hienKetQua(ketQua);
@@ -72,7 +72,7 @@ public class ResultPanel extends ScrollPane {
     }
 
     private Button theNutChay() {
-        Button b = Functions.nutChinh("Äi tá»›i thiáº¿t láº­p Æ°u tiÃªn");
+        Button b = Functions.nutChinh("Đi tới thiết lập ưu tiên");
         b.setOnAction(e -> frame.denTrang(MainFrame.CARD_PRIO));
         return b;
     }
@@ -102,10 +102,10 @@ public class ResultPanel extends ScrollPane {
 
             HBox top = new HBox(8);
             top.setAlignment(Pos.CENTER_LEFT);
-            Label ten = Functions.tieuDeThe("PhÆ°Æ¡ng Ã¡n " + o.ten());
+            Label ten = Functions.tieuDeThe("Phương án " + o.ten());
             top.getChildren().add(ten);
             if (deXuat) {
-                top.getChildren().add(Functions.nhanDeXuat("Äá» xuáº¥t"));
+                top.getChildren().add(Functions.nhanDeXuat("Đề xuất"));
             }
             top.getChildren().addAll(Functions.khoangTrong(), Functions.nhanChinh(Math.round(o.diem()) + "/100"));
 
@@ -114,15 +114,15 @@ public class ResultPanel extends ScrollPane {
             FlowPane chiSo = new FlowPane(8, 8);
             OptionStats s = o.stats();
             chiSo.getChildren().addAll(
-                    chiSoMuc("Sá»‘ ngÃ y Ä‘áº¿n trÆ°á»ng", s.soNgayHoc() + " ngÃ y"),
-                    chiSoMuc("Tá»•ng phÃºt trá»‘ng", s.phutTrong() + " phÃºt"),
-                    chiSoMuc("Tá»· lá»‡ buá»•i sÃ¡ng", s.tyLeSang() + "%"));
+                    chiSoMuc("Số ngày đến trường", s.soNgayHoc() + " ngày"),
+                    chiSoMuc("Tổng phút trống", s.phutTrong() + " phút"),
+                    chiSoMuc("Tỷ lệ buổi sáng", s.tyLeSang() + "%"));
 
-            CheckBox chk = new CheckBox("So sÃ¡nh");
+            CheckBox chk = new CheckBox("So sánh");
             chkSoSanh.put(o.ten(), chk);
             chk.setOnAction(e -> capNhatNutSoSanh());
 
-            Button xem = deXuat ? Functions.nutChinh("Xem lá»‹ch") : Functions.nutPhu("Xem lá»‹ch");
+            Button xem = deXuat ? Functions.nutChinh("Xem lịch") : Functions.nutPhu("Xem lịch");
             int idx = i;
             xem.setOnAction(e -> {
                 chiSoDangXem = idx;
@@ -152,31 +152,31 @@ public class ResultPanel extends ScrollPane {
     private void veChiTiet(ScheduleOption o) {
         chiTiet.getChildren().clear();
         HBox tieuDe = new HBox(10,
-                Functions.tieuDeThe("Thá»i khÃ³a biá»ƒu phÆ°Æ¡ng Ã¡n " + o.ten()),
-                Functions.nhanChinh("Äiá»ƒm " + Math.round(o.diem()) + "/100"));
+                Functions.tieuDeThe("Thời khóa biểu phương án " + o.ten()),
+                Functions.nhanChinh("Điểm " + Math.round(o.diem()) + "/100"));
         tieuDe.setAlignment(Pos.CENTER_LEFT);
 
         VBox theLuoi = Functions.the(14);
         theLuoi.getChildren().add(tieuDe);
         TimetableGridPanel grid = new TimetableGridPanel();
-        grid.setTieuDe("PhÆ°Æ¡ng Ã¡n " + o.ten());
+        grid.setTieuDe("Phương án " + o.ten());
         grid.setSlots(o.slots());
         grid.setPrefHeight(560);
         theLuoi.getChildren().add(grid);
 
         VBox theDiem = Functions.the(14);
         theDiem.getChildren().addAll(
-                Functions.tieuDeThe("Äiá»ƒm Ä‘Ã¡p á»©ng tá»«ng tiÃªu chÃ­"),
+                Functions.tieuDeThe("Điểm đáp ứng từng tiêu chí"),
                 Functions.moTa(dienDatTieuChi(o)));
         if (!o.biLoai().isEmpty()) {
-            theDiem.getChildren().add(Functions.nhanCanhBao("KhÃ´ng xáº¿p Ä‘Æ°á»£c há»c pháº§n: "
+            theDiem.getChildren().add(Functions.nhanCanhBao("Không xếp được học phần: "
                     + String.join(", ", o.biLoai())));
         } else {
-            theDiem.getChildren().add(Functions.nhanHopLe("ÄÃ£ xáº¿p Ä‘á»§ táº¥t cáº£ há»c pháº§n Ä‘Ã£ chá»n Â· KhÃ´ng trÃ¹ng giá»"));
+            theDiem.getChildren().add(Functions.nhanHopLe("Đã xếp đủ tất cả học phần đã chọn · Không trùng giờ"));
         }
 
         HBox nut = new HBox(10, Functions.khoangTrong(),
-                nutLuu("LÆ°u thá»i khÃ³a biá»ƒu", o));
+                nutLuu("Lưu thời khóa biểu", o));
         nut.setAlignment(Pos.CENTER_RIGHT);
         theDiem.getChildren().add(nut);
 
@@ -189,7 +189,7 @@ public class ResultPanel extends ScrollPane {
             List<Integer> ids = new ArrayList<>();
             o.slots().forEach(s -> ids.add(s.section().id()));
             MoDals.luuLich(frame.window(), client, st.hocKy == null ? "2026-2027-1" : st.hocKy.ma(),
-                    "Lá»‹ch phÆ°Æ¡ng Ã¡n " + o.ten(), ids,
+                    "Lịch phương án " + o.ten(), ids,
                     () -> frame.denTrang(MainFrame.CARD_SAVED));
         });
         return b;
@@ -199,26 +199,26 @@ public class ResultPanel extends ScrollPane {
         Criteria c = st.criteria;
         OptionStats s = o.stats();
         StringBuilder sb = new StringBuilder();
-        sb.append("â€¢ Æ¯u tiÃªn buá»•i sÃ¡ng: ").append(s.tyLeSang()).append("% tiáº¿t há»c buá»•i sÃ¡ng");
-        sb.append(" (trá»ng sá»‘ ").append(c.uuTienSang()).append("/5).\n");
-        sb.append("â€¢ Ãt ngÃ y Ä‘áº¿n trÆ°á»ng: ").append(s.soNgayHoc()).append(" ngÃ y");
-        sb.append(" (trá»ng sá»‘ ").append(c.itNgay()).append("/5).\n");
-        sb.append("â€¢ Khoáº£ng trá»‘ng ngáº¯n: ").append(s.phutTrong()).append(" phÃºt trá»‘ng");
-        sb.append(" (trá»ng sá»‘ ").append(c.khoangTrong()).append("/5).\n");
-        sb.append("â€¢ NgÃ y há»c yÃªu thÃ­ch: trá»ng sá»‘ ").append(c.ngayYeuThich()).append("/5");
+        sb.append("• Ưu tiên buổi sáng: ").append(s.tyLeSang()).append("% tiết học buổi sáng");
+        sb.append(" (trọng số ").append(c.uuTienSang()).append("/5).\n");
+        sb.append("• Ít ngày đến trường: ").append(s.soNgayHoc()).append(" ngày");
+        sb.append(" (trọng số ").append(c.itNgay()).append("/5).\n");
+        sb.append("• Khoảng trống ngắn: ").append(s.phutTrong()).append(" phút trống");
+        sb.append(" (trọng số ").append(c.khoangTrong()).append("/5).\n");
+        sb.append("• Ngày học yêu thích: trọng số ").append(c.ngayYeuThich()).append("/5");
         if (c.ngayChon() != null && !c.ngayChon().isEmpty()) {
-            sb.append(", cÃ¡c ngÃ y T").append(String.join(", T", c.ngayChon().stream().map(String::valueOf).toList()));
+            sb.append(", các ngày T").append(String.join(", T", c.ngayChon().stream().map(String::valueOf).toList()));
         }
         sb.append(".\n");
-        sb.append("VÃ¬ váº­y phÆ°Æ¡ng Ã¡n nÃ y Ä‘áº¡t Ä‘iá»ƒm ").append(Math.round(o.diem())).append("/100 vÃ  Ä‘Æ°á»£c xáº¿p háº¡ng tÆ°Æ¡ng á»©ng.");
+        sb.append("Vì vậy phương án này đạt điểm ").append(Math.round(o.diem())).append("/100 và được xếp hạng tương ứng.");
         return sb.toString();
     }
 
     private void capNhatNutSoSanh() {
         long n = chkSoSanh.values().stream().filter(CheckBox::isSelected).count();
         btnSoSanh.setDisable(n < 2);
-        btnSoSanh.setText(n < 2 ? "So sÃ¡nh phÆ°Æ¡ng Ã¡n Ä‘Ã£ chá»n (chá»n 2â€“3)"
-                : "So sÃ¡nh " + n + " phÆ°Æ¡ng Ã¡n Ä‘Ã£ chá»n");
+        btnSoSanh.setText(n < 2 ? "So sánh phương án đã chọn (chọn 2–3)"
+                : "So sánh " + n + " phương án đã chọn");
     }
 
     private void moSoSanh() {
@@ -230,7 +230,7 @@ public class ResultPanel extends ScrollPane {
             }
         }
         if (ds.size() < 2) {
-            Functions.canhBao(frame.window(), "HÃ£y chá»n Ã­t nháº¥t 2 phÆ°Æ¡ng Ã¡n Ä‘á»ƒ so sÃ¡nh.");
+            Functions.canhBao(frame.window(), "Hãy chọn ít nhất 2 phương án để so sánh.");
             return;
         }
         frame.moSoSanhPhuongAn(MainFrame.CARD_RES, ds);

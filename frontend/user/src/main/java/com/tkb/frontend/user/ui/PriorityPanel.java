@@ -26,9 +26,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * MÃ n hÃ¬nh Thiáº¿t láº­p Æ°u tiÃªn: hai cá»™t.
- * TrÃ¡i: nhÃ³m lá»›p Ä‘Æ°á»£c phÃ©p chá»n (card há»c pháº§n vá»›i tá»• há»£p LT+TH há»£p lá»‡).
- * Pháº£i: cÃ¡c tiÃªu chÃ­ Æ°u tiÃªn dáº¡ng thanh trÆ°á»£t 0..5 vÃ  ngÃ y há»c yÃªu thÃ­ch T2..T7.
+ * Màn hình Thiết lập ưu tiên: hai cột.
+ * Trái: nhóm lớp được phép chọn (card học phần với tổ hợp LT+TH hợp lệ).
+ * Phải: các tiêu chí ưu tiên dạng thanh trượt 0..5 và ngày học yêu thích T2..T7.
  */
 public class PriorityPanel extends ScrollPane {
     private final MainFrame frame;
@@ -55,10 +55,10 @@ public class PriorityPanel extends ScrollPane {
         khung.setStyle("-fx-background-color: #F6F8FB;");
 
         VBox header = new VBox(4,
-                Functions.chuDe("Thiáº¿t láº­p Æ°u tiÃªn"),
-                Functions.moTa("Chá»n cÃ¡c tá»• há»£p nhÃ³m lá»›p Ä‘Æ°á»£c phÃ©p vÃ  Ä‘iá»u chá»‰nh trá»ng sá»‘. "
-                        + "Trá»ng sá»‘ chá»‰ dÃ¹ng Ä‘á»ƒ xáº¿p háº¡ng cÃ¡c lá»‹ch; má»i phÆ°Æ¡ng Ã¡n há»£p lá»‡ Ä‘á»u khÃ´ng trÃ¹ng giá» "
-                        + "vÃ  tuÃ¢n thá»§ Ä‘iá»u kiá»‡n ghÃ©p nhÃ³m LTâ€“TH."));
+                Functions.chuDe("Thiết lập ưu tiên"),
+                Functions.moTa("Chọn các tổ hợp nhóm lớp được phép và điều chỉnh trọng số. "
+                        + "Trọng số chỉ dùng để xếp hạng các lịch; mọi phương án hợp lệ đều không trùng giờ "
+                        + "và tuân thủ điều kiện ghép nhóm LT–TH."));
 
         HBox haiCot = new HBox(16);
         khung.getChildren().addAll(header, haiCot);
@@ -66,8 +66,8 @@ public class PriorityPanel extends ScrollPane {
         VBox traiCard = Functions.the(16);
         HBox.setHgrow(traiCard, Priority.ALWAYS);
         traiCard.getChildren().addAll(
-                Functions.tieuDeThe("NhÃ³m lá»›p Ä‘Æ°á»£c phÃ©p chá»n"),
-                Functions.moTa("Má»—i há»c pháº§n lÃ  má»™t card. ÄÃ¡nh dáº¥u vÃ o tá»• há»£p báº¡n muá»‘n Ä‘Æ°a vÃ o xáº¿p lá»‹ch."),
+                Functions.tieuDeThe("Nhóm lớp được phép chọn"),
+                Functions.moTa("Mỗi học phần là một card. Đánh dấu vào tổ hợp bạn muốn đưa vào xếp lịch."),
                 cotTrai);
 
         VBox phaiCard = Functions.the(16);
@@ -88,13 +88,13 @@ public class PriorityPanel extends ScrollPane {
         veCotPhai();
     }
 
-    // ------------------------------------------------------------- cá»™t trÃ¡i
+    // ------------------------------------------------------------- cột trái
 
     private void veCotTrai() {
         cotTrai.getChildren().clear();
         if (st.tatCaNhom.isEmpty()) {
-            cotTrai.getChildren().add(Functions.moTa("ChÆ°a cÃ³ dá»¯ liá»‡u nhÃ³m lá»›p. "
-                    + "HÃ£y vÃ o má»¥c â€œNhÃ³m lá»›p há»c pháº§nâ€ Ä‘á»ƒ táº£i dá»¯ liá»‡u."));
+            cotTrai.getChildren().add(Functions.moTa("Chưa có dữ liệu nhóm lớp. "
+                    + "Hãy vào mục “Nhóm lớp học phần” để tải dữ liệu."));
             return;
         }
         Map<String, List<SectionSlot>> theoMon = new LinkedHashMap<>();
@@ -118,7 +118,7 @@ public class PriorityPanel extends ScrollPane {
             }
         }
         Label td = Functions.tieuDeThe(ten);
-        Label ma = Functions.nhanNho(maMh + " Â· " + tc + " tÃ­n chá»‰");
+        Label ma = Functions.nhanNho(maMh + " · " + tc + " tín chỉ");
         HBox top = new HBox(10, td, Functions.khoangTrong(), ma);
         top.setAlignment(Pos.CENTER_LEFT);
         card.getChildren().addAll(top, Functions.vach());
@@ -126,14 +126,14 @@ public class PriorityPanel extends ScrollPane {
         boolean coTh = nhom.stream().anyMatch(s -> "TH".equals(s.section().loai()));
         List<List<SectionSlot>> toHop = toHop(nhom, coTh);
 
-        card.getChildren().add(Functions.nhanXam(toHop.size() + " tá»• há»£p Ä‘á»§ Ä‘iá»u kiá»‡n"));
+        card.getChildren().add(Functions.nhanXam(toHop.size() + " tổ hợp đủ điều kiện"));
         for (List<SectionSlot> th : toHop) {
             card.getChildren().add(theToHop(th));
         }
         return card;
     }
 
-    /** Tá»• há»£p há»£p lá»‡: náº¿u cÃ³ TH thÃ¬ ghÃ©p LT+TH cÃ¹ng nhÃ³m; khÃ´ng thÃ¬ tá»«ng LT riÃªng. */
+    /** Tổ hợp hợp lệ: nếu có TH thì ghép LT+TH cùng nhóm; không thì từng LT riêng. */
     private List<List<SectionSlot>> toHop(List<SectionSlot> nhom, boolean coTh) {
         List<List<SectionSlot>> out = new ArrayList<>();
         if (!coTh) {
@@ -211,23 +211,23 @@ public class PriorityPanel extends ScrollPane {
                 p.add("TH" + x.nhom() + "." + x.toTh());
             }
         }
-        return "Chá»n tá»• há»£p: " + String.join(" + ", p);
+        return "Chọn tổ hợp: " + String.join(" + ", p);
     }
 
-    // ------------------------------------------------------------- cá»™t pháº£i
+    // ------------------------------------------------------------- cột phải
 
     private void veCotPhai() {
         cotPhai.getChildren().clear();
         cotPhai.getChildren().addAll(
-                Functions.tieuDeThe("Má»©c Ä‘á»™ Æ°u tiÃªn"),
-                Functions.moTa("KÃ©o thanh trÆ°á»£t Ä‘á»ƒ tÄƒng hoáº·c giáº£m má»©c Ä‘á»™ quan trá»ng cá»§a tá»«ng tiÃªu chÃ­."));
+                Functions.tieuDeThe("Mức độ ưu tiên"),
+                Functions.moTa("Kéo thanh trượt để tăng hoặc giảm mức độ quan trọng của từng tiêu chí."));
 
-        cotPhai.getChildren().add(tieuChi("Æ¯u tiÃªn buá»•i sÃ¡ng",
-                "Xáº¿p nhiá»u tiáº¿t há»c vÃ o buá»•i sÃ¡ng (tiáº¿t 1â€“5) hÆ¡n.", sSang, lblSang));
-        cotPhai.getChildren().add(tieuChi("Ãt ngÃ y Ä‘áº¿n trÆ°á»ng",
-                "Giáº£m sá»‘ ngÃ y pháº£i lÃªn trÆ°á»ng trong tuáº§n.", sItNgay, lblItNgay));
-        cotPhai.getChildren().add(tieuChi("Khoáº£ng trá»‘ng ngáº¯n",
-                "Háº¡n cháº¿ cÃ¡c khoáº£ng nghá»‰ dÃ i giá»¯a nhá»¯ng buá»•i há»c trong cÃ¹ng ngÃ y.", sKhoangTrong, lblKhoang));
+        cotPhai.getChildren().add(tieuChi("Ưu tiên buổi sáng",
+                "Xếp nhiều tiết học vào buổi sáng (tiết 1–5) hơn.", sSang, lblSang));
+        cotPhai.getChildren().add(tieuChi("Ít ngày đến trường",
+                "Giảm số ngày phải lên trường trong tuần.", sItNgay, lblItNgay));
+        cotPhai.getChildren().add(tieuChi("Khoảng trống ngắn",
+                "Hạn chế các khoảng nghỉ dài giữa những buổi học trong cùng ngày.", sKhoangTrong, lblKhoang));
         cotPhai.getChildren().add(tieuChiNgay());
         cotPhai.getChildren().addAll(Functions.vach(), theNut(), ghiChu());
 
@@ -252,17 +252,17 @@ public class PriorityPanel extends ScrollPane {
         slider.setSnapToTicks(true);
         slider.setShowTickMarks(true);
         slider.setShowTickLabels(true);
-        HBox nhan = new HBox(Functions.nhanNho("0 Â· KhÃ´ng Æ°u tiÃªn"), Functions.khoangTrong(),
-                Functions.nhanNho("5 Â· Cao nháº¥t"));
+        HBox nhan = new HBox(Functions.nhanNho("0 · Không ưu tiên"), Functions.khoangTrong(),
+                Functions.nhanNho("5 · Cao nhất"));
         card.getChildren().addAll(top, mo, slider, nhan);
         return card;
     }
 
     private VBox tieuChiNgay() {
         VBox card = Functions.the(12);
-        HBox top = new HBox(10, Functions.tieuDeThe("NgÃ y há»c yÃªu thÃ­ch"), Functions.khoangTrong(), lblNgayYeu);
+        HBox top = new HBox(10, Functions.tieuDeThe("Ngày học yêu thích"), Functions.khoangTrong(), lblNgayYeu);
         top.setAlignment(Pos.CENTER_LEFT);
-        Label mo = Functions.moTa("Æ¯u tiÃªn xáº¿p lá»‹ch vÃ o cÃ¡c ngÃ y báº¡n Ä‘Ã£ chá»n bÃªn dÆ°á»›i.");
+        Label mo = Functions.moTa("Ưu tiên xếp lịch vào các ngày bạn đã chọn bên dưới.");
         sNgayYeuThich.setMajorTickUnit(1);
         sNgayYeuThich.setMinorTickCount(0);
         sNgayYeuThich.setBlockIncrement(1);
@@ -280,16 +280,16 @@ public class PriorityPanel extends ScrollPane {
             ngayChk.put(thu, chk);
             ngayRow.getChildren().add(chk);
         }
-        HBox nhan = new HBox(Functions.nhanNho("0 Â· KhÃ´ng Æ°u tiÃªn"), Functions.khoangTrong(),
-                Functions.nhanNho("5 Â· Cao nháº¥t"));
-        card.getChildren().addAll(top, mo, sNgayYeuThich, nhan, Functions.nhanNho("CÃ¡c ngÃ y Æ°u tiÃªn"), ngayRow);
+        HBox nhan = new HBox(Functions.nhanNho("0 · Không ưu tiên"), Functions.khoangTrong(),
+                Functions.nhanNho("5 · Cao nhất"));
+        card.getChildren().addAll(top, mo, sNgayYeuThich, nhan, Functions.nhanNho("Các ngày ưu tiên"), ngayRow);
         return card;
     }
 
     private VBox theNut() {
         VBox box = new VBox(8);
-        Button macDinh = Functions.nutPhu("KhÃ´i phá»¥c máº·c Ä‘á»‹nh");
-        Button toiUu = Functions.nutChinh("Tá»‘i Æ°u thá»i khÃ³a biá»ƒu");
+        Button macDinh = Functions.nutPhu("Khôi phục mặc định");
+        Button toiUu = Functions.nutChinh("Tối ưu thời khóa biểu");
         macDinh.setMaxWidth(Double.MAX_VALUE);
         toiUu.setMaxWidth(Double.MAX_VALUE);
         toiUu.setPadding(new Insets(10));
@@ -314,9 +314,9 @@ public class PriorityPanel extends ScrollPane {
         box.setStyle("-fx-background-color: #EFF6FF; -fx-background-radius: 12; -fx-border-color: #BFDBFE; "
                 + "-fx-border-radius: 12; -fx-border-width: 1;");
         box.getChildren().addAll(
-                Functions.nhanDeXuat("Ghi chÃº"),
-                Functions.moTa("Trá»ng sá»‘ chá»‰ dÃ¹ng Ä‘á»ƒ xáº¿p háº¡ng cÃ¡c lá»‹ch. Má»i phÆ°Æ¡ng Ã¡n há»£p lá»‡ Ä‘á»u pháº£i "
-                        + "khÃ´ng trÃ¹ng giá» vÃ  tuÃ¢n thá»§ Ä‘iá»u kiá»‡n ghÃ©p nhÃ³m lÃ½ thuyáº¿t â€“ thá»±c hÃ nh."));
+                Functions.nhanDeXuat("Ghi chú"),
+                Functions.moTa("Trọng số chỉ dùng để xếp hạng các lịch. Mọi phương án hợp lệ đều phải "
+                        + "không trùng giờ và tuân thủ điều kiện ghép nhóm lý thuyết – thực hành."));
         return box;
     }
 
@@ -330,13 +330,13 @@ public class PriorityPanel extends ScrollPane {
     }
 
     private String lichCua(Section s) {
-        // TÃ¬m cÃ¡c buá»•i há»c cá»§a section nÃ y trong dá»¯ liá»‡u nhÃ³m lá»›p.
+        // Tìm các buổi học của section này trong dữ liệu nhóm lớp.
         for (SectionSlot sl : st.tatCaNhom) {
             if (sl.section().id() == s.id()) {
                 List<String> p = new ArrayList<>();
                 for (ClassSession cs : sl.sessions()) {
-                    p.add("Thá»© " + cs.thu() + " Â· tiáº¿t " + cs.tietBd() + "â€“"
-                            + (cs.tietBd() + cs.soTiet() - 1) + " Â· " + cs.phong());
+                    p.add("Thứ " + cs.thu() + " · tiết " + cs.tietBd() + "–"
+                            + (cs.tietBd() + cs.soTiet() - 1) + " · " + cs.phong());
                 }
                 return String.join("  |  ", p);
             }

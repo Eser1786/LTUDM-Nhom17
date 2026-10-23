@@ -23,13 +23,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/** MÃ n hÃ¬nh Thá»i khÃ³a biá»ƒu Ä‘Ã£ lÆ°u: card lá»‹ch, xem nhanh, má»Ÿ, Ä‘á»•i tÃªn, xÃ³a vÃ  so sÃ¡nh 2 lá»‹ch. */
+/** Màn hình Thời khóa biểu đã lưu: card lịch, xem nhanh, mở, đổi tên, xóa và so sánh 2 lịch. */
 public class SavedPlansPanel extends ScrollPane {
     private final TkbClient client;
     private final MainFrame frame;
     private final MainFrame.AppUiState st;
     private final TextField txtTimKiem = Functions.oNhap();
-    private final Button btnSoSanh = Functions.nutChinh("So sÃ¡nh 2 lá»‹ch Ä‘Ã£ chá»n");
+    private final Button btnSoSanh = Functions.nutChinh("So sánh 2 lịch đã chọn");
     private final Map<Long, CheckBox> chkSoSanh = new LinkedHashMap<>();
     private final VBox danhSach = new VBox(12);
     private final VBox khung = new VBox(14);
@@ -45,13 +45,13 @@ public class SavedPlansPanel extends ScrollPane {
         khung.setStyle("-fx-background-color: #F6F8FB;");
 
         VBox header = new VBox(4,
-                Functions.chuDe("Thá»i khÃ³a biá»ƒu Ä‘Ã£ lÆ°u"),
-                Functions.moTa("Má»Ÿ láº¡i lá»‹ch, Ä‘á»•i tÃªn, xÃ³a hoáº·c chá»n 2 lá»‹ch Ä‘á»ƒ so sÃ¡nh chi tiáº¿t."));
+                Functions.chuDe("Thời khóa biểu đã lưu"),
+                Functions.moTa("Mở lại lịch, đổi tên, xóa hoặc chọn 2 lịch để so sánh chi tiết."));
 
         VBox thanhCongCu = Functions.the(12);
-        txtTimKiem.setPromptText("TÃ¬m theo tÃªn lá»‹ch...");
+        txtTimKiem.setPromptText("Tìm theo tên lịch...");
         txtTimKiem.setPrefWidth(260);
-        Button btnMoi = Functions.nutPhu("Táº¡o phÆ°Æ¡ng Ã¡n má»›i");
+        Button btnMoi = Functions.nutPhu("Tạo phương án mới");
         btnMoi.setOnAction(e -> frame.denTrang(MainFrame.CARD_PRIO));
         btnSoSanh.setDisable(true);
         btnSoSanh.setOnAction(e -> moSoSanh());
@@ -96,11 +96,11 @@ public class SavedPlansPanel extends ScrollPane {
             VBox empty = Functions.the(24);
             empty.setAlignment(Pos.CENTER);
             empty.getChildren().addAll(
-                    Functions.tieuDeThe(tatCa.isEmpty() ? "ChÆ°a cÃ³ lá»‹ch nÃ o Ä‘Æ°á»£c lÆ°u" : "KhÃ´ng tÃ¬m tháº¥y lá»‹ch phÃ¹ há»£p"),
+                    Functions.tieuDeThe(tatCa.isEmpty() ? "Chưa có lịch nào được lưu" : "Không tìm thấy lịch phù hợp"),
                     Functions.moTa(tatCa.isEmpty()
-                            ? "HÃ£y tá»‘i Æ°u thá»i khÃ³a biá»ƒu rá»“i lÆ°u má»™t phÆ°Æ¡ng Ã¡n báº¡n thÃ­ch."
-                            : "Thá»­ tá»« khÃ³a khÃ¡c hoáº·c xÃ³a Ã´ tÃ¬m kiáº¿m."));
-            Button moi = Functions.nutChinh("Táº¡o phÆ°Æ¡ng Ã¡n má»›i");
+                            ? "Hãy tối ưu thời khóa biểu rồi lưu một phương án bạn thích."
+                            : "Thử từ khóa khác hoặc xóa ô tìm kiếm."));
+            Button moi = Functions.nutChinh("Tạo phương án mới");
             moi.setOnAction(e -> frame.denTrang(MainFrame.CARD_PRIO));
             empty.getChildren().add(moi);
             danhSach.getChildren().add(empty);
@@ -126,21 +126,21 @@ public class SavedPlansPanel extends ScrollPane {
         top.getChildren().addAll(chk, ten, Functions.khoangTrong(),
                 Functions.nhanChinh(Math.round(p.diem()) + "/100"));
 
-        String hocKy = st.hocKy == null ? p.maHocKy() : "Há»c ká»³ I Â· 2026â€“2027";
-        Label meta = Functions.nhanNho(hocKy + " Â· LÆ°u ngÃ y " + p.ngayTao());
+        String hocKy = st.hocKy == null ? p.maHocKy() : "Học kỳ I · 2026–2027";
+        Label meta = Functions.nhanNho(hocKy + " · Lưu ngày " + p.ngayTao());
 
         FlowPane chiSo = new FlowPane(8, 8);
         chiSo.getChildren().addAll(
-                Functions.nhanXam(p.soHocPhan() + " há»c pháº§n"),
-                Functions.nhanXam(p.soTinChi() + " tÃ­n chá»‰"),
-                Functions.nhanXam(p.stats().soNgayHoc() + " ngÃ y há»c"),
-                Functions.nhanXam(p.stats().phutTrong() + " phÃºt trá»‘ng"),
-                Functions.nhanXam(p.soBuoi() + " buá»•i/tuáº§n"));
+                Functions.nhanXam(p.soHocPhan() + " học phần"),
+                Functions.nhanXam(p.soTinChi() + " tín chỉ"),
+                Functions.nhanXam(p.stats().soNgayHoc() + " ngày học"),
+                Functions.nhanXam(p.stats().phutTrong() + " phút trống"),
+                Functions.nhanXam(p.soBuoi() + " buổi/tuần"));
 
         HBox actions = new HBox(8);
-        Button mo = Functions.nutPhu("Má»Ÿ lá»‹ch");
-        Button doi = Functions.nutPhu("Äá»•i tÃªn");
-        Button xoa = Functions.nutXoa("XÃ³a");
+        Button mo = Functions.nutPhu("Mở lịch");
+        Button doi = Functions.nutPhu("Đổi tên");
+        Button xoa = Functions.nutXoa("Xóa");
         mo.setOnAction(e -> moLich(p));
         doi.setOnAction(e -> doiTen(p));
         xoa.setOnAction(e -> xoa(p));
@@ -152,7 +152,7 @@ public class SavedPlansPanel extends ScrollPane {
 
     private VBox theXemNhanh(SavedPlan p) {
         VBox box = new VBox(6);
-        Label t = Functions.nhanNho("Xem nhanh thá»i khÃ³a biá»ƒu");
+        Label t = Functions.nhanNho("Xem nhanh thời khóa biểu");
         box.getChildren().add(t);
         try {
             PlanDetail d = client.getPlan(p.id());
@@ -162,7 +162,7 @@ public class SavedPlansPanel extends ScrollPane {
             grid.setPrefHeight(280);
             box.getChildren().add(grid);
         } catch (ApiException ex) {
-            box.getChildren().add(Functions.moTa("KhÃ´ng táº£i Ä‘Æ°á»£c chi tiáº¿t lá»‹ch."));
+            box.getChildren().add(Functions.moTa("Không tải được chi tiết lịch."));
         }
         return box;
     }
@@ -170,7 +170,7 @@ public class SavedPlansPanel extends ScrollPane {
     private void capNhatNutSoSanh() {
         long n = chkSoSanh.values().stream().filter(CheckBox::isSelected).count();
         btnSoSanh.setDisable(n != 2);
-        btnSoSanh.setText(n == 2 ? "So sÃ¡nh 2 lá»‹ch Ä‘Ã£ chá»n" : "Chá»n Ä‘Ãºng 2 lá»‹ch Ä‘á»ƒ so sÃ¡nh");
+        btnSoSanh.setText(n == 2 ? "So sánh 2 lịch đã chọn" : "Chọn đúng 2 lịch để so sánh");
     }
 
     private void moLich(SavedPlan p) {
@@ -198,7 +198,7 @@ public class SavedPlansPanel extends ScrollPane {
             }
         });
         if (ids.size() != 2) {
-            Functions.canhBao(frame.window(), "HÃ£y chá»n Ä‘Ãºng 2 lá»‹ch Ä‘á»ƒ so sÃ¡nh.");
+            Functions.canhBao(frame.window(), "Hãy chọn đúng 2 lịch để so sánh.");
             return;
         }
         frame.moSoSanhDaLuu(MainFrame.CARD_SAVED, ids);

@@ -6,12 +6,12 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class Main extends Application {
-    // Äiá»ƒm vÃ o á»©ng dá»¥ng JavaFX: táº¡o cá»­a sá»• vÃ  gáº¯n MainFrame (shell cá»§a toÃ n bá»™ giao diá»‡n).
+    // Điểm vào ứng dụng JavaFX: tạo cửa sổ và gắn MainFrame (shell của toàn bộ giao diện).
     @Override
     public void start(Stage stage) {
         MainFrame frame = new MainFrame();
         Scene scene = new Scene(frame, 1360, 880);
-        stage.setTitle("Project 15 â€“ Tá»‘i Æ°u thá»i khÃ³a biá»ƒu sinh viÃªn");
+        stage.setTitle("Project 15 – Tối ưu thời khóa biểu sinh viên");
         stage.setScene(scene);
         stage.setMinWidth(1024);
         stage.setMinHeight(680);
