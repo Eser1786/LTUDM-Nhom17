@@ -20,7 +20,7 @@ public class Main extends Application {
         // Defer the real UI construction to the JavaFX event queue so the app starts reliably.
         Platform.runLater(() -> {
             MainFrame frame = new MainFrame();
-            frame.setVisible(true);
+            frame.showWindow();
             stage.hide();
         });
     }

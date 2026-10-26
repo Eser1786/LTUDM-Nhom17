@@ -1,0 +1,12 @@
+# Build outputs
+**/target/
+
+# Python virtual environments
+venv/
+
+# Local environment files
+.env
+
+# Azurite local runtime database files
+__azurite_db_*.json
+.azurite/

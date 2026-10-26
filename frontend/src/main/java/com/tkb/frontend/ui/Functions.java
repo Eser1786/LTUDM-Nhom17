@@ -103,6 +103,12 @@ public final class Functions {
         showError(parent, message);
     }
 
+    public static void loi(Window parent, ApiException ex) {
+        // Convert backend error codes to user-friendly messages before showing them.
+        String msg = ex == null ? "Đã xảy ra lỗi không xác định." : ErrorMessages.thanThien(ex);
+        showError(parent, msg);
+    }
+
     private static void showError(Window parent, String message) {
         Alert a = new Alert(Alert.AlertType.ERROR, message);
         a.setTitle("Lỗi");
@@ -117,6 +123,35 @@ public final class Functions {
         HBox h = new HBox(v);
         h.setPadding(new Insets(0));
         return h;
+    }
+
+    public static Label chuDe(String text) {
+        Label l = new Label(text == null ? "" : text);
+        l.setTextFill(MA_CHU_DAM);
+        l.setFont(F_CHU_DE);
+        return l;
+    }
+
+    public static Label moTa(String text) {
+        Label l = new Label(text == null ? "" : text);
+        l.setWrapText(true);
+        l.setTextFill(MA_CHU_PHU);
+        l.setFont(F_MO_TA);
+        return l;
+    }
+
+    public static Button nutXoa(String text) {
+        return nut(text, MA_LOI_NEN, MA_LOI, MA_LOI);
+    }
+
+    private static Button nut(String text, Color background, Color border, Color textColor) {
+        Button b = new Button(text == null ? "" : text);
+        b.setFont(F_CHU_BOLD);
+        b.setStyle("-fx-background-color: " + toWeb(background)
+                + "; -fx-border-color: " + toWeb(border)
+                + "; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 8 12 8 12; -fx-text-fill: "
+                + toWeb(textColor) + ";");
+        return b;
     }
 
     private static String toWeb(javafx.scene.paint.Paint paint) {

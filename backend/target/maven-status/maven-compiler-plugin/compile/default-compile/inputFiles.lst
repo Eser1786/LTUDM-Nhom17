@@ -1,5 +1,2 @@
-<<<<<<< HEAD
-D:\schools\mangMayTinh\timetable-work\timetable\backend\src\main\java\com\tkb\backend\Main.java
-=======
 /home/eser/Projects/TimeTableManagement/backend/src/main/java/com/tkb/backend/Main.java
->>>>>>> 05f5e0e83a6f0080e4687b8aa210b0dffd5da367
+/home/eser/Projects/TimeTableManagement/backend/src/main/java/com/tkb/backend/tool/CsvDatabaseImporter.java

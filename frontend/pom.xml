@@ -6,52 +6,6 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-<<<<<<< HEAD
-  <properties>
-    <javafx.version>21.0.8</javafx.version>
-  </properties>
-
-  <dependencies>
-    <!-- Giao thuc, ma hoa, DTO dung chung voi server -->
-    <dependency>
-      <groupId>com.tkb</groupId>
-      <artifactId>common</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!-- Swing da co san trong JDK nen khong can them thu vien GUI.
-         Client KHONG duoc co MySQL connector hay HikariCP: moi truy cap CSDL di qua server. -->
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-controls</artifactId>
-      <version>${javafx.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-graphics</artifactId>
-      <version>${javafx.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-swing</artifactId>
-      <version>${javafx.version}</version>
-    </dependency>
-  </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.openjfx</groupId>
-        <artifactId>javafx-maven-plugin</artifactId>
-        <version>0.0.8</version>
-        <configuration>
-          <mainClass>com.tkb.frontend.Main</mainClass>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-</project>
-=======
     <parent>
         <groupId>com.tkb</groupId>
         <artifactId>timetable</artifactId>
@@ -120,4 +74,3 @@
         </plugins>
     </build>
 </project>
->>>>>>> 05f5e0e83a6f0080e4687b8aa210b0dffd5da367
