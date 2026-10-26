@@ -24,6 +24,24 @@ try:
 except ImportError:
     mysql = None
 
+
+def load_env_file(env_path: Path) -> None:
+    """Nap bien moi truong tu file .env neu chua export trong shell."""
+    if not env_path.exists():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        os.environ.setdefault(key, value)
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+load_env_file(PROJECT_ROOT / ".env")
+
 # ==============================================================================
 # 1. CAU HINH DANH SACH FILE PDF & COT DU LIEU
 # ==============================================================================
@@ -117,19 +135,15 @@ def extract_rows(pdf_path: str, subject_type: str) -> List[List[Optional[str]]]:
     if subject_type == "chuyen_nganh":
         to_th_idx = chuyen_nganh_full.index("To_TH")      # index 8
         tuan_hoc_idx = chuyen_nganh_full.index("Tuan_hoc")  # index 14
-        ma_mh_idx = chuyen_nganh_full.index("Ma_MH")      # index 1
-        nhom_idx = chuyen_nganh_full.index("Nhom")        # index 7
     else:
         to_th_idx = mon_chung_full.index("To_TH")         # index 4
         tuan_hoc_idx = mon_chung_full.index("Tuan_hoc")   # index 11
-        ma_mh_idx = mon_chung_full.index("Ma_MH")         # index 2
-        nhom_idx = mon_chung_full.index("Nhom")           # index 3
 
     all_rows: List[List[Optional[str]]] = []
     detected_to_th_count = 0
 
     with pdfplumber.open(pdf_path) as pdf:
-        for page_num, page in enumerate(pdf.pages, start=1):
+        for page in pdf.pages:
             tables = page.find_tables()
             if not tables:
                 continue
@@ -144,8 +158,6 @@ def extract_rows(pdf_path: str, subject_type: str) -> List[List[Optional[str]]]:
                 to_th_x_bounds = _find_column_x_bounds(table, to_th_idx)
                 tuan_x_bounds = _find_column_x_bounds(table, tuan_hoc_idx)
 
-                # Theo doi pham vi cac dong thuoc cung 1 o lon To_TH (merged cell)
-                # de xu ly truong hop dau 'X' nam giua o lon
                 current_group_indices: List[int] = []
                 current_merged_to_th_bbox: Optional[Tuple[float, float, float, float]] = None
 
@@ -155,7 +167,6 @@ def extract_rows(pdf_path: str, subject_type: str) -> List[List[Optional[str]]]:
                     row_vals = list(raw_rows[r_idx])
                     row_top, row_bottom = row_obj.bbox[1], row_obj.bbox[3]
 
-                    # Loc tat ca ky tu nam trong dai ngang cua dong hien tai
                     row_chars = [
                         c for c in page_chars
                         if row_top <= ((c["top"] + c["bottom"]) / 2.0) < row_bottom
@@ -163,7 +174,6 @@ def extract_rows(pdf_path: str, subject_type: str) -> List[List[Optional[str]]]:
 
                     # --- A. TACH O LON TO_TH CHO DONG TIET HOC HIEN TAI ---
                     if to_th_x_bounds is not None and to_th_idx < len(row_vals):
-                        # Cat khung (col_x0, row_top, col_x1, row_bottom) cho dong nay
                         virtual_to_th_cell = (to_th_x_bounds[0], row_top, to_th_x_bounds[1], row_bottom)
                         to_th_chars = [c for c in row_chars if _char_in_bbox(c, virtual_to_th_cell)]
                         sliced_to_th = "".join(
@@ -183,10 +193,8 @@ def extract_rows(pdf_path: str, subject_type: str) -> List[List[Optional[str]]]:
                             row_vals[tuan_hoc_idx] = raw_tuan
 
                     # --- C. KIEM TRA NEU O LON TO_TH CO KY TU NAM NGAY BIEN GIUA 2 DONG ---
-                    # Neu cell goc cua To_TH tai dong dau nhom la 1 o lon (top..bottom bao trum nhieu dong)
                     orig_cell = row_obj.cells[to_th_idx] if to_th_idx < len(row_obj.cells) else None
                     if orig_cell is not None:
-                        # Bat dau 1 o To_TH moi
                         _flush_merged_to_th_fallback(
                             all_rows, current_group_indices, current_merged_to_th_bbox,
                             page_chars, to_th_idx
@@ -199,7 +207,6 @@ def extract_rows(pdf_path: str, subject_type: str) -> List[List[Optional[str]]]:
 
                     all_rows.append(row_vals)
 
-                # Flush nhom cuoi cung cua bang
                 _flush_merged_to_th_fallback(
                     all_rows, current_group_indices, current_merged_to_th_bbox,
                     page_chars, to_th_idx
@@ -217,24 +224,15 @@ def _flush_merged_to_th_fallback(
     page_chars: List[dict],
     to_th_idx: int,
 ) -> None:
-    """
-    Xu ly truong hop o lon To_TH co chua ky tu (vd 1 dau 'X' nam giua o lon),
-    nhung do nam ngay tren duong bien hoac nhom co nhieu dong nen can phan bo:
-      - Neu bat ky dong nao trong nhom da nhan duoc dau 'X' theo toa do Y -> giu nguyen.
-      - Neu o lon co text (vd 'X') ma chua dong nao nhan duoc (do nam lech bien) ->
-        gan vao cac dong cua nhom do.
-    """
     if not group_indices or merged_bbox is None:
         return
 
-    # Kiem tra xem da co dong nao trong nhom bat duoc text To_TH chua
     already_captured = any(
         bool((all_rows[idx][to_th_idx] or "").strip()) for idx in group_indices
     )
     if already_captured:
         return
 
-    # Lay toan bo ky tu nam trong o lon merged_bbox
     merged_chars = [c for c in page_chars if _char_in_bbox(c, merged_bbox)]
     full_text = "".join(
         c.get("text", "") for c in sorted(merged_chars, key=lambda c: (round(c["top"], 1), c["x0"]))
@@ -243,7 +241,6 @@ def _flush_merged_to_th_fallback(
     if not full_text or full_text in ("TH", "Tổ TH"):
         return
 
-    # Neu o lon co text ma chua gan vao dong nao -> gan cho cac dong trong nhom
     lines = [line.strip() for line in full_text.splitlines() if line.strip()]
     if len(lines) == len(group_indices):
         for idx, val in zip(group_indices, lines):
@@ -274,7 +271,6 @@ def load_pdf(pdf_path: str, subject_type: str) -> pd.DataFrame:
 
     if subject_type == "chuyen_nganh":
         df = pd.DataFrame(rows, columns=chuyen_nganh_full)
-        # Chi ffill cac cot thong tin chung cua nhom, KHONG ffill To_TH vi To_TH da duoc cat theo tung dong
         df[fill_chuyen_nganh_cols] = df[fill_chuyen_nganh_cols].replace("", None).ffill()
     elif subject_type == "mon_chung":
         df = pd.DataFrame(rows, columns=mon_chung_full)
@@ -284,12 +280,10 @@ def load_pdf(pdf_path: str, subject_type: str) -> pd.DataFrame:
     else:
         raise ValueError(f"subject_type khong hop le: {subject_type}")
 
-    # Bo cac dong tiêu đề lặp lại ở mỗi trang ("Thứ", None...)
     df = df[df["Thu"].notna()]
     df = df[df["Thu"].astype(str).str.strip() != "Thứ"]
     df = df.dropna(subset=["TietBD", "So_tiet"])
 
-    # Phan loai LT / TH dua tren o To_TH vua tach duoc
     loai_results = df.apply(determine_loai_and_to_th, axis=1)
     df["To_TH"] = [res[0] for res in loai_results]
     df["Loai"] = [res[1] for res in loai_results]
@@ -311,11 +305,11 @@ def load_all_pdfs(pdf_paths: List[str], subject_type: str) -> pd.DataFrame:
 def normalize_text_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     Lam sach cac cot van ban:
-      - LUU Y QUAN TRONG: Voi cot 'Tuan_hoc', TUYET DOI KHONG goi .strip() o dau chuoi
-        de giu nguyen khoang trang bieu thi tuan nghi (vd '  *' = hoc tuan 3).
-      - Voi cot 'Ma_phong', xoa khoang trang bi tach loi (vd '4.S_QP0 6' -> '4.S_QP06').
+      - Voi cot 'Tuan_hoc': TUYET DOI KHONG goi .strip() o dau chuoi de giu nguyen
+        khoang trang bieu thi tuan nghi (vd '  *' = hoc tuan 3).
+      - Voi cot 'Ma_phong': xoa khoang trang bi tach loi (vd '4.S_QP0 6' -> '4.S_QP06').
     """
-    for col in df.select_dtypes(include=["object"]).columns:
+    for col in df.select_dtypes(include=["object", "string"]).columns:
         if col == "Tuan_hoc":
             df[col] = df[col].map(
                 lambda v: v.replace("\r", "").replace("\n", "").rstrip(" ")
@@ -361,20 +355,75 @@ def compute_tuan_mask(tuan_hoc: str, default_weeks: int = 15) -> Tuple[str, int]
     return raw[:62], mask
 
 
+def expand_sections_by_lab_group(
+    raw_sections: Dict[Tuple[str, str], dict]
+) -> Dict[Tuple[str, str], dict]:
+    """
+    Xu ly tu dong truong hop 1 nhom LT co nhieu To TH khac nhau (vd 849010 Nhom 01 co To_TH 01, 02, 03):
+      - Neu nhom chi co LT, hoac chi co 1 To_TH (hoac danh dau 'X' chung):
+        giu nguyen 1 ban ghi nhom_lop (vd nhom = '01') gom tat ca cac buoi.
+      - Neu nhom co >= 2 ma To_TH phan biet (vd '01', '02', '03'):
+        tach thanh cac lua chon doc lap (vd '01-01', '01-02', '01-03'), moi lua chon
+        gom [cac buoi LT chung + cac buoi TH cua rieng to do].
+        Nho vay khong can sua 01-schema.sql ma thuat toan van chon dung 1 to TH!
+    """
+    expanded: Dict[Tuple[str, str], dict] = {}
+
+    for (ma_mh, nhom), sec in raw_sections.items():
+        slots = sec["slots"]
+        distinct_to_th = sorted({
+            s[4] for s in slots
+            if s[5] == "TH" and s[4] and s[4].upper() != "X"
+        })
+
+        # Neu khong chia nhieu to TH -> giu nguyen
+        if len(distinct_to_th) <= 1:
+            expanded[(ma_mh, nhom)] = sec
+            continue
+
+        # Tach thanh tung to (buoi LT chung + buoi TH cua to do)
+        lt_slots = [s for s in slots if s[5] == "LT"]
+        for to_th in distinct_to_th:
+            th_slots = [s for s in slots if s[5] == "TH" and s[4] == to_th]
+            combined_nhom = f"{nhom}-{to_th}"[:5]  # Vua khit VARCHAR(5) trong 01-schema.sql
+            expanded[(ma_mh, combined_nhom)] = {
+                "ten_mh": sec["ten_mh"],
+                "gv_list": list(sec["gv_list"]),
+                "slots": lt_slots + th_slots,
+            }
+
+    return expanded
+
+
 def import_dataframe_to_mysql(df: pd.DataFrame, ma_hoc_ky: str) -> None:
     """Nap DataFrame da xu ly vao 4 bang MySQL (hoc_ky, hoc_phan, nhom_lop, lich_hoc)."""
     if mysql is None:
         print("[THONG BAO] Chua cai mysql-connector-python (pip install mysql-connector-python) -> Bo qua buoc nap MySQL.")
         return
 
+    def first_env(*keys: str, default: str) -> str:
+        for key in keys:
+            value = os.environ.get(key)
+            if value is not None and str(value).strip() != "":
+                return value
+        return default
+
+    def env_int(*keys: str, default: int) -> int:
+        raw = first_env(*keys, default=str(default))
+        try:
+            return int(raw)
+        except ValueError:
+            return default
+
     db_config = {
-        "host": os.environ.get("DB_HOST", "127.0.0.1"),
-        "port": int(os.environ.get("DB_PORT", "3306")),
-        "database": os.environ.get("DB_NAME", "tkb_db"),
-        "user": os.environ.get("DB_USER", "root"),
-        "password": os.environ.get("DB_PASS", "root"),
+        "host": first_env("MYSQL_HOST", "DB_HOST", default="127.0.0.1"),
+        "port": env_int("MYSQL_PORT", "DB_PORT", default=3306),
+        "database": first_env("MYSQL_DATABASE", "DB_NAME", default="timetable_db"),
+        "user": first_env("MYSQL_USER", "DB_USER", default="timetable_user"),
+        "password": first_env("MYSQL_PASSWORD", "DB_PASS", default="timetable_password"),
         "charset": "utf8mb4",
         "use_unicode": True,
+        "connection_timeout": 10,
     }
 
     parts = ma_hoc_ky.split("-")
@@ -391,13 +440,22 @@ def import_dataframe_to_mysql(df: pd.DataFrame, ma_hoc_ky: str) -> None:
     try:
         # Dam bao bang lich_hoc co du cot to_th, loai, tuan_hoc, tuan_mask va ck_lich_tiet <= 12
         cursor.execute("SHOW COLUMNS FROM lich_hoc")
-        existing_cols = {row[0] for row in cursor.fetchall()}
+        rows = cursor.fetchall()
+        existing_cols = {row[0] for row in rows}
         if "to_th" not in existing_cols:
             cursor.execute("ALTER TABLE lich_hoc ADD COLUMN to_th VARCHAR(5) NOT NULL DEFAULT '' AFTER phong")
         if "loai" not in existing_cols:
             cursor.execute("ALTER TABLE lich_hoc ADD COLUMN loai ENUM('LT','TH') NOT NULL DEFAULT 'LT' AFTER to_th")
         if "tuan_hoc" not in existing_cols:
-            cursor.execute("ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR(30) NULL AFTER loai")
+            cursor.execute("ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR(62) NULL AFTER loai")
+        else:
+            col_map = {row[0]: row for row in rows}
+            tuan_hoc_row = col_map.get("tuan_hoc")
+            if tuan_hoc_row is not None:
+                col_type = str(tuan_hoc_row[1]).lower()  # vd: 'varchar(30)'
+                m = re.search(r"varchar\((\d+)\)", col_type)
+                if m and int(m.group(1)) < 62:
+                    cursor.execute("ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR(62) NULL")
         if "tuan_mask" not in existing_cols:
             cursor.execute("ALTER TABLE lich_hoc ADD COLUMN tuan_mask BIGINT NOT NULL DEFAULT 32767 AFTER tuan_hoc")
         try:
@@ -422,7 +480,7 @@ def import_dataframe_to_mysql(df: pd.DataFrame, ma_hoc_ky: str) -> None:
 
         # 2. Gom nhom hoc_phan va nhom_lop
         courses: Dict[str, Tuple[str, int]] = {}
-        sections: Dict[Tuple[str, str], dict] = {}
+        raw_sections: Dict[Tuple[str, str], dict] = {}
 
         for row in df.itertuples(index=False):
             ma_mh = str(row.Ma_MH).strip()
@@ -433,7 +491,7 @@ def import_dataframe_to_mysql(df: pd.DataFrame, ma_hoc_ky: str) -> None:
 
             courses[ma_mh] = (ten_mon, max(so_tc, courses.get(ma_mh, (ten_mon, 0))[1]))
 
-            sec = sections.setdefault(
+            sec = raw_sections.setdefault(
                 (ma_mh, nhom),
                 {"ten_mh": ten_mon, "gv_list": [], "slots": [], "seen": set()},
             )
@@ -457,6 +515,9 @@ def import_dataframe_to_mysql(df: pd.DataFrame, ma_hoc_ky: str) -> None:
             if slot_key not in sec["seen"]:
                 sec["seen"].add(slot_key)
                 sec["slots"].append(slot_key)
+
+        # Tach nhom neu co nhieu To_TH (01, 02, 03), con neu khong co hoac chi co 'X' thi giu nguyen
+        sections = expand_sections_by_lab_group(raw_sections)
 
         # 3. Ghi hoc_phan
         cursor.executemany(
@@ -535,9 +596,8 @@ if __name__ == "__main__":
     df["So_tiet"] = pd.to_numeric(df["So_tiet"], errors="coerce").fillna(0).astype(int)
 
     df = normalize_text_columns(df)
-    df = df.drop_duplicates( ignore_index=True)
+    df = df.drop_duplicates(ignore_index=True)
 
-    # Thong ke nhanh so luong buoi TH / LT tim thay
     th_count = (df["Loai"] == "TH").sum()
     lt_count = (df["Loai"] == "LT").sum()
     print(f"[THONG KE] Tong so dong sau khu trung: {len(df)} (LT: {lt_count}, TH co dau X/To_TH: {th_count})")
@@ -546,6 +606,5 @@ if __name__ == "__main__":
     df.to_csv(output_csv_path, index=False, encoding="utf-8")
     print(f"[CSV] Da luu file CSV tai: {output_csv_path}")
 
-    # Neu muon nap thang vao MySQL Docker ngay sau khi xuat CSV (bo qua neu truyen --csv-only)
     if "--csv-only" not in sys.argv:
         import_dataframe_to_mysql(df, semester)

@@ -68,7 +68,7 @@ CREATE TABLE lich_hoc (
   phong        VARCHAR(20) NULL,
   to_th        VARCHAR(5)  NOT NULL DEFAULT '',       -- '' nếu là LT, hoặc số tổ thực hành ('01', '02'...)
   loai         ENUM('LT','TH') NOT NULL DEFAULT 'LT', -- phân biệt buổi Lý thuyết ('LT') và Thực hành ('TH')
-  tuan_hoc     VARCHAR(30) NULL,                      -- chuỗi tuần học nguyên bản trong PDF/CSV
+    tuan_hoc     VARCHAR(62) NULL,                      -- chuỗi tuần học nguyên bản trong PDF/CSV
   -- Mặt nạ tuần: bit 0 = tuần 1, bit 1 = tuần 2, ... (tối đa 62 tuần, dùng BIGINT có dấu cho dễ
   -- đọc bằng JDBC). Hai buổi chỉ trùng nhau khi cùng thứ, giao nhau về tiết VÀ (mask_a & mask_b) <> 0.
   tuan_mask    BIGINT NOT NULL DEFAULT 32767,
