@@ -22,15 +22,26 @@ mvn clean compile : tự động tải xuống các thư viện nếu như lần
 
 ```
 
+### Thư viện python
+
+```bash
+
+pip install requirements.txt : tải các thư viện cần thiết của python trước khi chạy file python cũng như backend
+```
+
 #### Cách chạy backend
 
 ```bash
 
 docker compose up -d
 mvn clean compile
-(chạy file main tiếp theo)
+# (chạy file main tiếp theo)
+
+python tools/import_tkb_mysql.py csv/2026-2027-1/thoi_khoa_bieu.csv # nạp file csv hiện tại vào mysql
 
 ```
+
+
 #### Dùng lệnh để vào được sql query
 
 ```bash

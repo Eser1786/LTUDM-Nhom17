@@ -23,18 +23,59 @@ try:
 except ImportError:
     mysql = None
 
+
+def load_env_file(env_path: Path) -> None:
+    """Nap bien moi truong tu file .env neu chua export trong shell."""
+    if not env_path.exists():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        os.environ.setdefault(key, value)
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+load_env_file(PROJECT_ROOT / ".env")
+
 # ==============================================================================
 # 1. CAU HINH KET NOI MYSQL (DOCKER)
 # ==============================================================================
-DB_CONFIG = {
-    "host": os.environ.get("DB_HOST", "127.0.0.1"),
-    "port": int(os.environ.get("DB_PORT", "3306")),
-    "database": os.environ.get("DB_NAME", "tkb_db"),
-    "user": os.environ.get("DB_USER", "root"),
-    "password": os.environ.get("DB_PASS", "root"),
-    "charset": "utf8mb4",
-    "use_unicode": True,
-}
+def _first_env(*keys: str, default: str) -> str:
+    for key in keys:
+        value = os.environ.get(key)
+        if value is not None and str(value).strip() != "":
+            return value
+    return default
+
+
+def _env_int(*keys: str, default: int) -> int:
+    raw = _first_env(*keys, default=str(default))
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+def build_db_config() -> Dict[str, object]:
+    """
+    Doc cau hinh ket noi tu bien moi truong theo thu tu uu tien:
+    - Nhom MYSQL_* (phu hop docker-compose)
+    - Nhom DB_* (tuong thich script cu)
+    """
+    return {
+        "host": _first_env("MYSQL_HOST", "DB_HOST", default="127.0.0.1"),
+        "port": _env_int("MYSQL_PORT", "DB_PORT", default=3306),
+        "database": _first_env("MYSQL_DATABASE", "MYSQL_NAME", "DB_NAME", default="timetable_db"),
+        "user": _first_env("MYSQL_USER", "DB_USER", default="timetable_user"),
+        "password": _first_env("MYSQL_PASSWORD", "DB_PASS", default="timetable_password"),
+        "charset": "utf8mb4",
+        "use_unicode": True,
+        "connection_timeout": 10,
+    }
 
 
 # ==============================================================================
@@ -324,7 +365,8 @@ def ensure_schema_columns_and_constraints(cursor) -> None:
     va cho phep tiet hoc den tiet 12 (xu ly 34 buoi tiet 9-11).
     """
     cursor.execute("SHOW COLUMNS FROM lich_hoc")
-    existing_cols = {row[0] for row in cursor.fetchall()}
+    rows = cursor.fetchall()
+    existing_cols = {row[0] for row in rows}
 
     if "to_th" not in existing_cols:
         cursor.execute(
@@ -336,8 +378,17 @@ def ensure_schema_columns_and_constraints(cursor) -> None:
         )
     if "tuan_hoc" not in existing_cols:
         cursor.execute(
-            "ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR(30) NULL AFTER loai"
+            "ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR(62) NULL AFTER loai"
         )
+    else:
+        # Tuong thich DB cu: neu tuan_hoc nho hon 62 ky tu thi mo rong.
+        col_map = {row[0]: row for row in rows}
+        tuan_hoc_row = col_map.get("tuan_hoc")
+        if tuan_hoc_row is not None:
+            col_type = str(tuan_hoc_row[1]).lower()  # vd: 'varchar(30)'
+            m = re.search(r"varchar\((\d+)\)", col_type)
+            if m and int(m.group(1)) < 62:
+                cursor.execute("ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR(62) NULL")
     if "tuan_mask" not in existing_cols:
         cursor.execute(
             "ALTER TABLE lich_hoc ADD COLUMN tuan_mask BIGINT NOT NULL DEFAULT 32767 AFTER tuan_hoc"
@@ -368,7 +419,15 @@ def import_to_mysql(
             "Chua cai thu vien mysql-connector-python! Chay lenh: pip install mysql-connector-python"
         )
 
-    conn = mysql.connector.connect(**DB_CONFIG)
+    db_config = build_db_config()
+    try:
+        conn = mysql.connector.connect(**db_config)
+    except Exception as exc:
+        safe_cfg = {k: v for k, v in db_config.items() if k != "password"}
+        raise RuntimeError(
+            "Khong ket noi duoc MySQL. Kiem tra docker compose, host/port va tai khoan trong .env. "
+            f"Cau hinh dang dung: {safe_cfg}"
+        ) from exc
     conn.autocommit = False
     cursor = conn.cursor()
 
