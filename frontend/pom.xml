@@ -1,4 +1,3 @@
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
@@ -10,13 +9,14 @@
         <groupId>com.tkb</groupId>
         <artifactId>timetable</artifactId>
         <version>1.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>frontend</artifactId>
 
     <properties>
-        <javafx.version>21.0.5</javafx.version>
-        <maven.compiler.release>17</maven.compiler.release>
+        <javafx.version>21.0.8</javafx.version>
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -51,14 +51,56 @@
     </dependencies>
 
     <build>
+        <sourceDirectory>${project.basedir}/user/src/main/java</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/user/src/main/resources</directory>
+            </resource>
+        </resources>
+
         <plugins>
+            <!-- Thêm thư mục nguồn riêng cho user và admin -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>add-user-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>user/src/main/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-user-resources</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>add-resource</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>user/src/main/resources</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- Biên dịch Java -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <release>17</release>
+                    <release>${maven.compiler.release}</release>
                 </configuration>
             </plugin>
 
@@ -68,7 +110,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>com.tkb.frontend.Launcher</mainClass>
+                    <mainClass>com.tkb.frontend.user.Main</mainClass>
                 </configuration>
             </plugin>
         </plugins>

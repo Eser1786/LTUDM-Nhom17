@@ -2,7 +2,7 @@
 
 ## 1) Entry point
 
-### `Main` (`frontend/src/main/java/com/tkb/frontend/Main.java`)
+### `Main` (`frontend/user/src/main/java/com/tkb/frontend/user/Main.java`)
 - Purpose: JavaFX application entry point.
 - Main functions:
   - `start(Stage stage)`: launches the JavaFX window and then creates the main app frame.
@@ -10,7 +10,7 @@
 
 ## 2) Main app shell
 
-### `MainFrame` (`frontend/src/main/java/com/tkb/frontend/ui/MainFrame.java`)
+### `MainFrame` (`frontend/user/src/main/java/com/tkb/frontend/user/ui/MainFrame.java`)
 - Purpose: main window layout, navigation, and overall app state.
 - Main functions:
   - `MainFrame()`: initializes sidebar, header, cards, and login screen.
@@ -70,7 +70,7 @@
 
 ## 3) Shared UI helpers
 
-### `Functions` (`frontend/src/main/java/com/tkb/frontend/ui/Functions.java`)
+### `Functions` (`frontend/user/src/main/java/com/tkb/frontend/user/ui/Functions.java`)
 - Purpose: common JavaFX styling and reusable widgets.
 - Main functions:
   - `the()`: returns a default white card container.
@@ -96,7 +96,7 @@
 
 ## 4) Requirement screen
 
-### `RequirementPanel` (`frontend/src/main/java/com/tkb/frontend/ui/RequirementPanel.java`)
+### `RequirementPanel` (`frontend/user/src/main/java/com/tkb/frontend/user/ui/RequirementPanel.java`)
 - Purpose: shows course sections and filtering UI.
 - Main functions:
   - `RequirementPanel(TkbClient client, MainFrame frame)`: constructor, creates filter controls and screen layout.
@@ -106,7 +106,7 @@
 
 ## 5) Scheduling job screen
 
-### `JobPanel` (`frontend/src/main/java/com/tkb/frontend/ui/JobPanel.java`)
+### `JobPanel` (`frontend/user/src/main/java/com/tkb/frontend/user/ui/JobPanel.java`)
 - Purpose: shows current optimization job progress.
 - Main functions:
   - `JobPanel(TkbClient client, MainFrame frame)`: constructor and layout creation.
@@ -118,7 +118,7 @@
 
 ## 6) Result screen
 
-### `ResultPanel` (`frontend/src/main/java/com/tkb/frontend/ui/ResultPanel.java`)
+### `ResultPanel` (`frontend/user/src/main/java/com/tkb/frontend/user/ui/ResultPanel.java`)
 - Purpose: displays recommended schedule options.
 - Main functions:
   - `ResultPanel(TkbClient client, MainFrame frame)`: constructor.
@@ -131,7 +131,7 @@
 
 ## 7) Saved plans screen
 
-### `SavedPlansPanel` (`frontend/src/main/java/com/tkb/frontend/ui/SavedPlansPanel.java`)
+### `SavedPlansPanel` (`frontend/user/src/main/java/com/tkb/frontend/user/ui/SavedPlansPanel.java`)
 - Purpose: lists saved timetable plans and allows search / compare.
 - Main functions:
   - `SavedPlansPanel(TkbClient client, MainFrame frame)`: constructor and layout.
@@ -146,7 +146,7 @@
 
 ## 8) Timetable grid view
 
-### `TimetableGridPanel` (`frontend/src/main/java/com/tkb/frontend/ui/TimetableGridPanel.java`)
+### `TimetableGridPanel` (`frontend/user/src/main/java/com/tkb/frontend/user/ui/TimetableGridPanel.java`)
 - Purpose: draws a weekly timetable grid with course cells.
 - Main functions:
   - `TimetableGridPanel()`: constructor and base grid initialization.
@@ -177,7 +177,7 @@
 
 ## 10) Data model used by UI
 
-### `Types` (`frontend/src/main/java/com/tkb/frontend/model/Types.java`)
+### `Types` (`frontend/user/src/main/java/com/tkb/frontend/user/model/Types.java`)
 - Purpose: domain data records for semester, sections, criteria, jobs, results, and saved plans.
 - Important records:
   - `Semester`
