@@ -159,7 +159,7 @@ public class JobPanel extends VBox {
                 hienLoi(false, null);
                 frame.batDauXepLich();
             });
-            quayLai.setOnAction(e -> frame.denTrang(MainFrame.CARD_PRIO));
+            quayLai.setOnAction(e -> frame.denTrang(MainFrame.CARD_REQ));
             HBox nut = new HBox(10, quayLai, thuLai);
             nut.setAlignment(Pos.CENTER_LEFT);
             nutBox.getChildren().setAll(nut);

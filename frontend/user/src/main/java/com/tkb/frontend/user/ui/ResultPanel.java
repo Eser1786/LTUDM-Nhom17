@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Comparator;
 
 /** Màn hình Kết quả đề xuất: ba card phương án A/B/C, lưới thời khóa biểu và điểm đáp ứng tiêu chí. */
 public class ResultPanel extends ScrollPane {
@@ -73,7 +74,7 @@ public class ResultPanel extends ScrollPane {
 
     private Button theNutChay() {
         Button b = Functions.nutChinh("Đi tới thiết lập ưu tiên");
-        b.setOnAction(e -> frame.denTrang(MainFrame.CARD_PRIO));
+        b.setOnAction(e -> frame.denTrang(MainFrame.CARD_REQ));
         return b;
     }
 
@@ -85,8 +86,11 @@ public class ResultPanel extends ScrollPane {
             hienTrangThai();
             return;
         }
+        List<ScheduleOption> sorted = new ArrayList<>(result.options());
+        sorted.sort(Comparator.comparingDouble(ScheduleOption::diem).reversed());
+        this.ketQua = new JobResult(result.maHocKy(), sorted);
         veCards();
-        veChiTiet(result.options().get(0));
+        veChiTiet(sorted.get(0));
         capNhatNutSoSanh();
     }
 

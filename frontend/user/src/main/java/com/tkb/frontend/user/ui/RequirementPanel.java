@@ -1,14 +1,12 @@
 package com.tkb.frontend.user.ui;
 
-import com.tkb.frontend.user.model.Types.ClassSession;
-import com.tkb.frontend.user.model.Types.Section;
+import com.tkb.frontend.user.model.Types.Course;
 import com.tkb.frontend.user.model.Types.SectionSlot;
 import com.tkb.frontend.user.net.TkbClient;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -16,16 +14,13 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 /**
- * Màn hình Nhóm lớp học phần: bảng danh sách nhóm lớp với bộ lọc, phân trang,
- * và thể hiện cặp tương thích giữa lý thuyết (LT) và thực hành (TH).
+ * Màn hình chọn môn và đặt ưu tiên trong cùng một trang.
+ * Người dùng chọn các môn cần xếp thời khóa biểu rồi điều chỉnh mức độ ưu tiên ngay trên màn hình này.
  */
 public class RequirementPanel extends ScrollPane {
     private static final int MOI_TRANG = 8;
@@ -33,34 +28,32 @@ public class RequirementPanel extends ScrollPane {
     private final TkbClient client;
     private final MainFrame frame;
     private final MainFrame.AppUiState st;
+    private final PriorityPanel priorityPanel;
     private final TextField txtTimKiem = Functions.oNhap();
-    private final ComboBox<String> cbLoai = new ComboBox<>();
-    private final ComboBox<String> cbNgay = new ComboBox<>();
-    private final ComboBox<String> cbKhung = new ComboBox<>();
-    private final Button btnDatLai = Functions.nutPhu("Đặt lại bộ lọc");
-    private final Button btnTiep = Functions.nutChinh("Tiếp tục: Thiết lập ưu tiên");
+    private final Button btnDatLai = Functions.nutPhu("Đặt lại");
     private final VBox bang = new VBox(0);
+    private final VBox daChonBox = new VBox(10);
     private final VBox khung = new VBox(14);
+    private final HBox phanTrang = new HBox(10);
     private final Label lblDem = Functions.moTa("");
-    private final HBox phanTrang = new HBox(6);
-    private List<SectionSlot> locDuLieu = new ArrayList<>();
+    private List<Course> locDuLieu = new ArrayList<>();
     private int trangHienTai;
 
     public RequirementPanel(TkbClient client, MainFrame frame) {
         this.client = client;
         this.frame = frame;
         this.st = frame.trangThai();
+        this.priorityPanel = new PriorityPanel(frame);
 
         khung.setPadding(new Insets(22, 26, 20, 26));
         khung.setSpacing(14);
         khung.setStyle("-fx-background-color: #F6F8FB;");
 
         VBox header = new VBox(4,
-                Functions.chuDe("Nhóm lớp học phần"),
-                Functions.moTa("Tìm kiếm và chọn các nhóm lớp bạn được phép tham gia. "
-                        + "Nhóm lý thuyết cần được chọn cùng nhóm thực hành tương ứng (LT01 ghép TH01.1)."));
+                Functions.chuDe("Môn muốn đăng ký"),
+                Functions.moTa("Chọn những môn bạn muốn học và điều chỉnh mức độ ưu tiên ngay trên cùng một màn hình để tối ưu thời khóa biểu."));
 
-        khung.getChildren().addAll(header, theBoLoc(), theBang());
+        khung.getChildren().addAll(header, theLayout());
 
         setContent(khung);
         setFitToWidth(true);
@@ -68,48 +61,27 @@ public class RequirementPanel extends ScrollPane {
         getStyleClass().add("requirement-scroll");
     }
 
+    private VBox theLayout() {
+        VBox vertical = new VBox(14);
+
+        VBox listCard = new VBox(12);
+        listCard.getChildren().addAll(theBoLoc(), theBang());
+
+        vertical.getChildren().addAll(listCard, daChonPanel(), priorityPanel);
+        return vertical;
+    }
+
     private VBox theBoLoc() {
         VBox card = Functions.the(14);
-        cbLoai.getItems().addAll("Tất cả loại lớp", "Lý thuyết (LT)", "Thực hành (TH)");
-        cbNgay.getItems().addAll("Tất cả các ngày", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7");
-        cbKhung.getItems().addAll("Tất cả khung giờ", "Buổi sáng (tiết 1–5)", "Buổi chiều (tiết 6–12)");
-        cbLoai.setValue("Tất cả loại lớp");
-        cbNgay.setValue("Tất cả các ngày");
-        cbKhung.setValue("Tất cả khung giờ");
-        txtTimKiem.setPromptText("Tìm theo tên hoặc mã học phần...");
-        txtTimKiem.setPrefWidth(280);
+        txtTimKiem.setPromptText("Tìm theo mã hoặc tên môn...");
+        txtTimKiem.setPrefWidth(320);
 
-        GridPane grid = new GridPane();
-        grid.setHgap(14);
-        grid.setVgap(10);
-        grid.add(Functions.nhanNho("Tìm kiếm"), 0, 0);
-        grid.add(txtTimKiem, 0, 1);
-        grid.add(Functions.nhanNho("Loại lớp"), 1, 0);
-        grid.add(cbLoai, 1, 1);
-        grid.add(Functions.nhanNho("Ngày học"), 2, 0);
-        grid.add(cbNgay, 2, 1);
-        grid.add(Functions.nhanNho("Khung giờ"), 3, 0);
-        grid.add(cbKhung, 3, 1);
-
-        HBox dong2 = new HBox(10, Functions.khoangTrong(), btnDatLai);
-        dong2.setAlignment(Pos.CENTER_RIGHT);
-
-        card.getChildren().addAll(grid, dong2);
+        HBox row = new HBox(10, txtTimKiem, Functions.khoangTrong(), btnDatLai);
+        row.setAlignment(Pos.CENTER_LEFT);
+        card.getChildren().add(row);
 
         btnDatLai.setOnAction(e -> datLaiBoLoc());
         txtTimKiem.textProperty().addListener((o, a, b) -> {
-            trangHienTai = 0;
-            veBang();
-        });
-        cbLoai.valueProperty().addListener((o, a, b) -> {
-            trangHienTai = 0;
-            veBang();
-        });
-        cbNgay.valueProperty().addListener((o, a, b) -> {
-            trangHienTai = 0;
-            veBang();
-        });
-        cbKhung.valueProperty().addListener((o, a, b) -> {
             trangHienTai = 0;
             veBang();
         });
@@ -118,29 +90,20 @@ public class RequirementPanel extends ScrollPane {
 
     private VBox theBang() {
         VBox card = Functions.the(14);
-        HBox tieuDe = new HBox(10, Functions.tieuDeThe("Danh sách nhóm lớp"));
+        HBox tieuDe = new HBox(10, Functions.tieuDeThe("Danh sách môn"));
         tieuDe.setAlignment(Pos.CENTER_LEFT);
         tieuDe.getChildren().addAll(Functions.khoangTrong(), lblDem);
 
         GridPane hang = new GridPane();
         hang.setMaxWidth(Double.MAX_VALUE);
         hang.setStyle("-fx-background-color: #F1F5F9; -fx-background-radius: 8;");
-        String[] cot = {"Chọn", "Học phần", "Nhóm", "Loại", "Ngày", "Thời gian", "Phòng", "Nhóm đi cùng"};
+        String[] cot = {"Chọn", "Mã môn", "Tên môn", "Tín chỉ", "Số lớp"};
         for (int i = 0; i < cot.length; i++) {
             Label l = new Label(cot[i]);
             l.setFont(Functions.F_NHO);
             l.setPadding(new Insets(9, 8, 9, 8));
             GridPane.setHgrow(l, Priority.ALWAYS);
-            l.setMaxWidth(Double.MAX_VALUE);
             hang.add(l, i, 0);
-        }
-        double[] mau = new double[]{60, 300, 80, 90, 80, 150, 90, 150};
-        for (int i = 0; i < mau.length; i++) {
-            javafx.scene.layout.ColumnConstraints cc = new javafx.scene.layout.ColumnConstraints();
-            cc.setMinWidth(mau[i]);
-            cc.setPercentWidth(-1);
-            cc.setHgrow(Priority.ALWAYS);
-            hang.getColumnConstraints().add(cc);
         }
 
         bang.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 8; "
@@ -148,17 +111,32 @@ public class RequirementPanel extends ScrollPane {
         bang.setMaxWidth(Double.MAX_VALUE);
         ScrollPane cuon = new ScrollPane(bang);
         cuon.setFitToWidth(true);
-        cuon.setMinHeight(260);
-        cuon.setPrefHeight(440);
+        cuon.setMinHeight(220);
+        cuon.setPrefHeight(260);
         cuon.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         VBox.setVgrow(cuon, Priority.ALWAYS);
 
         HBox footer = new HBox(10);
         footer.setAlignment(Pos.CENTER_LEFT);
-        footer.getChildren().addAll(phanTrang, Functions.khoangTrong(), btnTiep);
-        btnTiep.setOnAction(e -> frame.denTrang(MainFrame.CARD_PRIO));
-
+        footer.getChildren().addAll(phanTrang, Functions.khoangTrong());
         card.getChildren().addAll(tieuDe, hang, cuon, footer);
+        return card;
+    }
+
+    private VBox daChonPanel() {
+        VBox card = Functions.the(14);
+        card.setMinHeight(160);
+        card.setPrefHeight(200);
+        HBox tit = new HBox(8, Functions.tieuDeThe("Môn đã chọn"), Functions.khoangTrong());
+        tit.setAlignment(Pos.CENTER_LEFT);
+        daChonBox.setFillWidth(true);
+        daChonBox.setPrefHeight(110);
+        ScrollPane cuon = new ScrollPane(daChonBox);
+        cuon.setFitToWidth(true);
+        cuon.setPrefHeight(130);
+        cuon.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        card.getChildren().addAll(tit, cuon);
+        capNhatMonDaChon();
         return card;
     }
 
@@ -166,39 +144,48 @@ public class RequirementPanel extends ScrollPane {
         try {
             if (st.hocKy != null) {
                 st.tatCaNhom = client.listAllSections(st.hocKy.ma());
+                st.courses = client.listCourses(st.hocKy.ma());
             }
         } catch (com.tkb.frontend.user.net.ApiException ex) {
             Functions.loi(frame.window(), ex);
             return;
         }
-        locDuLieu = st.tatCaNhom;
+        locDuLieu = st.courses;
+        priorityPanel.taiLai();
+        capNhatMonDaChon();
         veBang();
     }
 
-    private List<SectionSlot> loc() {
-        return locDuLieu.stream()
-                .filter(this::matchSearch)
-                .filter(this::matchLoai)
-                .filter(this::matchNgay)
-                .filter(this::matchKhung)
-                .collect(Collectors.toList());
+    private List<Course> loc() {
+        String q = txtTimKiem.getText() == null ? "" : txtTimKiem.getText().trim().toLowerCase(Locale.ROOT);
+        if (q.isBlank()) {
+            return new ArrayList<>(locDuLieu);
+        }
+        List<Course> ds = new ArrayList<>();
+        for (Course c : locDuLieu) {
+            String hay = (c.maMh() + " " + c.ten()).toLowerCase(Locale.ROOT);
+            if (hay.contains(q)) {
+                ds.add(c);
+            }
+        }
+        return ds;
     }
 
     private void veBang() {
-        List<SectionSlot> ds = loc();
+        List<Course> ds = loc();
         bang.getChildren().clear();
 
         if (ds.isEmpty()) {
             VBox empty = new VBox(6);
             empty.setPadding(new Insets(30));
             empty.setAlignment(Pos.CENTER);
-            Label t = Functions.tieuDeThe("Không có nhóm lớp nào phù hợp");
-            Label m = Functions.moTa("Hãy thử nới lỏng bộ lọc hoặc nhấn “Đặt lại bộ lọc” để xem toàn bộ danh sách.");
+            Label t = Functions.tieuDeThe("Không có môn nào phù hợp");
+            Label m = Functions.moTa("Hãy thử tìm kiếm theo mã hoặc tên môn khác.");
             Button reset = Functions.nutPhu("Đặt lại bộ lọc");
             reset.setOnAction(e -> datLaiBoLoc());
             empty.getChildren().addAll(t, m, reset);
             bang.getChildren().add(empty);
-            lblDem.setText("0 nhóm");
+            lblDem.setText("0 môn");
             phanTrang.getChildren().clear();
             return;
         }
@@ -208,152 +195,145 @@ public class RequirementPanel extends ScrollPane {
         if (trangHienTai >= soTrang) trangHienTai = soTrang - 1;
         int tu = trangHienTai * MOI_TRANG;
         int den = Math.min(tu + MOI_TRANG, tong);
-        List<SectionSlot> trang = ds.subList(tu, den);
+        List<Course> trang = ds.subList(tu, den);
 
-        String tongKet = "Hiển thị " + (tu + 1) + "–" + den + " trong " + tong + " nhóm lớp";
+        String tongKet = "Hiển thị " + (tu + 1) + "–" + den + " trong " + tong + " môn";
         lblDem.setText(tongKet);
 
-        for (int i = 0; i < trang.size(); i++) {
-            SectionSlot slot = trang.get(i);
-            bang.getChildren().add(taoDong(slot, i));
+        for (Course c : trang) {
+            bang.getChildren().add(taoDong(c));
         }
         vePhanTrang(soTrang, tong);
+        capNhatMonDaChon();
     }
 
-    private GridPane taoDong(SectionSlot slot, int index) {
-        Section s = slot.section();
-        boolean daChon = st.daChon.contains(s.id());
+    private void capNhatMonDaChon() {
+        daChonBox.getChildren().clear();
+        List<String> monChon = new ArrayList<>();
+        for (SectionSlot slot : st.tatCaNhom) {
+            if (st.daChon.contains(slot.section().id()) && !monChon.contains(slot.section().maMh())) {
+                monChon.add(slot.section().maMh());
+            }
+        }
+        if (monChon.isEmpty()) {
+            daChonBox.getChildren().add(Functions.moTa("Chưa có môn nào được chọn."));
+            return;
+        }
+        for (String ma : monChon) {
+            String ten = "";
+            for (Course c : st.courses) {
+                if (c.maMh().equals(ma)) {
+                    ten = c.ten();
+                    break;
+                }
+            }
+            HBox row = new HBox(8);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setPadding(new Insets(6, 10, 6, 10));
+            row.setStyle("-fx-background-color: #DBEAFE; -fx-background-radius: 10; -fx-border-radius: 10;");
 
+            Label maLbl = new Label(ma);
+            maLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #1D4ED8;");
+            Label tenLbl = new Label("• " + ten);
+            tenLbl.setWrapText(true);
+            tenLbl.setStyle("-fx-text-fill: #1E3A8A;");
+            row.getChildren().addAll(maLbl, tenLbl);
+            daChonBox.getChildren().add(row);
+        }
+    }
+
+    private GridPane taoDong(Course course) {
         GridPane row = new GridPane();
         row.setPadding(new Insets(2, 0, 2, 0));
         row.setMaxWidth(Double.MAX_VALUE);
-        String bg = daChon ? "#F0FDF4" : (index % 2 == 0 ? "#FFFFFF" : "#FAFBFC");
-        row.setStyle("-fx-background-color: " + bg + "; -fx-border-color: #F1F5F9; -fx-border-width: 0 0 1 0;");
-        double[] mau = new double[]{60, 320, 80, 90, 80, 150, 90, 150};
-        for (int i = 0; i < mau.length; i++) {
+        row.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #F1F5F9; -fx-border-width: 0 0 1 0;");
+
+        boolean daChon = monDaChon(course.maMh());
+        CheckBox chk = new CheckBox();
+        chk.setSelected(daChon);
+        chk.setOnAction(e -> {
+            chuyenTrangThaiMon(course.maMh(), chk.isSelected());
+            veBang();
+        });
+
+        VBox maBox = new VBox(2);
+        maBox.setPadding(new Insets(9, 8, 9, 8));
+        Label ma = new Label(course.maMh());
+        ma.setStyle("-fx-font-weight: bold; -fx-text-fill: #0F172A;");
+        maBox.getChildren().add(ma);
+
+        VBox tenBox = new VBox(2);
+        tenBox.setPadding(new Insets(9, 8, 9, 8));
+        Label ten = new Label(course.ten());
+        ten.setWrapText(true);
+        ten.setStyle("-fx-text-fill: #0F172A;");
+        tenBox.getChildren().add(ten);
+
+        VBox tcBox = new VBox(2);
+        tcBox.setPadding(new Insets(9, 8, 9, 8));
+        Label tc = new Label(course.soTc() + " tín chỉ");
+        tcBox.getChildren().add(tc);
+
+        VBox soLopBox = new VBox(2);
+        soLopBox.setPadding(new Insets(9, 8, 9, 8));
+        int soLop = 0;
+        for (SectionSlot s : st.tatCaNhom) {
+            if (s.section().maMh().equals(course.maMh())) {
+                soLop++;
+            }
+        }
+        soLopBox.getChildren().add(new Label(soLop + " nhóm"));
+
+        row.add(new HBox(chk), 0, 0);
+        row.add(maBox, 1, 0);
+        row.add(tenBox, 2, 0);
+        row.add(tcBox, 3, 0);
+        row.add(soLopBox, 4, 0);
+
+        for (int i = 0; i < 5; i++) {
             javafx.scene.layout.ColumnConstraints cc = new javafx.scene.layout.ColumnConstraints();
-            cc.setMinWidth(mau[i]);
             cc.setHgrow(Priority.ALWAYS);
             row.getColumnConstraints().add(cc);
         }
 
-        CheckBox chk = new CheckBox();
-        chk.setSelected(daChon);
-        HBox chonBox = new HBox(chk);
-        chonBox.setPadding(new Insets(9, 8, 9, 8));
-        chonBox.setAlignment(Pos.CENTER_LEFT);
-        chk.setOnAction(e -> {
-            if (chk.isSelected()) {
-                st.daChon.add(s.id());
-            } else {
-                st.daChon.remove(s.id());
-            }
-            veBang();
-        });
-        row.add(chonBox, 0, 0);
-
-        VBox hocPhan = new VBox(2);
-        hocPhan.setPadding(new Insets(7, 8, 7, 8));
-        Label ten = new Label(slot.tenHocPhan());
-        ten.setWrapText(true);
-        Label ma = Functions.nhanNho(s.maMh() + " · " + slot.soTc() + " tín chỉ");
-        hocPhan.getChildren().addAll(ten, ma);
-        row.add(hocPhan, 1, 0);
-
-        row.add(o(s.nhom(), false), 2, 0);
-        row.add(o(s.loai(), true), 3, 0);
-        row.add(o(ngayCua(slot), false), 4, 0);
-        row.add(o(thoiGianCua(slot), false), 5, 0);
-        row.add(o(phongCua(slot), false), 6, 0);
-        row.add(o(nhomDiCung(s), true), 7, 0);
         return row;
     }
 
-    private javafx.scene.layout.Region o(String text, boolean badge) {
-        javafx.scene.Node noiDung;
-        if (badge) {
-            if (text.startsWith("LT")) noiDung = Functions.nhanF("LT", "#DBEAFE", "#1D4ED8");
-            else if (text.startsWith("TH")) noiDung = Functions.nhanF("TH", "#FEF3C7", "#B45309");
-            else if (text.startsWith("Cần")) noiDung = Functions.nhanCanhBao(text);
-            else noiDung = Functions.nhanXam(text);
-        } else {
-            Label l = new Label(text);
-            l.setWrapText(true);
-            l.setFont(Functions.F_CHU);
-            l.setTextFill(Functions.MA_CHU_DAM);
-            noiDung = l;
-        }
-        HBox box = new HBox(noiDung);
-        box.setPadding(new Insets(9, 8, 9, 8));
-        box.setAlignment(Pos.CENTER_LEFT);
-        box.setMaxWidth(Double.MAX_VALUE);
-        GridPane.setHgrow(box, Priority.ALWAYS);
-        return box;
-    }
-
-    private String ngayCua(SectionSlot slot) {
-        List<String> ngay = new ArrayList<>();
-        for (ClassSession cs : slot.sessions()) {
-            String n = "T" + cs.thu();
-            if (!ngay.contains(n)) ngay.add(n);
-        }
-        return String.join(", ", ngay);
-    }
-
-    private String thoiGianCua(SectionSlot slot) {
-        List<String> gio = new ArrayList<>();
-        for (ClassSession cs : slot.sessions()) {
-            gio.add("Tiết " + cs.tietBd() + "–" + (cs.tietBd() + cs.soTiet() - 1));
-        }
-        return String.join(", ", gio);
-    }
-
-    private String phongCua(SectionSlot slot) {
-        List<String> p = new ArrayList<>();
-        for (ClassSession cs : slot.sessions()) {
-            if (cs.phong() != null && !cs.phong().isBlank() && !p.contains(cs.phong())) {
-                p.add(cs.phong());
+    private void chuyenTrangThaiMon(String maMh, boolean chon) {
+        for (SectionSlot slot : st.tatCaNhom) {
+            if (slot.section().maMh().equals(maMh)) {
+                if (chon) {
+                    st.daChon.add(slot.section().id());
+                } else {
+                    st.daChon.remove(slot.section().id());
+                }
             }
         }
-        return String.join(", ", p);
     }
 
-    /**
-     * Trả về nhóm đi cùng để bảo đảm cặp tương thích: LT01 -> TH01.1, TH01.1 -> LT01.
-     */
-    private String nhomDiCung(Section s) {
-        List<String> cap = new ArrayList<>();
-        for (SectionSlot k : st.tatCaNhom) {
-            Section y = k.section();
-            if (!y.maMh().equals(s.maMh())) continue;
-            if ("LT".equals(s.loai()) && "TH".equals(y.loai()) && y.nhom().equals(s.nhom())) {
-                cap.add("TH" + y.nhom() + "." + y.toTh());
-            } else if ("TH".equals(s.loai()) && "LT".equals(y.loai())
-                    && y.nhom().equals(s.nhom())) {
-                cap.add("LT" + y.nhom());
+    private boolean monDaChon(String maMh) {
+        for (SectionSlot slot : st.tatCaNhom) {
+            if (slot.section().maMh().equals(maMh) && st.daChon.contains(slot.section().id())) {
+                return true;
             }
         }
-        if (cap.isEmpty()) {
-            return "—";
-        }
-        return "Cần kèm " + String.join(", ", cap);
+        return false;
     }
 
     private void vePhanTrang(int soTrang, int tong) {
         phanTrang.getChildren().clear();
-        Button nhau = Functions.nutPhu("‹");
-        nhau.setDisable(trangHienTai == 0);
-        nhau.setOnAction(e -> {
+        Button truoc = Functions.nutPhu("‹");
+        truoc.setDisable(trangHienTai == 0);
+        truoc.setOnAction(e -> {
             trangHienTai--;
             veBang();
         });
-        phanTrang.getChildren().add(nhau);
+        phanTrang.getChildren().add(truoc);
         for (int i = 0; i < soTrang; i++) {
             int tr = i;
             Button b = Functions.nutPhu(String.valueOf(i + 1));
             if (i == trangHienTai) {
-                b.setStyle("-fx-background-color: #1D4ED8; -fx-text-fill: white; -fx-border-color: #1D4ED8; "
-                        + "-fx-border-radius: 8; -fx-background-radius: 8; -fx-cursor: hand;");
+                b.setStyle("-fx-background-color: #1D4ED8; -fx-text-fill: white; -fx-border-color: #1D4ED8; -fx-border-radius: 8; -fx-background-radius: 8;");
             }
             b.setOnAction(e -> {
                 trangHienTai = tr;
@@ -367,58 +347,11 @@ public class RequirementPanel extends ScrollPane {
             trangHienTai++;
             veBang();
         });
-        phanTrang.getChildren().addAll(sau, Functions.nhanXam(tong + " nhóm"));
-    }
-
-    private boolean matchSearch(SectionSlot slot) {
-        String q = txtTimKiem.getText() == null ? "" : txtTimKiem.getText().trim().toLowerCase(Locale.ROOT);
-        if (q.isEmpty()) return true;
-        String hay = (slot.section().maMh() + " " + slot.tenHocPhan()).toLowerCase(Locale.ROOT);
-        return hay.contains(q);
-    }
-
-    private boolean matchLoai(SectionSlot slot) {
-        String val = cbLoai.getValue();
-        if (val == null || "Tất cả loại lớp".equals(val)) return true;
-        return val.contains(slot.section().loai());
-    }
-
-    private boolean matchNgay(SectionSlot slot) {
-        String val = cbNgay.getValue();
-        if (val == null || "Tất cả các ngày".equals(val)) return true;
-        for (ClassSession s : slot.sessions()) {
-            if (dayLabel(s.thu()).equals(val)) return true;
-        }
-        return false;
-    }
-
-    private boolean matchKhung(SectionSlot slot) {
-        String val = cbKhung.getValue();
-        if (val == null || "Tất cả khung giờ".equals(val)) return true;
-        for (ClassSession s : slot.sessions()) {
-            if ("Buổi sáng (tiết 1–5)".equals(val) && s.tietBd() <= 5) return true;
-            if ("Buổi chiều (tiết 6–12)".equals(val) && s.tietBd() >= 6) return true;
-        }
-        return false;
-    }
-
-    private String dayLabel(int thu) {
-        return switch (thu) {
-            case 2 -> "Thứ 2";
-            case 3 -> "Thứ 3";
-            case 4 -> "Thứ 4";
-            case 5 -> "Thứ 5";
-            case 6 -> "Thứ 6";
-            case 7 -> "Thứ 7";
-            default -> "";
-        };
+        phanTrang.getChildren().addAll(sau, Functions.nhanXam(tong + " môn"));
     }
 
     private void datLaiBoLoc() {
         txtTimKiem.clear();
-        cbLoai.setValue("Tất cả loại lớp");
-        cbNgay.setValue("Tất cả các ngày");
-        cbKhung.setValue("Tất cả khung giờ");
         trangHienTai = 0;
         veBang();
     }

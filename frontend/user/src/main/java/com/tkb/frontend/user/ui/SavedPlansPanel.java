@@ -52,7 +52,7 @@ public class SavedPlansPanel extends ScrollPane {
         txtTimKiem.setPromptText("Tìm theo tên lịch...");
         txtTimKiem.setPrefWidth(260);
         Button btnMoi = Functions.nutPhu("Tạo phương án mới");
-        btnMoi.setOnAction(e -> frame.denTrang(MainFrame.CARD_PRIO));
+        btnMoi.setOnAction(e -> frame.denTrang(MainFrame.CARD_REQ));
         btnSoSanh.setDisable(true);
         btnSoSanh.setOnAction(e -> moSoSanh());
         HBox row = new HBox(10, txtTimKiem, Functions.khoangTrong(), btnMoi, btnSoSanh);
@@ -101,7 +101,7 @@ public class SavedPlansPanel extends ScrollPane {
                             ? "Hãy tối ưu thời khóa biểu rồi lưu một phương án bạn thích."
                             : "Thử từ khóa khác hoặc xóa ô tìm kiếm."));
             Button moi = Functions.nutChinh("Tạo phương án mới");
-            moi.setOnAction(e -> frame.denTrang(MainFrame.CARD_PRIO));
+            moi.setOnAction(e -> frame.denTrang(MainFrame.CARD_REQ));
             empty.getChildren().add(moi);
             danhSach.getChildren().add(empty);
             capNhatNutSoSanh();

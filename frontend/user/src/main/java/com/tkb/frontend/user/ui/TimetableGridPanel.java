@@ -25,14 +25,25 @@ import java.util.Map;
  * Mỗi buổi học là một block đặt đúng ngày và giờ, hiển thị học phần, mã nhóm và phòng.
  */
 public class TimetableGridPanel extends VBox {
-    private static final int GIO_BAT_DAU = 7;
-    private static final int GIO_KET_THUC = 21;
-    private static final int TONG_GIO = GIO_KET_THUC - GIO_BAT_DAU; // 14
+    private static final List<String> THOI_GIAN = List.of(
+            "07:00", "07:50", "09:00", "09:50", "10:40",
+            "13:00", "13:50", "15:00", "15:50", "16:40"
+    );
+    private static final int TONG_GIO = THOI_GIAN.size();
 
     private final GridPane grid = new GridPane();
     private final ScrollPane scroll = new ScrollPane();
     private final List<SectionSlot> slots = new ArrayList<>();
     private String tieuDe = "Thời khóa biểu";
+
+    private int rowIndexForTiet(int tiet) {
+        if (tiet <= 0) return 0;
+        int index = tiet - 1;
+        if (index >= TONG_GIO) {
+            return TONG_GIO - 1;
+        }
+        return index;
+    }
 
     public TimetableGridPanel() {
         setSpacing(10);
@@ -111,7 +122,6 @@ public class TimetableGridPanel extends VBox {
             time.setMaxWidth(Double.MAX_VALUE);
             grid.add(time, 0, h + 1);
 
-            // Nền lưới trống để thể hiện rõ khoảng trống.
             for (int c = 0; c < 6; c++) {
                 Region cell = new Region();
                 cell.setMinHeight(30);
@@ -127,7 +137,6 @@ public class TimetableGridPanel extends VBox {
             return;
         }
 
-        // Gom theo (ngày, giờ bắt đầu) để xếp các block chồng thời gian thành 1 ô.
         Map<String, List<SectionSlot>> groups = new HashMap<>();
         for (SectionSlot slot : slots) {
             for (ClassSession session : slot.sessions()) {
@@ -136,7 +145,6 @@ public class TimetableGridPanel extends VBox {
             }
         }
 
-        // Track occupied cells to avoid stacking empty Region on top of class cells
         boolean[][] occupied = new boolean[6][TONG_GIO];
 
         for (Map.Entry<String, List<SectionSlot>> entry : groups.entrySet()) {
@@ -144,7 +152,7 @@ public class TimetableGridPanel extends VBox {
             int day = Integer.parseInt(parts[0]);
             int tiet = Integer.parseInt(parts[1]);
             int col = day - 2;
-            int row = tiet - 1;
+            int row = rowIndexForTiet(tiet);
             if (col < 0 || col > 5 || row < 0) continue;
 
             List<SectionSlot> items = entry.getValue();
@@ -153,7 +161,6 @@ public class TimetableGridPanel extends VBox {
             int soTiet = cs == null ? 1 : cs.soTiet();
             int span = Math.max(1, Math.min(soTiet, TONG_GIO - row));
 
-            // Mark occupied cells
             for (int r = 0; r < span; r++) {
                 if (row + r < TONG_GIO) {
                     occupied[col][row + r] = true;
@@ -180,7 +187,6 @@ public class TimetableGridPanel extends VBox {
             grid.add(cell, col + 1, row + 1, 1, span);
         }
 
-        // Remove empty Region cells that are covered by class cells
         List<Node> toRemove = new ArrayList<>();
         for (Node node : grid.getChildren()) {
             Integer colIdx = GridPane.getColumnIndex(node);
@@ -233,7 +239,9 @@ public class TimetableGridPanel extends VBox {
     }
 
     private String gioLabel(int h) {
-        int gio = GIO_BAT_DAU + h;
-        return String.format("%02d:00", gio);
+        if (h < 0 || h >= THOI_GIAN.size()) {
+            return "";
+        }
+        return THOI_GIAN.get(h);
     }
 }

@@ -9,6 +9,7 @@ import com.tkb.frontend.user.model.Types.SectionSlot;
 import com.tkb.frontend.user.model.Types.Semester;
 import com.tkb.frontend.user.model.Types.Student;
 import com.tkb.frontend.user.net.ApiException;
+import com.tkb.frontend.user.net.HttpTkbClient;
 import com.tkb.frontend.user.net.MockNetworkClient;
 import com.tkb.frontend.user.net.TkbClient;
 import javafx.geometry.Insets;
@@ -44,7 +45,6 @@ public class MainFrame extends BorderPane {
     static final String CARD_APP = "APP";
     static final String CARD_OVERVIEW = "TONG_QUAN";
     static final String CARD_REQ = "NHOM_LOP";
-    static final String CARD_PRIO = "UU_TIEN";
     static final String CARD_JOB = "JOB";
     static final String CARD_RES = "KET_QUA";
     static final String CARD_CMP = "SO_SANH";
@@ -54,7 +54,6 @@ public class MainFrame extends BorderPane {
     private static final Map<String, String> TEN_TRANG = Map.of(
             CARD_OVERVIEW, "Tổng quan",
             CARD_REQ, "Nhóm lớp học phần",
-            CARD_PRIO, "Thiết lập ưu tiên",
             CARD_JOB, "Đang xử lý",
             CARD_RES, "Kết quả đề xuất",
             CARD_CMP, "So sánh lịch",
@@ -62,7 +61,16 @@ public class MainFrame extends BorderPane {
 
     // Shared frontend state is stored here so all UI screens can access the current student,
     // selected semester, chosen sections, and generated scheduling results.
-    private final TkbClient client = new MockNetworkClient();
+    private final TkbClient client = createClient();
+    private static TkbClient createClient() {
+        try {
+            TkbClient live = new HttpTkbClient();
+            live.listSemesters();
+            return live;
+        } catch (Exception ex) {
+            return new MockNetworkClient();
+        }
+    }
     private final AppUiState trangThai = new AppUiState(client);
     private final Map<String, Node> cards = new LinkedHashMap<>();
     private final Map<String, Button> navButtons = new LinkedHashMap<>();
@@ -76,7 +84,6 @@ public class MainFrame extends BorderPane {
     private final AvatarPanel avatar = new AvatarPanel("?", 36);
     private final OverviewPanel panelOverview;
     private final RequirementPanel panelReq;
-    private final PriorityPanel panelPrio;
     private final JobPanel panelJob;
     private final ResultPanel panelRes;
     private final SavedPlansPanel panelSaved;
@@ -90,7 +97,6 @@ public class MainFrame extends BorderPane {
         setStyle("-fx-background-color: #F6F8FB;");
         panelOverview = new OverviewPanel(this);
         panelReq = new RequirementPanel(client, this);
-        panelPrio = new PriorityPanel(this);
         panelJob = new JobPanel(client, this);
         panelRes = new ResultPanel(client, this);
         panelSaved = new SavedPlansPanel(client, this);
@@ -124,11 +130,10 @@ public class MainFrame extends BorderPane {
 
         Button overviewBtn = taoNavItem(CARD_OVERVIEW, "Tổng quan");
         Button reqBtn = taoNavItem(CARD_REQ, "Nhóm lớp học phần");
-        Button prioBtn = taoNavItem(CARD_PRIO, "Tối ưu thời khóa biểu");
         Button resBtn = taoNavItem(CARD_RES, "Kết quả đề xuất");
         Button cmpBtn = taoNavItem(CARD_CMP, "So sánh lịch");
         Button savedBtn = taoNavItem(CARD_SAVED, "Thời khóa biểu đã lưu");
-        sidebar.getChildren().addAll(overviewBtn, reqBtn, prioBtn, resBtn, cmpBtn, savedBtn);
+        sidebar.getChildren().addAll(overviewBtn, reqBtn, resBtn, cmpBtn, savedBtn);
 
         VBox semBox = new VBox(0);
         semBox.setStyle("-fx-background-color: #1E293B; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #1E293B;");
@@ -147,7 +152,7 @@ public class MainFrame extends BorderPane {
         Button helpBtn = new Button("Hướng dẫn sử dụng");
         helpBtn.setMaxWidth(Double.MAX_VALUE);
         helpBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #CBD5E1; -fx-alignment: center-left;");
-        helpBtn.setOnAction(e -> Functions.thongTin(getScene() == null ? null : getScene().getWindow(), "1. Chọn nhóm lớp học phần\n2. Thiết lập ưu tiên\n3. Chạy tối ưu và xem các phương án A/B/C."));
+        helpBtn.setOnAction(e -> Functions.thongTin(getScene() == null ? null : getScene().getWindow(), "1. Chọn môn và thiết lập ưu tiên trên cùng trang\n2. Chạy tối ưu và xem phương án đề xuất."));
         sidebar.getChildren().addAll(infoBtn, helpBtn);
 
         HBox header = new HBox(12);
@@ -188,7 +193,6 @@ public class MainFrame extends BorderPane {
 
         cards.put(CARD_OVERVIEW, panelOverview);
         cards.put(CARD_REQ, panelReq);
-        cards.put(CARD_PRIO, panelPrio);
         cards.put(CARD_JOB, panelJob);
         cards.put(CARD_RES, panelRes);
         cards.put(CARD_CMP, panelCmp);
@@ -227,7 +231,6 @@ public class MainFrame extends BorderPane {
         switch (card) {
             case CARD_OVERVIEW -> panelOverview.taiLai();
             case CARD_REQ -> panelReq.taiDuLieu();
-            case CARD_PRIO -> panelPrio.taiLai();
             case CARD_SAVED -> panelSaved.taiDanhSach();
             case CARD_CMP -> panelCmp.taiDuLieu();
             case CARD_RES -> panelRes.hienTrangThai();
@@ -310,7 +313,7 @@ public class MainFrame extends BorderPane {
     void jobHuy() {
         // The schedule computation can be canceled without resetting the user's selection choices.
         Functions.thongTin(getScene() == null ? null : getScene().getWindow(), "Đã hủy xếp lịch. Các lựa chọn của bạn vẫn được giữ nguyên.");
-        denTrang(CARD_PRIO);
+        denTrang(CARD_REQ);
     }
 
     void jobThatBai(String message) {
@@ -318,7 +321,7 @@ public class MainFrame extends BorderPane {
         if (message != null && !message.isBlank()) {
             Functions.loi(getScene() == null ? null : getScene().getWindow(), message);
         }
-        denTrang(CARD_PRIO);
+        denTrang(CARD_REQ);
     }
 
     void moSoSanhPhuongAn(String quayLaiCard, List<ScheduleOption> ds) {

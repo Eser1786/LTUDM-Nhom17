@@ -1,7 +1,6 @@
 package com.tkb.frontend.user.ui;
 
 import com.tkb.frontend.user.model.Types.ClassSession;
-import com.tkb.frontend.user.model.Types.Course;
 import com.tkb.frontend.user.model.Types.Criteria;
 import com.tkb.frontend.user.model.Types.Section;
 import com.tkb.frontend.user.model.Types.SectionSlot;
@@ -16,24 +15,18 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
- * Màn hình Thiết lập ưu tiên: hai cột.
- * Trái: nhóm lớp được phép chọn (card học phần với tổ hợp LT+TH hợp lệ).
- * Phải: các tiêu chí ưu tiên dạng thanh trượt 0..5 và ngày học yêu thích T2..T7.
+ * Màn hình Thiết lập ưu tiên.
+ * Chỉ giữ bảng mức độ ưu tiên; người dùng đã chọn môn ở màn hình trước.
  */
 public class PriorityPanel extends ScrollPane {
     private final MainFrame frame;
     private final MainFrame.AppUiState st;
-    private final VBox cotTrai = new VBox(12);
     private final VBox cotPhai = new VBox(12);
     private final Slider sSang = new Slider(0, 5, 3);
     private final Slider sItNgay = new Slider(0, 5, 3);
@@ -56,19 +49,7 @@ public class PriorityPanel extends ScrollPane {
 
         VBox header = new VBox(4,
                 Functions.chuDe("Thiết lập ưu tiên"),
-                Functions.moTa("Chọn các tổ hợp nhóm lớp được phép và điều chỉnh trọng số. "
-                        + "Trọng số chỉ dùng để xếp hạng các lịch; mọi phương án hợp lệ đều không trùng giờ "
-                        + "và tuân thủ điều kiện ghép nhóm LT–TH."));
-
-        HBox haiCot = new HBox(16);
-        khung.getChildren().addAll(header, haiCot);
-
-        VBox traiCard = Functions.the(16);
-        HBox.setHgrow(traiCard, Priority.ALWAYS);
-        traiCard.getChildren().addAll(
-                Functions.tieuDeThe("Nhóm lớp được phép chọn"),
-                Functions.moTa("Mỗi học phần là một card. Đánh dấu vào tổ hợp bạn muốn đưa vào xếp lịch."),
-                cotTrai);
+                Functions.moTa("Sau khi chọn các môn muốn đăng ký, bạn chỉ cần điều chỉnh mức độ ưu tiên để hệ thống sắp xếp lịch theo độ phù hợp tốt nhất."));
 
         VBox phaiCard = Functions.the(16);
         phaiCard.setPrefWidth(420);
@@ -76,7 +57,7 @@ public class PriorityPanel extends ScrollPane {
         cotPhai.setFillWidth(true);
         phaiCard.getChildren().add(cotPhai);
 
-        haiCot.getChildren().addAll(traiCard, phaiCard);
+        khung.getChildren().addAll(header, phaiCard);
 
         setContent(khung);
         setFitToWidth(true);
@@ -84,137 +65,8 @@ public class PriorityPanel extends ScrollPane {
     }
 
     public void taiLai() {
-        veCotTrai();
         veCotPhai();
     }
-
-    // ------------------------------------------------------------- cột trái
-
-    private void veCotTrai() {
-        cotTrai.getChildren().clear();
-        if (st.tatCaNhom.isEmpty()) {
-            cotTrai.getChildren().add(Functions.moTa("Chưa có dữ liệu nhóm lớp. "
-                    + "Hãy vào mục “Nhóm lớp học phần” để tải dữ liệu."));
-            return;
-        }
-        Map<String, List<SectionSlot>> theoMon = new LinkedHashMap<>();
-        for (SectionSlot s : st.tatCaNhom) {
-            theoMon.computeIfAbsent(s.section().maMh(), k -> new ArrayList<>()).add(s);
-        }
-        for (Map.Entry<String, List<SectionSlot>> e : theoMon.entrySet()) {
-            cotTrai.getChildren().add(theHocPhan(e.getKey(), e.getValue()));
-        }
-    }
-
-    private VBox theHocPhan(String maMh, List<SectionSlot> nhom) {
-        VBox card = Functions.the(14);
-        String ten = maMh;
-        int tc = 0;
-        for (Course c : st.courses) {
-            if (c.maMh().equals(maMh)) {
-                ten = c.ten();
-                tc = c.soTc();
-                break;
-            }
-        }
-        Label td = Functions.tieuDeThe(ten);
-        Label ma = Functions.nhanNho(maMh + " · " + tc + " tín chỉ");
-        HBox top = new HBox(10, td, Functions.khoangTrong(), ma);
-        top.setAlignment(Pos.CENTER_LEFT);
-        card.getChildren().addAll(top, Functions.vach());
-
-        boolean coTh = nhom.stream().anyMatch(s -> "TH".equals(s.section().loai()));
-        List<List<SectionSlot>> toHop = toHop(nhom, coTh);
-
-        card.getChildren().add(Functions.nhanXam(toHop.size() + " tổ hợp đủ điều kiện"));
-        for (List<SectionSlot> th : toHop) {
-            card.getChildren().add(theToHop(th));
-        }
-        return card;
-    }
-
-    /** Tổ hợp hợp lệ: nếu có TH thì ghép LT+TH cùng nhóm; không thì từng LT riêng. */
-    private List<List<SectionSlot>> toHop(List<SectionSlot> nhom, boolean coTh) {
-        List<List<SectionSlot>> out = new ArrayList<>();
-        if (!coTh) {
-            for (SectionSlot s : nhom) {
-                if ("LT".equals(s.section().loai())) {
-                    out.add(List.of(s));
-                }
-            }
-            return out;
-        }
-        List<SectionSlot> lts = new ArrayList<>();
-        List<SectionSlot> ths = new ArrayList<>();
-        for (SectionSlot s : nhom) {
-            if ("TH".equals(s.section().loai())) ths.add(s);
-            else lts.add(s);
-        }
-        for (SectionSlot lt : lts) {
-            List<SectionSlot> ghep = new ArrayList<>();
-            ghep.add(lt);
-            for (SectionSlot th : ths) {
-                if (th.section().nhom().equals(lt.section().nhom())) {
-                    ghep.add(th);
-                }
-            }
-            out.add(ghep);
-        }
-        return out;
-    }
-
-    private VBox theToHop(List<SectionSlot> th) {
-        Set<Integer> ids = new LinkedHashSet<>();
-        for (SectionSlot s : th) {
-            ids.add(s.section().id());
-        }
-        boolean daChon = !ids.isEmpty() && st.daChon.containsAll(ids);
-
-        VBox card = Functions.the(10);
-        String bg = daChon ? "#F0FDF4" : "#F8FAFC";
-        card.setStyle("-fx-background-color: " + bg + "; -fx-background-radius: 10; -fx-border-color: "
-                + (daChon ? "#16A34A" : "#E2E8F0") + "; -fx-border-radius: 10; -fx-border-width: 1;");
-
-        CheckBox chk = new CheckBox(nhanToHop(th));
-        chk.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12.5));
-        chk.setSelected(daChon);
-        chk.setOnAction(e -> {
-            if (chk.isSelected()) {
-                st.daChon.addAll(ids);
-            } else {
-                st.daChon.removeAll(ids);
-            }
-            taiLai();
-        });
-        card.getChildren().add(chk);
-
-        for (SectionSlot s : th) {
-            VBox dong = new VBox(1);
-            Label loai = Functions.nhanF(s.section().loai(), s.section().loai().equals("LT")
-                    ? "#DBEAFE" : "#FEF3C7", s.section().loai().equals("LT") ? "#1D4ED8" : "#B45309");
-            Label lich = Functions.moTa(lichCua(s.section()));
-            HBox line = new HBox(8, loai, lich);
-            line.setAlignment(Pos.CENTER_LEFT);
-            dong.getChildren().add(line);
-            card.getChildren().add(dong);
-        }
-        return card;
-    }
-
-    private String nhanToHop(List<SectionSlot> th) {
-        List<String> p = new ArrayList<>();
-        for (SectionSlot s : th) {
-            Section x = s.section();
-            if ("LT".equals(x.loai())) {
-                p.add("LT" + x.nhom());
-            } else {
-                p.add("TH" + x.nhom() + "." + x.toTh());
-            }
-        }
-        return "Chọn tổ hợp: " + String.join(" + ", p);
-    }
-
-    // ------------------------------------------------------------- cột phải
 
     private void veCotPhai() {
         cotPhai.getChildren().clear();
@@ -320,27 +172,12 @@ public class PriorityPanel extends ScrollPane {
         return box;
     }
 
-    private void luuCriteria() {
+    public void luuCriteria() {
         List<Integer> ngay = new ArrayList<>();
         ngayChk.forEach((thu, chk) -> {
             if (chk.isSelected()) ngay.add(thu);
         });
         st.criteria = new Criteria((int) sSang.getValue(), (int) sItNgay.getValue(),
                 (int) sKhoangTrong.getValue(), (int) sNgayYeuThich.getValue(), ngay, 3);
-    }
-
-    private String lichCua(Section s) {
-        // Tìm các buổi học của section này trong dữ liệu nhóm lớp.
-        for (SectionSlot sl : st.tatCaNhom) {
-            if (sl.section().id() == s.id()) {
-                List<String> p = new ArrayList<>();
-                for (ClassSession cs : sl.sessions()) {
-                    p.add("Thứ " + cs.thu() + " · tiết " + cs.tietBd() + "–"
-                            + (cs.tietBd() + cs.soTiet() - 1) + " · " + cs.phong());
-                }
-                return String.join("  |  ", p);
-            }
-        }
-        return "";
     }
 }
