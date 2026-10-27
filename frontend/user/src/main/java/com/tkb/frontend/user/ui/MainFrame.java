@@ -1,15 +1,16 @@
-package com.tkb.frontend.ui;
+package com.tkb.frontend.user.ui;
 
-import com.tkb.frontend.model.Types.Criteria;
-import com.tkb.frontend.model.Types.JobResult;
-import com.tkb.frontend.model.Types.PlanRequest;
-import com.tkb.frontend.model.Types.ScheduleOption;
-import com.tkb.frontend.model.Types.SectionSlot;
-import com.tkb.frontend.model.Types.Semester;
-import com.tkb.frontend.model.Types.Student;
-import com.tkb.frontend.net.ApiException;
-import com.tkb.frontend.net.MockNetworkClient;
-import com.tkb.frontend.net.TkbClient;
+import com.tkb.frontend.user.model.Types.Criteria;
+import com.tkb.frontend.user.model.Types.Course;
+import com.tkb.frontend.user.model.Types.JobResult;
+import com.tkb.frontend.user.model.Types.PlanRequest;
+import com.tkb.frontend.user.model.Types.ScheduleOption;
+import com.tkb.frontend.user.model.Types.SectionSlot;
+import com.tkb.frontend.user.model.Types.Semester;
+import com.tkb.frontend.user.model.Types.Student;
+import com.tkb.frontend.user.net.ApiException;
+import com.tkb.frontend.user.net.MockNetworkClient;
+import com.tkb.frontend.user.net.TkbClient;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -28,6 +29,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -291,7 +293,7 @@ public class MainFrame extends BorderPane {
         try {
             PlanRequest req = new PlanRequest(trangThai.hocKy.ma(), trangThai.monDaChon(), trangThai.criteria, new ArrayList<>(trangThai.daChon));
             jobId = client.submit(req);
-            panelJob.batDau(jobId);
+            panelJob.batDau(jobId, this::jobHuy);
             denTrang(CARD_JOB);
         } catch (ApiException ex) {
             Functions.loi(getScene() == null ? null : getScene().getWindow(), ex);
@@ -341,152 +343,50 @@ public class MainFrame extends BorderPane {
         denTrang(trangSoSanhQuayLai);
     }
 
+    Window window() {
+        return getScene() == null ? null : getScene().getWindow();
+    }
+
     public void showWindow() {
         Stage stage = new Stage();
         stage.setTitle("Project 15 – Tối ưu thời khóa biểu sinh viên");
         stage.setScene(new Scene(this, 1360, 860));
         stage.show();
     }
-}
 
-class AppUiState {
-    final TkbClient client;
-    Student sinhVien;
-    List<Semester> semesters = new ArrayList<>();
-    Semester hocKy;
-    List<SectionSlot> tatCaNhom = new ArrayList<>();
-    Criteria criteria = Criteria.macDinh();
-    final Set<Integer> daChon = new LinkedHashSet<>();
-    JobResult ketQua;
+    public static final class AppUiState {
+        final TkbClient client;
+        Student sinhVien;
+        List<Semester> semesters = new ArrayList<>();
+        Semester hocKy;
+        List<SectionSlot> tatCaNhom = new ArrayList<>();
+        List<Course> courses = new ArrayList<>();
+        Criteria criteria = Criteria.macDinh();
+        final Set<Integer> daChon = new LinkedHashSet<>();
+        JobResult ketQua;
 
-    AppUiState(TkbClient client) {
-        this.client = client;
-    }
-
-    void chonMacDinh() {
-        try {
-            tatCaNhom = hocKy == null ? List.of() : client.listAllSections(hocKy.ma());
-        } catch (ApiException ex) {
-            tatCaNhom = List.of();
+        AppUiState(TkbClient client) {
+            this.client = client;
         }
-    }
 
-    List<String> monDaChon() {
-        Set<String> maMon = new LinkedHashSet<>();
-        for (SectionSlot slot : tatCaNhom) {
-            if (daChon.contains(slot.section().id())) {
-                maMon.add(slot.section().maMh());
+        void chonMacDinh() {
+            try {
+                tatCaNhom = hocKy == null ? List.of() : client.listAllSections(hocKy.ma());
+                courses = hocKy == null ? List.of() : client.listCourses(hocKy.ma());
+            } catch (ApiException ex) {
+                tatCaNhom = List.of();
+                courses = List.of();
             }
         }
-        return new ArrayList<>(maMon);
-    }
-}
 
-class LoginPanel extends VBox {
-    LoginPanel(AppUiState st, Runnable sauDangNhap) {
-        setSpacing(12);
-        setPadding(new Insets(24));
-        setAlignment(Pos.CENTER);
-
-        Label title = Functions.chuDe("Đăng nhập");
-        Label info = Functions.moTa("Bản demo không yêu cầu xác thực máy chủ.");
-        TextField user = Functions.oNhap();
-        user.setPromptText("MSSV hoặc email");
-        PasswordField pass = new PasswordField();
-        pass.setPromptText("Mật khẩu");
-        pass.setPrefWidth(280);
-        Button login = Functions.nutChinh("Đăng nhập");
-        login.setOnAction(e -> sauDangNhap.run());
-
-        getChildren().addAll(title, info, user, pass, login);
-    }
-}
-
-class OverviewPanel extends VBox {
-    private final MainFrame frame;
-    private final Label lbl = new Label();
-
-    OverviewPanel(MainFrame frame) {
-        this.frame = frame;
-        setPadding(new Insets(22, 26, 18, 26));
-        setSpacing(10);
-        setStyle("-fx-background-color: #F6F8FB;");
-        getChildren().addAll(Functions.chuDe("Tổng quan"), lbl);
-    }
-
-    void taiLai() {
-        Student sv = frame.trangThai().sinhVien;
-        if (sv == null) {
-            lbl.setText("Chưa có dữ liệu sinh viên.");
-            return;
+        List<String> monDaChon() {
+            Set<String> maMon = new LinkedHashSet<>();
+            for (SectionSlot slot : tatCaNhom) {
+                if (daChon.contains(slot.section().id())) {
+                    maMon.add(slot.section().maMh());
+                }
+            }
+            return new ArrayList<>(maMon);
         }
-        lbl.setText("Xin chào " + sv.hoTen() + ". Hãy chọn nhóm lớp và bắt đầu tối ưu.");
-    }
-}
-
-class PriorityPanel extends VBox {
-    private final MainFrame frame;
-
-    PriorityPanel(MainFrame frame) {
-        this.frame = frame;
-        setPadding(new Insets(22, 26, 18, 26));
-        setSpacing(12);
-        setStyle("-fx-background-color: #F6F8FB;");
-        Label title = Functions.chuDe("Thiết lập ưu tiên");
-        Label info = Functions.moTa("Điều chỉnh ưu tiên trước khi chạy xếp lịch tự động.");
-        Button start = Functions.nutChinh("Bắt đầu xếp lịch");
-        start.setOnAction(e -> frame.batDauXepLich());
-        getChildren().addAll(title, info, start);
-    }
-
-    void taiLai() {
-    }
-}
-
-class ComparePanel extends VBox {
-    private final MainFrame frame;
-    private final Label lbl = new Label("Chưa có dữ liệu so sánh.");
-
-    ComparePanel(MainFrame frame) {
-        this.frame = frame;
-        setPadding(new Insets(22, 26, 18, 26));
-        setSpacing(12);
-        setStyle("-fx-background-color: #F6F8FB;");
-        Button back = Functions.nutPhu("Quay lại");
-        back.setOnAction(e -> frame.quayLaiTuSoSanh());
-        getChildren().addAll(Functions.chuDe("So sánh lịch"), lbl, back);
-    }
-
-    void napPhuongAn(List<ScheduleOption> ds) {
-        int size = ds == null ? 0 : ds.size();
-        lbl.setText("Đang so sánh " + size + " phương án đề xuất.");
-    }
-
-    void napDaLuu(List<Long> ids) {
-        int size = ids == null ? 0 : ids.size();
-        lbl.setText("Đang so sánh " + size + " phương án đã lưu.");
-    }
-
-    void taiDuLieu() {
-    }
-}
-
-class AvatarPanel extends StackPane {
-    private final Circle circle = new Circle(18, Color.web("#1D4ED8"));
-    private final Text text = new Text("?");
-
-    AvatarPanel(String initials, double size) {
-        circle.setRadius(size / 2.0);
-        text.setFill(Color.WHITE);
-        text.setFont(Font.font("Segoe UI", FontWeight.BOLD, Math.max(10, size * 0.35)));
-        setMinSize(size, size);
-        setPrefSize(size, size);
-        setMaxSize(size, size);
-        getChildren().addAll(circle, text);
-        setChu(initials);
-    }
-
-    void setChu(String initials) {
-        text.setText((initials == null || initials.isBlank()) ? "?" : initials.trim().toUpperCase());
     }
 }

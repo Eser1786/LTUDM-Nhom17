@@ -242,7 +242,7 @@ public class ComparePanel extends ScrollPane {
 
     private Button theNutQuayLai() {
         Button b = Functions.nutPhu("Quay lại kết quả");
-        b.setOnAction(e -> frame.trangSoSanhQuayLai());
+        b.setOnAction(e -> frame.quayLaiTuSoSanh());
         return b;
     }
 

@@ -51,6 +51,13 @@
     </dependencies>
 
     <build>
+        <sourceDirectory>${project.basedir}/user/src/main/java</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/user/src/main/resources</directory>
+            </resource>
+        </resources>
+
         <plugins>
             <!-- Thêm thư mục nguồn riêng cho user và admin -->
             <plugin>
