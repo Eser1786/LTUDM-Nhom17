@@ -6,8 +6,12 @@ venv/
 
 # Local environment files
 .env
-*.env
+
 
 # Azurite local runtime database files
 __azurite_db_*.json
 .azurite/
+
+# pdf và csv được tạo ra từ codecode
+pdf/2026-2027-1
+csv/2026-2027-1
