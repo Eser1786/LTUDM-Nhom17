@@ -61,14 +61,26 @@ public class RequirementPanel extends ScrollPane {
         getStyleClass().add("requirement-scroll");
     }
 
-    private VBox theLayout() {
-        VBox vertical = new VBox(14);
+    private HBox theLayout() {
+        HBox horizontal = new HBox(14);
 
+        VBox left = new VBox(14);
+        HBox.setHgrow(left, Priority.ALWAYS);
         VBox listCard = new VBox(12);
         listCard.getChildren().addAll(theBoLoc(), theBang());
+        left.getChildren().addAll(listCard, daChonPanel());
 
-        vertical.getChildren().addAll(listCard, daChonPanel(), priorityPanel);
-        return vertical;
+        VBox right = new VBox(14);
+        right.setPrefWidth(420);
+        right.setMinWidth(320);
+        HBox.setHgrow(right, Priority.NEVER);
+        // Thu nho bang thiet lap uu tien de dat vao nua ben phai.
+        priorityPanel.setPrefWidth(420);
+        priorityPanel.setMaxWidth(420);
+        right.getChildren().add(priorityPanel);
+
+        horizontal.getChildren().addAll(left, right);
+        return horizontal;
     }
 
     private VBox theBoLoc() {
@@ -97,8 +109,8 @@ public class RequirementPanel extends ScrollPane {
         GridPane hang = new GridPane();
         hang.setMaxWidth(Double.MAX_VALUE);
         hang.setStyle("-fx-background-color: #F1F5F9; -fx-background-radius: 8;");
-        String[] cot = {"Chọn", "Mã môn", "Tên môn", "Tín chỉ", "Số lớp"};
-        double[] rongCot = {8, 14, 40, 16, 22};
+        String[] cot = {"Chọn", "Mã môn", "Tên môn", "Tín chỉ"};
+        double[] rongCot = {10, 18, 52, 20};
         for (int i = 0; i < cot.length; i++) {
             Label l = new Label(cot[i]);
             l.setFont(Functions.F_NHO);
@@ -284,24 +296,13 @@ public class RequirementPanel extends ScrollPane {
         tc.setStyle("-fx-text-fill: #1D4ED8; -fx-font-weight: bold;");
         tcBox.getChildren().add(tc);
 
-        VBox soLopBox = new VBox(2);
-        soLopBox.setPadding(new Insets(9, 8, 9, 8));
-        int soLop = 0;
-        for (SectionSlot s : st.tatCaNhom) {
-            if (s.section().maMh().equals(course.maMh())) {
-                soLop++;
-            }
-        }
-        soLopBox.getChildren().add(new Label(soLop + " nhóm"));
-
         row.add(chk, 0, 0);
         row.add(maBox, 1, 0);
         row.add(tenBox, 2, 0);
         row.add(tcBox, 3, 0);
-        row.add(soLopBox, 4, 0);
 
-        double[] rongCot = {8, 14, 40, 16, 22};
-        for (int i = 0; i < 5; i++) {
+        double[] rongCot = {10, 18, 52, 20};
+        for (int i = 0; i < 4; i++) {
             javafx.scene.layout.ColumnConstraints cc = new javafx.scene.layout.ColumnConstraints();
             cc.setPercentWidth(rongCot[i]);
             cc.setHgrow(Priority.ALWAYS);
