@@ -1,5 +1,6 @@
 package com.tkb.frontend.user.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import java.util.List;
 
 /**
@@ -37,12 +38,21 @@ public final class Types {
     }
 
     /** hoc_phan */
-    public record Course(String maMh, String ten, int soTc) {
+    public record Course(
+            @JsonAlias({"ma_mh", "maMH", "maMon", "ma_mon"}) String maMh,
+            @JsonAlias({"ten_hp", "tenHocPhan", "ten_mon", "tenMon", "tenHocPhan"}) String ten,
+            @JsonAlias({"so_tc", "soTinChi", "tinChi", "credits", "credit"}) int soTc) {
     }
 
     /** nhom_lop - mot nhom ly thuyet (toTh = "") hoac mot to thuc hanh (toTh = "01"...). */
-    public record Section(int id, String maHocKy, String maMh, String nhom, String toTh,
-                          String loai, Integer siSo, String giangVien) {
+    public record Section(int id,
+                          @JsonAlias({"ma_hoc_ky", "maHocKy"}) String maHocKy,
+                          @JsonAlias({"ma_mh", "maMH", "maMon"}) String maMh,
+                          @JsonAlias({"nhom_lop", "nhomLop"}) String nhom,
+                          @JsonAlias({"to_th", "toTh"}) String toTh,
+                          @JsonAlias({"loai_lop", "loaiLop"}) String loai,
+                          @JsonAlias({"si_so", "siSo"}) Integer siSo,
+                          @JsonAlias({"giang_vien", "giangVien"}) String giangVien) {
         public String hienThi() {
             return maMh + "." + nhom + ("TH".equals(loai) ? "." + toTh : "") + " (" + loai + ")";
         }
@@ -53,7 +63,9 @@ public final class Types {
     }
 
     /** Nhom lop kem lich hoc va thong tin hoc phan, dung de ve luoi. */
-    public record SectionSlot(Section section, String tenHocPhan, int soTc,
+    public record SectionSlot(Section section,
+                              @JsonAlias({"ten_hp", "tenHocPhan", "ten_mon"}) String tenHocPhan,
+                              @JsonAlias({"so_tc", "soTinChi", "tinChi", "credits", "credit"}) int soTc,
                               List<ClassSession> sessions) {
         public boolean trung(SectionSlot other) {
             for (ClassSession a : sessions) {

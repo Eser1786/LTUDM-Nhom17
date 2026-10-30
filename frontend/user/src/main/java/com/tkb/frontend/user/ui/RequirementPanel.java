@@ -98,12 +98,17 @@ public class RequirementPanel extends ScrollPane {
         hang.setMaxWidth(Double.MAX_VALUE);
         hang.setStyle("-fx-background-color: #F1F5F9; -fx-background-radius: 8;");
         String[] cot = {"Chọn", "Mã môn", "Tên môn", "Tín chỉ", "Số lớp"};
+        double[] rongCot = {8, 14, 40, 16, 22};
         for (int i = 0; i < cot.length; i++) {
             Label l = new Label(cot[i]);
             l.setFont(Functions.F_NHO);
             l.setPadding(new Insets(9, 8, 9, 8));
             GridPane.setHgrow(l, Priority.ALWAYS);
             hang.add(l, i, 0);
+            javafx.scene.layout.ColumnConstraints cc = new javafx.scene.layout.ColumnConstraints();
+            cc.setPercentWidth(rongCot[i]);
+            cc.setHgrow(Priority.ALWAYS);
+            hang.getColumnConstraints().add(cc);
         }
 
         bang.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 8; "
@@ -251,6 +256,10 @@ public class RequirementPanel extends ScrollPane {
         boolean daChon = monDaChon(course.maMh());
         CheckBox chk = new CheckBox();
         chk.setSelected(daChon);
+        chk.setPadding(new Insets(9, 8, 9, 8));
+        chk.setAlignment(Pos.CENTER);
+        GridPane.setHalignment(chk, javafx.geometry.HPos.CENTER);
+        GridPane.setValignment(chk, javafx.geometry.VPos.CENTER);
         chk.setOnAction(e -> {
             chuyenTrangThaiMon(course.maMh(), chk.isSelected());
             veBang();
@@ -272,6 +281,7 @@ public class RequirementPanel extends ScrollPane {
         VBox tcBox = new VBox(2);
         tcBox.setPadding(new Insets(9, 8, 9, 8));
         Label tc = new Label(course.soTc() + " tín chỉ");
+        tc.setStyle("-fx-text-fill: #1D4ED8; -fx-font-weight: bold;");
         tcBox.getChildren().add(tc);
 
         VBox soLopBox = new VBox(2);
@@ -284,14 +294,16 @@ public class RequirementPanel extends ScrollPane {
         }
         soLopBox.getChildren().add(new Label(soLop + " nhóm"));
 
-        row.add(new HBox(chk), 0, 0);
+        row.add(chk, 0, 0);
         row.add(maBox, 1, 0);
         row.add(tenBox, 2, 0);
         row.add(tcBox, 3, 0);
         row.add(soLopBox, 4, 0);
 
+        double[] rongCot = {8, 14, 40, 16, 22};
         for (int i = 0; i < 5; i++) {
             javafx.scene.layout.ColumnConstraints cc = new javafx.scene.layout.ColumnConstraints();
+            cc.setPercentWidth(rongCot[i]);
             cc.setHgrow(Priority.ALWAYS);
             row.getColumnConstraints().add(cc);
         }
