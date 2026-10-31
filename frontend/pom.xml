@@ -117,6 +117,9 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>com.tkb.frontend.user.Main</mainClass>
+                    <options>
+                        <option>-Djavafx.cachedir=${project.build.directory}/javafx-cache</option>
+                    </options>
                 </configuration>
             </plugin>
         </plugins>

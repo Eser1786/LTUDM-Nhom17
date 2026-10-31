@@ -183,8 +183,10 @@ public class HttpTkbClient implements TkbClient {
                 return response;
             }
             throw parseError(response);
-        } catch (IOException | InterruptedException ex) {
+        } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
+            throw new ApiException(ErrorCode.NETWORK_ERROR, "Không thể kết nối tới backend: " + baseUrl, List.of(ex.getMessage()));
+        } catch (IOException ex) {
             throw new ApiException(ErrorCode.NETWORK_ERROR, "Không thể kết nối tới backend: " + baseUrl, List.of(ex.getMessage()));
         }
     }
