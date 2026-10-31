@@ -24,9 +24,10 @@ import java.util.Map;
  * Màn hình Thiết lập ưu tiên.
  * Chỉ giữ bảng mức độ ưu tiên; người dùng đã chọn môn ở màn hình trước.
  */
-public class PriorityPanel extends ScrollPane {
+public class PriorityPanel extends VBox {
     private final MainFrame frame;
     private final MainFrame.AppUiState st;
+    private final boolean hienTieuDe;
     private final VBox cotPhai = new VBox(12);
     private final Slider sSang = new Slider(0, 5, 3);
     private final Slider sItNgay = new Slider(0, 5, 3);
@@ -40,16 +41,17 @@ public class PriorityPanel extends ScrollPane {
     private final VBox khung = new VBox(14);
 
     public PriorityPanel(MainFrame frame) {
+        this(frame, true);
+    }
+
+    public PriorityPanel(MainFrame frame, boolean hienTieuDe) {
+        this.hienTieuDe = hienTieuDe;
         this.frame = frame;
         this.st = frame.trangThai();
 
-        khung.setPadding(new Insets(22, 26, 20, 26));
+        khung.setPadding(new Insets(0, 26, 20, 26));
         khung.setSpacing(14);
         khung.setStyle("-fx-background-color: #F6F8FB;");
-
-        VBox header = new VBox(4,
-                Functions.chuDe("Thiết lập ưu tiên"),
-                Functions.moTa("Sau khi chọn các môn muốn đăng ký, bạn chỉ cần điều chỉnh mức độ ưu tiên để hệ thống sắp xếp lịch theo độ phù hợp tốt nhất."));
 
         VBox phaiCard = Functions.the(16);
         phaiCard.setPrefWidth(420);
@@ -57,11 +59,18 @@ public class PriorityPanel extends ScrollPane {
         cotPhai.setFillWidth(true);
         phaiCard.getChildren().add(cotPhai);
 
-        khung.getChildren().addAll(header, phaiCard);
+        if (hienTieuDe) {
+            VBox header = new VBox(4,
+                    Functions.chuDe("Thiết lập ưu tiên"),
+                    Functions.moTa("Sau khi chọn các môn muốn đăng ký, bạn chỉ cần điều chỉnh mức độ ưu tiên để hệ thống sắp xếp lịch theo độ phù hợp tốt nhất."));
+            khung.getChildren().addAll(header, phaiCard);
+        } else {
+            khung.getChildren().add(phaiCard);
+        }
 
-        setContent(khung);
-        setFitToWidth(true);
+        setSpacing(0);
         setStyle("-fx-background-color: #F6F8FB;");
+        getChildren().add(khung);
     }
 
     public void taiLai() {
@@ -141,10 +150,7 @@ public class PriorityPanel extends ScrollPane {
     private VBox theNut() {
         VBox box = new VBox(8);
         Button macDinh = Functions.nutPhu("Khôi phục mặc định");
-        Button toiUu = Functions.nutChinh("Tối ưu thời khóa biểu");
         macDinh.setMaxWidth(Double.MAX_VALUE);
-        toiUu.setMaxWidth(Double.MAX_VALUE);
-        toiUu.setPadding(new Insets(10));
         macDinh.setOnAction(e -> {
             Criteria d = Criteria.macDinh();
             sSang.setValue(d.uuTienSang());
@@ -153,11 +159,7 @@ public class PriorityPanel extends ScrollPane {
             sNgayYeuThich.setValue(d.ngayYeuThich());
             ngayChk.forEach((thu, chk) -> chk.setSelected(d.ngayChon().contains(thu)));
         });
-        toiUu.setOnAction(e -> {
-            luuCriteria();
-            frame.batDauXepLich();
-        });
-        box.getChildren().addAll(macDinh, toiUu);
+        box.getChildren().add(macDinh);
         return box;
     }
 

@@ -23,7 +23,7 @@ import java.util.Locale;
  * Người dùng chọn các môn cần xếp thời khóa biểu rồi điều chỉnh mức độ ưu tiên ngay trên màn hình này.
  */
 public class RequirementPanel extends ScrollPane {
-    private static final int MOI_TRANG = 8;
+    private static final int MOI_TRANG = 10;
 
     private final TkbClient client;
     private final MainFrame frame;
@@ -43,17 +43,25 @@ public class RequirementPanel extends ScrollPane {
         this.client = client;
         this.frame = frame;
         this.st = frame.trangThai();
-        this.priorityPanel = new PriorityPanel(frame);
+        this.priorityPanel = new PriorityPanel(frame, false);
 
         khung.setPadding(new Insets(22, 26, 20, 26));
         khung.setSpacing(14);
         khung.setStyle("-fx-background-color: #F6F8FB;");
 
-        VBox header = new VBox(4,
+        // Chia tieu de thanh 2 phan de dat "Thiet lap uu tien" ngang voi "Mon muon dang ky".
+        HBox titleRow = new HBox(14);
+        VBox leftTitle = new VBox(4,
                 Functions.chuDe("Môn muốn đăng ký"),
                 Functions.moTa("Chọn những môn bạn muốn học và điều chỉnh mức độ ưu tiên ngay trên cùng một màn hình để tối ưu thời khóa biểu."));
+        HBox.setHgrow(leftTitle, Priority.ALWAYS);
+        VBox rightTitle = new VBox(4,
+                Functions.chuDe("Thiết lập ưu tiên"));
+        rightTitle.setPrefWidth(420);
+        rightTitle.setMinWidth(320);
+        titleRow.getChildren().addAll(leftTitle, rightTitle);
 
-        khung.getChildren().addAll(header, theLayout());
+        khung.getChildren().addAll(titleRow, theLayout());
 
         setContent(khung);
         setFitToWidth(true);
@@ -70,13 +78,24 @@ public class RequirementPanel extends ScrollPane {
         listCard.getChildren().addAll(theBoLoc(), theBang());
         left.getChildren().addAll(listCard, daChonPanel());
 
+        Button btnToiUu = Functions.nutChinh("Tối ưu thời khóa biểu");
+        btnToiUu.setMaxWidth(Double.MAX_VALUE);
+        btnToiUu.setPadding(new Insets(10));
+        btnToiUu.setOnAction(e -> {
+            priorityPanel.luuCriteria();
+            frame.batDauXepLich();
+        });
+        left.getChildren().add(btnToiUu);
+
         VBox right = new VBox(14);
         right.setPrefWidth(420);
         right.setMinWidth(320);
+        right.setPadding(new Insets(0, 0, 0, 16));
+        right.setStyle("-fx-border-color: #CBD5E1; -fx-border-width: 0 0 0 1;");
         HBox.setHgrow(right, Priority.NEVER);
-        // Thu nho bang thiet lap uu tien de dat vao nua ben phai.
-        priorityPanel.setPrefWidth(420);
-        priorityPanel.setMaxWidth(420);
+        // Thu nho bang thiet lap uu tien de dat vao nua ben phai, can len tren.
+        priorityPanel.setPrefWidth(400);
+        priorityPanel.setMaxWidth(400);
         right.getChildren().add(priorityPanel);
 
         horizontal.getChildren().addAll(left, right);
@@ -128,8 +147,8 @@ public class RequirementPanel extends ScrollPane {
         bang.setMaxWidth(Double.MAX_VALUE);
         ScrollPane cuon = new ScrollPane(bang);
         cuon.setFitToWidth(true);
-        cuon.setMinHeight(220);
-        cuon.setPrefHeight(260);
+        cuon.setMinHeight(360);
+        cuon.setPrefHeight(420);
         cuon.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         VBox.setVgrow(cuon, Priority.ALWAYS);
 
