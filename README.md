@@ -45,7 +45,7 @@ TimeTableManagement/
 ├── docker-compose.yml                  # Cấu hình container MySQL 8.0 và Adminer
 ├── init-schema/
 │   └── 01-schema.sql                   # Schema khởi tạo 8 bảng CSDL (UTF-8mb4)
-├── csv/
+├── csv/                                # được khởi tạo từ code
 │   └── 2026-2027-1/
 │       └── thoi_khoa_bieu.csv          # Dữ liệu thời khóa biểu đã chuẩn hóa từ PDF
 ├── tools/
