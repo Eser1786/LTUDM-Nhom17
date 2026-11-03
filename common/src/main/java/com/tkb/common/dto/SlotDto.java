@@ -4,7 +4,15 @@ package com.tkb.common.dto;
  * B2.4 - SlotDto: Cau truc du lieu mot buoi hoc trong tuan (Muc 8 Protocol).
  *
  * Cau truc JSON chuan:
- *   {"dayOfWeek": 3, "startPeriod": 1, "periodCount": 2, "room": "C.A207", "weeks": "1234567890--------"}
+ *   {
+ *     "dayOfWeek": 3,
+ *     "startPeriod": 1,
+ *     "periodCount": 2,
+ *     "room": "C.A207",
+ *     "weeks": "1234567890--------",
+ *     "type": "LT",
+ *     "labGroup": ""
+ *   }
  *
  * Quy uoc gia tri:
  *   - dayOfWeek: 2 den 8 (2 = Thu Hai, 7 = Thu Bay, 8 = Chu Nhat).
@@ -12,7 +20,9 @@ package com.tkb.common.dto;
  *   - periodCount: So tiet hoc lien tuc (tiet ket thuc = startPeriod + periodCount - 1 <= 12).
  *   - room: Ma phong hoc (vd: "C.A207", "C.E102").
  *   - weeks: Chuoi bieu dien tuan hoc (vd: "1234567890--------", "-2-4-6-8-0-2------" hoac "********").
- *            Ky tu '-' hoac khoang trang ' ' la tuan NGHI; cac ky tu khac (so hoac '*') la tuan CO HOC.
+ *   - type: "LT" (Ly thuyet) hoac "TH" (Thuc hanh).
+ *   - labGroup: So to thuc hanh ("" neu la LT, "01", "02"... neu la TH).
+ *   - weekMask: Mat na bit 62-bit (bit i = 1 neu tuan thu i+1 co hoc) giup kiem tra trung tuan cuc nhanh.
  *
  * Vi tri dat file:
  *   common/src/main/java/com/tkb/common/dto/SlotDto.java
@@ -24,16 +34,34 @@ public class SlotDto {
     private int periodCount;
     private String room;
     private String weeks;
+    private String type = "LT";
+    private String labGroup = "";
+    private long weekMask;
 
     public SlotDto() {
     }
 
     public SlotDto(int dayOfWeek, int startPeriod, int periodCount, String room, String weeks) {
+        this(dayOfWeek, startPeriod, periodCount, room, weeks, "LT", "", computeWeekMask(weeks));
+    }
+
+    public SlotDto(
+            int dayOfWeek,
+            int startPeriod,
+            int periodCount,
+            String room,
+            String weeks,
+            String type,
+            String labGroup,
+            long weekMask) {
         this.dayOfWeek = dayOfWeek;
         this.startPeriod = startPeriod;
         this.periodCount = periodCount;
         this.room = room;
         this.weeks = weeks != null ? weeks : "";
+        this.type = (type != null && !type.isBlank()) ? type : "LT";
+        this.labGroup = labGroup != null ? labGroup : "";
+        this.weekMask = (weekMask > 0) ? weekMask : computeWeekMask(this.weeks);
     }
 
     /**
@@ -45,47 +73,47 @@ public class SlotDto {
 
     /**
      * Kiem tra hai buoi hoc co trung lich voi nhau hay khong (xet ca Thu, Tiet va Tuan hoc - A5).
-     * Hai buoi chi bi coi la trung khi:
-     *   1. Cung thu trong tuan (dayOfWeek).
-     *   2. Giao nhau ve khoang tiet hoc.
-     *   3. Co it nhat 1 tuan hoc chung trong chuoi weeks.
      */
     public boolean conflictsWith(SlotDto other) {
         if (other == null || this.dayOfWeek != other.dayOfWeek) {
             return false;
         }
-        // Kiem tra giao nhau ve tiet hoc
         boolean periodOverlap = this.startPeriod <= other.getEndPeriod()
                 && other.startPeriod <= this.getEndPeriod();
         if (!periodOverlap) {
             return false;
         }
-        // Kiem tra giao nhau ve tuan hoc
+        if (this.weekMask > 0 && other.weekMask > 0) {
+            return (this.weekMask & other.weekMask) != 0L;
+        }
         return weeksOverlap(this.weeks, other.weeks);
     }
 
     /**
-     * Kiem tra 2 chuoi tuan hoc co tuan nao trung nhau khong.
-     * Quy uoc:
-     *   - Ky tu '-' hoac ' ' (khoang trang) tai vi tri i la tuan thu (i+1) KHONG hoc.
-     *   - Moi ky tu khac ('*', chữ số '1'..'9', '0') tại vị trí i là tuần thứ (i+1) CÓ học.
-     *   - Neu 1 trong 2 chuoi rong/null -> mac dinh coi nhu hoc tat ca cac tuan (trung nhau).
+     * Chuyen chuoi tuan hoc (weeks) sang mat na bit 62-bit (tuan_mask trong MySQL).
+     * Ky tu '-', '_', '.', hoac khoang trang ' ' la tuan NGHI (bit = 0).
+     * Moi ky tu khac (so hoac '*') la tuan CO HOC (bit = 1).
      */
-    public static boolean weeksOverlap(String w1, String w2) {
-        if (w1 == null || w1.isEmpty() || w2 == null || w2.isEmpty()) {
-            return true;
+    public static long computeWeekMask(String weeks) {
+        if (weeks == null || weeks.isEmpty()) {
+            return (1L << 15) - 1L; // Mac dinh 15 tuan dau (32767)
         }
-        int minLen = Math.min(w1.length(), w2.length());
-        for (int i = 0; i < minLen; i++) {
-            char c1 = w1.charAt(i);
-            char c2 = w2.charAt(i);
-            boolean active1 = (c1 != '-' && c1 != ' ');
-            boolean active2 = (c2 != '-' && c2 != ' ');
-            if (active1 && active2) {
-                return true; // Trung nhau tai tuan thu (i + 1)
+        int limit = Math.min(weeks.length(), 62);
+        long mask = 0L;
+        for (int i = 0; i < limit; i++) {
+            char c = weeks.charAt(i);
+            if (c != '-' && c != ' ' && c != '_' && c != '.') {
+                mask |= (1L << i);
             }
         }
-        return false;
+        return mask > 0 ? mask : ((1L << 15) - 1L);
+    }
+
+    /**
+     * Kiem tra 2 chuoi tuan hoc co tuan nao trung nhau khong.
+     */
+    public static boolean weeksOverlap(String w1, String w2) {
+        return (computeWeekMask(w1) & computeWeekMask(w2)) != 0L;
     }
 
     public int getDayOfWeek() {
@@ -125,6 +153,36 @@ public class SlotDto {
     }
 
     public void setWeeks(String weeks) {
-        this.weeks = weeks;
+        this.weeks = weeks != null ? weeks : "";
+        if (this.weekMask <= 0) {
+            this.weekMask = computeWeekMask(this.weeks);
+        }
+    }
+
+    public String getType() {
+        return type != null ? type : "LT";
+    }
+
+    public void setType(String type) {
+        this.type = (type != null && !type.isBlank()) ? type : "LT";
+    }
+
+    public String getLabGroup() {
+        return labGroup != null ? labGroup : "";
+    }
+
+    public void setLabGroup(String labGroup) {
+        this.labGroup = labGroup != null ? labGroup : "";
+    }
+
+    public long getWeekMask() {
+        if (weekMask <= 0) {
+            weekMask = computeWeekMask(weeks);
+        }
+        return weekMask;
+    }
+
+    public void setWeekMask(long weekMask) {
+        this.weekMask = weekMask;
     }
 }
