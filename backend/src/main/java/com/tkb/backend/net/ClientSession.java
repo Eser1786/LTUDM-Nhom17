@@ -41,6 +41,7 @@ import java.security.KeyPair;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -55,8 +56,7 @@ import javax.crypto.SecretKey;
  *   1. Bat tay 3 buoc: HELLO (RSA PublicKey) -> KEY_EXCHANGE (RSA-OAEP) -> READY (AES-256-GCM).
  *   2. Timeout 5 phut khong co goi tin nao thi tu dong dong ket noi.
  *   3. Giai ma Request AES-GCM, kiem tra quyen (-, U, A), dieu phoi (Dispatch) tat ca 32 lenh.
- *   4. Bat moi ngoai le, tra INTERNAL_ERROR, khong gui stack trace ve Client.
- *   5. Don sach job va upload do khi Client ngat ket noi.
+ *   4. Ho tro day du cac tham so mo rong cua 2 Khung keo tha uu tien trong lenh OPTIMIZE va SAVE_PLAN.
  *
  * Vi tri dat file:
  *   backend/src/main/java/com/tkb/backend/net/ClientSession.java
@@ -166,14 +166,12 @@ public class ClientSession implements Runnable {
     // =========================================================================
 
     private boolean performHandshake(InputStream in, OutputStream out) throws IOException {
-        // Buoc 1: Server gui HELLO (khong ma hoa) kem RSA-2048 PublicKey
         Map<String, Object> helloMsg = new LinkedHashMap<>();
         helloMsg.put("type", "HELLO");
         helloMsg.put("protocolVersion", 1);
         helloMsg.put("publicKey", CryptoUtil.encodePublicKeyBase64(rsaKeyPair.getPublic()));
         FrameCodec.writePlainJsonFrame(out, GSON.toJson(helloMsg));
 
-        // Buoc 2: Server doc KEY_EXCHANGE tu Client (khong ma hoa)
         String keyExchangeRaw = FrameCodec.readPlainJsonFrame(in);
         JsonObject keyObj = JsonParser.parseString(keyExchangeRaw).getAsJsonObject();
         String type = keyObj.has("type") && !keyObj.get("type").isJsonNull()
@@ -187,7 +185,6 @@ public class ClientSession implements Runnable {
         String encryptedKeyBase64 = keyObj.get("encryptedKey").getAsString();
         this.aesSessionKey = CryptoUtil.decryptSessionKeyRsaBase64(encryptedKeyBase64, rsaKeyPair.getPrivate());
 
-        // Buoc 3: Server gui READY (da ma hoa bang khoa phien AES-256-GCM)
         Map<String, Object> readyMsg = Map.of("type", "READY");
         FrameCodec.writeEncryptedJsonFrame(out, GSON.toJson(readyMsg), aesSessionKey);
         server.log("Bat tay RSA/AES-GCM thanh cong cho phien [" + sessionId + "].");
@@ -217,7 +214,6 @@ public class ClientSession implements Runnable {
             return Response.error(reqId, ErrorCode.BAD_REQUEST, "Lệnh không tồn tại: " + req.getCmd());
         }
 
-        // Kiem tra quyen truy cap (-, U, A) theo Muc 5, 6, 7 trang Protocol
         RequiredRole required = command.getRequiredRole();
         UserDto currentUser = this.authenticatedUser;
         if (required == RequiredRole.USER && currentUser == null) {
@@ -232,7 +228,6 @@ public class ClientSession implements Runnable {
             }
         }
 
-        // Thuc thi lenh va bat moi ngoai le de khong bao gio lam sap luong hoac lo stack trace (B3.4)
         try {
             return dispatchCommand(command, req);
         } catch (Exception e) {
@@ -343,7 +338,6 @@ public class ClientSession implements Runnable {
             return Response.error(req.getId(), ErrorCode.VALIDATION_FAILED, "Thiếu mã học phần courseCode.", Map.of("field", "courseCode"));
         }
 
-        // includeInactive = true chi danh cho ADMIN (nguoi thuong gui se bi bo qua)
         boolean includeInactive = Boolean.TRUE.equals(reqInactive) && authenticatedUser != null && authenticatedUser.isAdmin();
         List<SectionDto> sections = catalogCache.getSectionsForCourse(semesterCode.trim(), courseCode.trim(), includeInactive);
 
@@ -396,7 +390,6 @@ public class ClientSession implements Runnable {
             );
         }
 
-        // Kiem tra khong trung ma hoc phan trong danh sach
         Set<String> uniqueCourses = new LinkedHashSet<>();
         for (String c : courses) {
             if (c == null || c.isBlank() || !uniqueCourses.add(c.trim())) {
@@ -418,7 +411,6 @@ public class ClientSession implements Runnable {
             );
         }
 
-        // Kiem tra tat ca hoc phan co duoc mo trong hoc ky hay khong (Yeu cau A.10 -> COURSE_NOT_OPEN)
         Map<String, List<SectionDto>> allActiveByCourse = catalogCache.getAllActiveSectionsByCourse(semesterCode.trim());
         List<String> notOpenCourses = new ArrayList<>();
         for (String code : uniqueCourses) {
@@ -436,7 +428,6 @@ public class ClientSession implements Runnable {
             );
         }
 
-        // Kiem tra gioi han 3 job dong thoi tren moi nguoi dung (B7.2)
         long userId = authenticatedUser.getUserId();
         if (!jobManager.canUserSubmitJob(userId)) {
             return Response.error(req.getId(), ErrorCode.TOO_MANY_JOBS);
@@ -495,9 +486,6 @@ public class ClientSession implements Runnable {
         return Response.success(req.getId(), data);
     }
 
-    /**
-     * B8.1 - SAVE_PLAN: Kiem tra cung hoc ky, khong trung gio, tu tinh lai diem va metrics tren Server.
-     */
     private Response handleSavePlan(Request req) throws Exception {
         String semesterCode = req.getString("semesterCode");
         String name = req.getString("name");
@@ -530,7 +518,6 @@ public class ClientSession implements Runnable {
             return Response.error(req.getId(), ErrorCode.NAME_TAKEN);
         }
 
-        // Kiem tra tat ca sectionIds thuoc dung hoc ky va khong trung ma mon
         List<SectionDto> selectedSections = new ArrayList<>();
         List<Long> sectionIds = new ArrayList<>();
         Set<String> seenCourses = new LinkedHashSet<>();
@@ -553,7 +540,6 @@ public class ClientSession implements Runnable {
             sectionIds.add(secId);
         }
 
-        // Kiem tra khong trung gio (xet ca Tuan hoc)
         if (solver.hasAnyConflict(selectedSections)) {
             return Response.error(
                     req.getId(),
@@ -563,7 +549,6 @@ public class ClientSession implements Runnable {
             );
         }
 
-        // Tu tinh lai diem va metrics tren Server (khong tin so lieu tu Client)
         Object criteriaRaw = req.getData().get("criteria");
         Criteria criteria = parseCriteria(criteriaRaw);
         PlanDto evaluated = solver.evaluateAndBuildPlan(selectedSections, criteria, List.of());
@@ -999,12 +984,9 @@ public class ClientSession implements Runnable {
     }
 
     // =========================================================================
-    // CAC HAM TIEN ICH GUI GOI TIN & DON TAI NGUYEN
+    // CAC HAM TIEN ICH GUI GOI TIN & PARSE CRITERIA MO RONG
     // =========================================================================
 
-    /**
-     * Mã hóa Response / Push thành JSON AES-256-GCM và gửi xuống Socket an toàn đa luồng.
-     */
     public void sendResponse(Response response) {
         if (!running || socket.isClosed() || socketOut == null || aesSessionKey == null) {
             return;
@@ -1033,6 +1015,9 @@ public class ClientSession implements Runnable {
         server.unregisterSession(sessionId);
     }
 
+    /**
+     * Đọc đầy đủ các trường cấu hình của cả 2 Khung kéo thả (tương thích ngược 100% với JSON cũ).
+     */
     private Criteria parseCriteria(Object rawObj) {
         if (rawObj instanceof Map<?, ?> map) {
             boolean minDays = parseBool(map.get("minDays"), true);
@@ -1041,9 +1026,71 @@ public class ClientSession implements Runnable {
             double wDays = parseDouble(map.get("weightMinDays"), 1.0);
             double wMorning = parseDouble(map.get("weightMorning"), 1.0);
             double wGaps = parseDouble(map.get("weightNoGaps"), 1.0);
-            return new Criteria(minDays, morningFirst, avoidGaps, wDays, wMorning, wGaps);
+
+            String timeMode = map.get("timeMode") != null
+                    ? String.valueOf(map.get("timeMode")).trim()
+                    : (morningFirst ? "MORNING" : "NONE");
+
+            Set<Integer> preferredDays = new LinkedHashSet<>();
+            if (map.get("preferredDays") instanceof List<?> dayList) {
+                for (Object item : dayList) {
+                    if (item instanceof Number n) {
+                        preferredDays.add(n.intValue());
+                    }
+                }
+            }
+
+            int[] preferredSlotsMask = null;
+            if (map.get("preferredSlotsMask") instanceof List<?> maskList && !maskList.isEmpty()) {
+                preferredSlotsMask = new int[Math.min(7, maskList.size())];
+                for (int i = 0; i < preferredSlotsMask.length; i++) {
+                    Object m = maskList.get(i);
+                    if (m instanceof Number n) {
+                        preferredSlotsMask[i] = n.intValue();
+                    }
+                }
+            }
+
+            String preferredCampus = map.get("preferredCampus") != null
+                    ? String.valueOf(map.get("preferredCampus")).trim()
+                    : "";
+            boolean avoidCampusSwitch = parseBool(map.get("avoidCampusSwitch"), true);
+            double wCampus = parseDouble(map.get("weightCampus"), 1.0);
+
+            Map<String, String> preferredLecturers = parseStringMap(map.get("preferredLecturers"));
+            Map<String, String> lockedGroups = parseStringMap(map.get("lockedGroups"));
+
+            return new Criteria(
+                    minDays,
+                    morningFirst,
+                    avoidGaps,
+                    wDays,
+                    wMorning,
+                    wGaps,
+                    timeMode,
+                    preferredDays,
+                    preferredSlotsMask,
+                    preferredCampus,
+                    avoidCampusSwitch,
+                    wCampus,
+                    preferredLecturers,
+                    lockedGroups
+            );
         }
         return new Criteria(true, true, false);
+    }
+
+    private static Map<String, String> parseStringMap(Object raw) {
+        if (raw instanceof Map<?, ?> m) {
+            Map<String, String> res = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> e : m.entrySet()) {
+                if (e.getKey() != null && e.getValue() != null) {
+                    res.put(String.valueOf(e.getKey()).trim(), String.valueOf(e.getValue()).trim());
+                }
+            }
+            return res;
+        }
+        return Collections.emptyMap();
     }
 
     private static boolean parseBool(Object val, boolean def) {
