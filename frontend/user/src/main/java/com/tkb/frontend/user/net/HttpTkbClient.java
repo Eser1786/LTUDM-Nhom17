@@ -27,12 +27,13 @@ import java.util.Map;
 
 public class HttpTkbClient implements TkbClient {
     private static final String DEFAULT_BASE_URL = "http://localhost:8081/api";
+    private static final String SYS_PROP_BASE_URL = "tkb.backend.url";
     private final HttpClient httpClient;
     private final ObjectMapper mapper;
     private final String baseUrl;
 
     public HttpTkbClient() {
-        this(DEFAULT_BASE_URL);
+        this(System.getProperty(SYS_PROP_BASE_URL, DEFAULT_BASE_URL));
     }
 
     public HttpTkbClient(String baseUrl) {

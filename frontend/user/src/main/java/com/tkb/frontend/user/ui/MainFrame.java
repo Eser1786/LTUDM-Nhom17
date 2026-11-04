@@ -10,7 +10,6 @@ import com.tkb.frontend.user.model.Types.Semester;
 import com.tkb.frontend.user.model.Types.Student;
 import com.tkb.frontend.user.net.ApiException;
 import com.tkb.frontend.user.net.HttpTkbClient;
-import com.tkb.frontend.user.net.MockNetworkClient;
 import com.tkb.frontend.user.net.TkbClient;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -63,13 +62,7 @@ public class MainFrame extends BorderPane {
     // selected semester, chosen sections, and generated scheduling results.
     private final TkbClient client = createClient();
     private static TkbClient createClient() {
-        try {
-            TkbClient live = new HttpTkbClient();
-            live.listSemesters();
-            return live;
-        } catch (Exception ex) {
-            return new MockNetworkClient();
-        }
+        return new HttpTkbClient();
     }
     private final AppUiState trangThai = new AppUiState(client);
     private final Map<String, Node> cards = new LinkedHashMap<>();
@@ -145,14 +138,14 @@ public class MainFrame extends BorderPane {
         semBox.getChildren().addAll(lblSemSidebar, lblSemNgaySidebar);
         sidebar.getChildren().add(semBox);
 
-        Button infoBtn = new Button("Dữ liệu học phần minh họa");
+        Button infoBtn = new Button("Dữ liệu học phần từ backend");
         infoBtn.setMaxWidth(Double.MAX_VALUE);
         infoBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #CBD5E1; -fx-alignment: center-left;");
-        infoBtn.setOnAction(e -> Functions.thongTin(getScene() == null ? null : getScene().getWindow(), "Bản demo dùng dữ liệu học phần giả lập cho các học kỳ-nhóm."));
+        infoBtn.setOnAction(e -> Functions.thongTin(getScene() == null ? null : getScene().getWindow(), "Dữ liệu đang được lấy trực tiếp từ server backend. Nếu không thấy dữ liệu, hãy kiểm tra server đã khởi động và URL backend đúng."));
         Button helpBtn = new Button("Hướng dẫn sử dụng");
         helpBtn.setMaxWidth(Double.MAX_VALUE);
         helpBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #CBD5E1; -fx-alignment: center-left;");
-        helpBtn.setOnAction(e -> Functions.thongTin(getScene() == null ? null : getScene().getWindow(), "1. Chọn môn và thiết lập ưu tiên trên cùng trang\n2. Chạy tối ưu và xem phương án đề xuất."));
+        helpBtn.setOnAction(e -> Functions.thongTin(getScene() == null ? null : getScene().getWindow(), "1. Chọn môn và thiết lập ưu tiên trên cùng trang\n2. Chạy tối ưu và xem phương án đề xuất từ backend."));
         sidebar.getChildren().addAll(infoBtn, helpBtn);
 
         HBox header = new HBox(12);
