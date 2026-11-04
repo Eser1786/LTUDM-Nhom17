@@ -1,20 +1,20 @@
 package com.tkb.frontend.user.ui;
 
-import com.tkb.frontend.user.model.Types.ClassSession;
 import com.tkb.frontend.user.model.Types.Criteria;
-import com.tkb.frontend.user.model.Types.Section;
-import com.tkb.frontend.user.model.Types.SectionSlot;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Slider;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,19 +25,17 @@ import java.util.Map;
  * Chỉ giữ bảng mức độ ưu tiên; người dùng đã chọn môn ở màn hình trước.
  */
 public class PriorityPanel extends VBox {
+    private static final String KEY_SANG = "SANG";
+    private static final String KEY_IT_NGAY = "IT_NGAY";
+    private static final String KEY_KHOANG = "KHOANG";
+    private static final String KEY_NGAY = "NGAY";
+
     private final MainFrame frame;
     private final MainFrame.AppUiState st;
     private final boolean hienTieuDe;
     private final VBox cotPhai = new VBox(12);
-    private final Slider sSang = new Slider(0, 5, 3);
-    private final Slider sItNgay = new Slider(0, 5, 3);
-    private final Slider sKhoangTrong = new Slider(0, 5, 3);
-    private final Slider sNgayYeuThich = new Slider(0, 5, 0);
     private final Map<Integer, CheckBox> ngayChk = new LinkedHashMap<>();
-    private final Label lblSang = Functions.nhanChinh("3");
-    private final Label lblItNgay = Functions.nhanChinh("3");
-    private final Label lblKhoang = Functions.nhanChinh("3");
-    private final Label lblNgayYeu = Functions.nhanChinh("0");
+    private final List<PriorityItem> priorityItems = new ArrayList<>();
     private final VBox khung = new VBox(14);
 
     public PriorityPanel(MainFrame frame) {
@@ -48,6 +46,17 @@ public class PriorityPanel extends VBox {
         this.hienTieuDe = hienTieuDe;
         this.frame = frame;
         this.st = frame.trangThai();
+
+        priorityItems.addAll(List.of(
+                new PriorityItem(KEY_SANG, "Ưu tiên buổi sáng",
+                        "Xếp nhiều tiết học vào buổi sáng (tiết 1–5) hơn."),
+                new PriorityItem(KEY_IT_NGAY, "Ít ngày đến trường",
+                        "Giảm số ngày phải lên trường trong tuần."),
+                new PriorityItem(KEY_KHOANG, "Khoảng trống ngắn",
+                        "Hạn chế các khoảng nghỉ dài giữa những buổi học trong cùng ngày."),
+                new PriorityItem(KEY_NGAY, "Ngày học yêu thích",
+                        "Ưu tiên xếp lịch vào các ngày bạn đã chọn bên dưới.")
+        ));
 
         khung.setPadding(new Insets(0, 26, 20, 26));
         khung.setSpacing(14);
@@ -62,7 +71,7 @@ public class PriorityPanel extends VBox {
         if (hienTieuDe) {
             VBox header = new VBox(4,
                     Functions.chuDe("Thiết lập ưu tiên"),
-                    Functions.moTa("Sau khi chọn các môn muốn đăng ký, bạn chỉ cần điều chỉnh mức độ ưu tiên để hệ thống sắp xếp lịch theo độ phù hợp tốt nhất."));
+                    Functions.moTa("Sau khi chọn các môn muốn đăng ký, bạn chỉ cần sắp xếp thứ tự ưu tiên để hệ thống tối ưu lịch theo hướng ưu tiên từ trên xuống."));
             khung.getChildren().addAll(header, phaiCard);
         } else {
             khung.getChildren().add(phaiCard);
@@ -81,70 +90,139 @@ public class PriorityPanel extends VBox {
         cotPhai.getChildren().clear();
         cotPhai.getChildren().addAll(
                 Functions.tieuDeThe("Mức độ ưu tiên"),
-                Functions.moTa("Kéo thanh trượt để tăng hoặc giảm mức độ quan trọng của từng tiêu chí."));
+                Functions.moTa("Kéo các điều kiện lên xuống để đặt thứ tự ưu tiên từ trên xuống."));
 
-        cotPhai.getChildren().add(tieuChi("Ưu tiên buổi sáng",
-                "Xếp nhiều tiết học vào buổi sáng (tiết 1–5) hơn.", sSang, lblSang));
-        cotPhai.getChildren().add(tieuChi("Ít ngày đến trường",
-                "Giảm số ngày phải lên trường trong tuần.", sItNgay, lblItNgay));
-        cotPhai.getChildren().add(tieuChi("Khoảng trống ngắn",
-                "Hạn chế các khoảng nghỉ dài giữa những buổi học trong cùng ngày.", sKhoangTrong, lblKhoang));
-        cotPhai.getChildren().add(tieuChiNgay());
-        cotPhai.getChildren().addAll(Functions.vach(), theNut(), ghiChu());
-
-        sSang.valueProperty().addListener((o, a, b) -> lblSang.setText(String.valueOf((int) sSang.getValue())));
-        sItNgay.valueProperty().addListener((o, a, b) -> lblItNgay.setText(String.valueOf((int) sItNgay.getValue())));
-        sKhoangTrong.valueProperty().addListener((o, a, b) -> lblKhoang.setText(String.valueOf((int) sKhoangTrong.getValue())));
-        sNgayYeuThich.valueProperty().addListener((o, a, b) -> {
-            lblNgayYeu.setText(String.valueOf((int) sNgayYeuThich.getValue()));
-            ngayChk.values().forEach(c -> c.setDisable(sNgayYeuThich.getValue() == 0));
-        });
-        ngayChk.values().forEach(c -> c.setDisable(sNgayYeuThich.getValue() == 0));
-    }
-
-    private VBox tieuChi(String td, String mt, Slider slider, Label giaTri) {
-        VBox card = Functions.the(12);
-        HBox top = new HBox(10, Functions.tieuDeThe(td), Functions.khoangTrong(), giaTri);
-        top.setAlignment(Pos.CENTER_LEFT);
-        Label mo = Functions.moTa(mt);
-        slider.setMajorTickUnit(1);
-        slider.setMinorTickCount(0);
-        slider.setBlockIncrement(1);
-        slider.setSnapToTicks(true);
-        slider.setShowTickMarks(true);
-        slider.setShowTickLabels(true);
-        HBox nhan = new HBox(Functions.nhanNho("0 · Không ưu tiên"), Functions.khoangTrong(),
-                Functions.nhanNho("5 · Cao nhất"));
-        card.getChildren().addAll(top, mo, slider, nhan);
-        return card;
-    }
-
-    private VBox tieuChiNgay() {
-        VBox card = Functions.the(12);
-        HBox top = new HBox(10, Functions.tieuDeThe("Ngày học yêu thích"), Functions.khoangTrong(), lblNgayYeu);
-        top.setAlignment(Pos.CENTER_LEFT);
-        Label mo = Functions.moTa("Ưu tiên xếp lịch vào các ngày bạn đã chọn bên dưới.");
-        sNgayYeuThich.setMajorTickUnit(1);
-        sNgayYeuThich.setMinorTickCount(0);
-        sNgayYeuThich.setBlockIncrement(1);
-        sNgayYeuThich.setSnapToTicks(true);
-        sNgayYeuThich.setShowTickMarks(true);
-        sNgayYeuThich.setShowTickLabels(true);
-
-        ngayChk.clear();
-        FlowPane ngayRow = new FlowPane(10, 8);
-        String[] tenNgay = {"T2", "T3", "T4", "T5", "T6", "T7"};
-        for (int i = 0; i < tenNgay.length; i++) {
-            int thu = i + 2;
-            CheckBox chk = new CheckBox(tenNgay[i]);
-            chk.setSelected(st.criteria.ngayChon().contains(thu));
-            ngayChk.put(thu, chk);
-            ngayRow.getChildren().add(chk);
+        VBox list = new VBox(10);
+        for (int i = 0; i < priorityItems.size(); i++) {
+            list.getChildren().add(tieuChiTheoThuTu(priorityItems.get(i), i));
         }
-        HBox nhan = new HBox(Functions.nhanNho("0 · Không ưu tiên"), Functions.khoangTrong(),
-                Functions.nhanNho("5 · Cao nhất"));
-        card.getChildren().addAll(top, mo, sNgayYeuThich, nhan, Functions.nhanNho("Các ngày ưu tiên"), ngayRow);
+
+        cotPhai.getChildren().add(list);
+        cotPhai.getChildren().addAll(Functions.vach(), theNut(), ghiChu());
+        capNhatNgayYeuThich();
+    }
+
+    private VBox tieuChiTheoThuTu(PriorityItem item, int index) {
+        VBox card = Functions.the(12);
+        card.setUserData(item);
+        card.setStyle(card.getStyle() + " -fx-cursor: hand;");
+
+        HBox top = new HBox(10);
+        top.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane dragBox = new StackPane();
+        dragBox.setPrefSize(28, 28);
+        dragBox.setStyle("-fx-background-color: #EEF2FF; -fx-background-radius: 8;");
+        Label dragIcon = new Label("⋮⋮");
+        dragIcon.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+        dragIcon.setTextFill(Functions.MA_CHU_PHU);
+        dragBox.getChildren().add(dragIcon);
+
+        Label title = Functions.tieuDeThe(item.title());
+        Label badge = Functions.nhanXam("Ưu tiên " + (index + 1));
+        HBox left = new HBox(10, dragBox, title);
+        left.setAlignment(Pos.CENTER_LEFT);
+        top.getChildren().addAll(left, Functions.khoangTrong(), badge);
+
+        Label mo = Functions.moTa(item.description());
+        int currentWeight = priorityWeight(index);
+        Label current = Functions.nhanNho("Mức ưu tiên hiện tại: " + currentWeight + "/5");
+        VBox body = new VBox(10, top, mo, current);
+
+        if (KEY_NGAY.equals(item.key())) {
+            FlowPane ngayRow = new FlowPane(10, 8);
+            String[] tenNgay = {"T2", "T3", "T4", "T5", "T6", "T7"};
+            for (int i = 0; i < tenNgay.length; i++) {
+                int thu = i + 2;
+                CheckBox chk = new CheckBox(tenNgay[i]);
+                chk.setSelected(st.criteria.ngayChon().contains(thu));
+                ngayChk.put(thu, chk);
+                ngayRow.getChildren().add(chk);
+            }
+            body.getChildren().addAll(Functions.nhanNho("Các ngày ưu tiên"), ngayRow);
+        }
+
+        card.getChildren().add(body);
+
+        card.setOnDragDetected(evt -> {
+            Dragboard db = card.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent content = new ClipboardContent();
+            content.putString(item.key());
+            db.setContent(content);
+            card.setOpacity(0.7);
+            evt.consume();
+        });
+
+        card.setOnDragOver(evt -> {
+            if (evt.getGestureSource() != card && evt.getDragboard().hasString()) {
+                evt.acceptTransferModes(TransferMode.MOVE);
+                evt.consume();
+            }
+        });
+
+        card.setOnDragDropped(evt -> {
+            Dragboard db = evt.getDragboard();
+            if (db.hasString()) {
+                String draggedKey = db.getString();
+                int from = findItemIndexByKey(draggedKey);
+                int to = priorityItems.indexOf(item);
+                if (from >= 0 && from != to) {
+                    movePriorityItem(from, to);
+                    veCotPhai();
+                }
+                evt.setDropCompleted(true);
+            }
+            evt.consume();
+        });
+
+        card.setOnDragDone(evt -> {
+            card.setOpacity(1.0);
+            evt.consume();
+        });
+
         return card;
+    }
+
+    private int findItemIndexByKey(String key) {
+        for (int i = 0; i < priorityItems.size(); i++) {
+            if (priorityItems.get(i).key().equals(key)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void movePriorityItem(int from, int to) {
+        if (from < 0 || to < 0 || from == to) {
+            return;
+        }
+        PriorityItem item = priorityItems.remove(from);
+        int targetIndex = to;
+        if (to > from) {
+            targetIndex = to;
+        }
+        priorityItems.add(Math.max(0, Math.min(targetIndex, priorityItems.size())), item);
+    }
+
+    private void capNhatNgayYeuThich() {
+        int uuTienNgay = getPriorityWeight(KEY_NGAY);
+        for (CheckBox checkBox : ngayChk.values()) {
+            checkBox.setDisable(uuTienNgay == 0);
+        }
+    }
+
+    private int getPriorityWeight(String key) {
+        for (int i = 0; i < priorityItems.size(); i++) {
+            if (priorityItems.get(i).key().equals(key)) {
+                return priorityWeight(i);
+            }
+        }
+        return 0;
+    }
+
+    private int priorityWeight(int index) {
+        if (index < 0) return 0;
+        return Math.max(1, 5 - index);
     }
 
     private VBox theNut() {
@@ -153,10 +231,19 @@ public class PriorityPanel extends VBox {
         macDinh.setMaxWidth(Double.MAX_VALUE);
         macDinh.setOnAction(e -> {
             Criteria d = Criteria.macDinh();
-            sSang.setValue(d.uuTienSang());
-            sItNgay.setValue(d.itNgay());
-            sKhoangTrong.setValue(d.khoangTrong());
-            sNgayYeuThich.setValue(d.ngayYeuThich());
+            priorityItems.clear();
+            priorityItems.addAll(List.of(
+                    new PriorityItem(KEY_SANG, "Ưu tiên buổi sáng",
+                            "Xếp nhiều tiết học vào buổi sáng (tiết 1–5) hơn."),
+                    new PriorityItem(KEY_IT_NGAY, "Ít ngày đến trường",
+                            "Giảm số ngày phải lên trường trong tuần."),
+                    new PriorityItem(KEY_KHOANG, "Khoảng trống ngắn",
+                            "Hạn chế các khoảng nghỉ dài giữa những buổi học trong cùng ngày."),
+                    new PriorityItem(KEY_NGAY, "Ngày học yêu thích",
+                            "Ưu tiên xếp lịch vào các ngày bạn đã chọn bên dưới.")
+            ));
+            ngayChk.clear();
+            veCotPhai();
             ngayChk.forEach((thu, chk) -> chk.setSelected(d.ngayChon().contains(thu)));
         });
         box.getChildren().add(macDinh);
@@ -169,8 +256,7 @@ public class PriorityPanel extends VBox {
                 + "-fx-border-radius: 12; -fx-border-width: 1;");
         box.getChildren().addAll(
                 Functions.nhanDeXuat("Ghi chú"),
-                Functions.moTa("Trọng số chỉ dùng để xếp hạng các lịch. Mọi phương án hợp lệ đều phải "
-                        + "không trùng giờ và tuân thủ điều kiện ghép nhóm lý thuyết – thực hành."));
+                Functions.moTa("Thứ tự từ trên xuống là mức ưu tiên cao nhất đến thấp nhất. Hệ thống sẽ tự quy đổi thành trọng số 0–5 để tối ưu hóa lịch học."));
         return box;
     }
 
@@ -179,7 +265,17 @@ public class PriorityPanel extends VBox {
         ngayChk.forEach((thu, chk) -> {
             if (chk.isSelected()) ngay.add(thu);
         });
-        st.criteria = new Criteria((int) sSang.getValue(), (int) sItNgay.getValue(),
-                (int) sKhoangTrong.getValue(), (int) sNgayYeuThich.getValue(), ngay, 3);
+
+        st.criteria = new Criteria(
+                getPriorityWeight(KEY_SANG),
+                getPriorityWeight(KEY_IT_NGAY),
+                getPriorityWeight(KEY_KHOANG),
+                getPriorityWeight(KEY_NGAY),
+                ngay,
+                3
+        );
+    }
+
+    private record PriorityItem(String key, String title, String description) {
     }
 }
