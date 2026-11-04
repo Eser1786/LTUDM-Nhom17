@@ -164,7 +164,6 @@ public class MockNetworkClient implements TkbClient {
         p.ten = ten;
         p.diem = diem;
         p.stats = tinhChiSo(slots);
-        p.sectionIds = new ArrayList<>(sectionIds);
         p.slots = slots;
         p.ngayTao = ngayTao;
         plans.add(p);
@@ -291,11 +290,10 @@ public class MockNetworkClient implements TkbClient {
         Criteria criteria = request.criteria() == null ? Criteria.macDinh() : request.criteria();
         PlanRequest chinh = new PlanRequest(request.maHocKy(), monUuTien, criteria, ids);
         String jobId = "job-" + System.nanoTime();
-        JobState state = new JobState(jobId, chinh, candidates);
+        JobState state = new JobState(chinh, candidates);
         jobs.put(jobId, state);
         Thread worker = new Thread(() -> runJob(state), "mock-job-" + jobId);
         worker.setDaemon(true);
-        state.worker = worker;
         worker.start();
         return jobId;
     }
@@ -801,7 +799,7 @@ public class MockNetworkClient implements TkbClient {
         plan.diem = diem;
         plan.stats = stats;
         plan.slots = slots;
-        plan.sectionIds = new ArrayList<>(sectionIds);
+
         plan.ngayTao = LocalDateTime.now().format(FMT);
         plans.add(plan);
         return plan.id;
@@ -857,14 +855,12 @@ public class MockNetworkClient implements TkbClient {
         String ten;
         double diem;
         OptionStats stats;
-        List<Integer> sectionIds;
         List<SectionSlot> slots;
         List<String> biLoai = new ArrayList<>();
         String ngayTao;
     }
 
     private static final class JobState {
-        final String id;
         final PlanRequest request;
         final List<SectionSlot> candidates;
         final long seed = System.nanoTime();
@@ -873,10 +869,7 @@ public class MockNetworkClient implements TkbClient {
         volatile JobStatus.State state = JobStatus.State.RUNNING;
         volatile JobResult result;
         volatile String error;
-        Thread worker;
-
-        JobState(String id, PlanRequest request, List<SectionSlot> candidates) {
-            this.id = id;
+        JobState(PlanRequest request, List<SectionSlot> candidates) {
             this.request = request;
             this.candidates = candidates;
         }

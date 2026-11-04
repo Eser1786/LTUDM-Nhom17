@@ -13,7 +13,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -34,7 +33,6 @@ public class ResultPanel extends ScrollPane {
     private final Map<String, CheckBox> chkSoSanh = new LinkedHashMap<>();
     private final Button btnSoSanh = Functions.nutPhu("So sánh phương án đã chọn");
     private JobResult ketQua;
-    private int chiSoDangXem = 0;
 
     public ResultPanel(TkbClient client, MainFrame frame) {
         this.client = client;
@@ -80,7 +78,6 @@ public class ResultPanel extends ScrollPane {
 
     public void hienKetQua(JobResult result) {
         this.ketQua = result;
-        this.chiSoDangXem = 0;
         this.chkSoSanh.clear();
         if (result == null || result.options().isEmpty()) {
             hienTrangThai();
@@ -127,9 +124,7 @@ public class ResultPanel extends ScrollPane {
             chk.setOnAction(e -> capNhatNutSoSanh());
 
             Button xem = deXuat ? Functions.nutChinh("Xem lịch") : Functions.nutPhu("Xem lịch");
-            int idx = i;
             xem.setOnAction(e -> {
-                chiSoDangXem = idx;
                 veChiTiet(o);
             });
 

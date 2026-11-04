@@ -1,9 +1,6 @@
 package com.tkb.frontend.user.ui;
 
-import com.tkb.frontend.user.model.Types.ClassSession;
 import com.tkb.frontend.user.model.Types.Criteria;
-import com.tkb.frontend.user.model.Types.Section;
-import com.tkb.frontend.user.model.Types.SectionSlot;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -13,7 +10,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

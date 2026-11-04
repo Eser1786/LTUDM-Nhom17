@@ -2,7 +2,6 @@ package com.tkb.frontend.user.ui;
 
 import com.tkb.frontend.user.net.ApiException;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;

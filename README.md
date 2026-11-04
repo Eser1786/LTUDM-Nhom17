@@ -77,6 +77,12 @@ TimeTableManagement/
     └── src/main/java/com/tkb/frontend/
 ```
 
+### Chạy thử điều hướng Client theo role
+
+Điểm vào `com.tkb.frontend.user.Main` hiện dùng `MockProtocolNetworkClient` cho giai đoạn phát triển. Mock mặc định trả role `USER`; để mở khung Admin, đặt JVM argument `-Dtkb.mock.role=ADMIN`. Form đăng nhập ở chế độ này chỉ kiểm tra trường không rỗng, không xác thực tài khoản thật.
+
+Mock trả fixture cho toàn bộ command request trong `common`, với schema đối chiếu từ protocol và server trên `origin/main`. Có thể tùy chỉnh bằng `registerSampleResponse` hoặc responder riêng. `samplePushJson` tạo mẫu `JOB_PROGRESS`/`JOB_DONE` cho job `OPTIMIZE` hoặc `IMPORT`; đây là gói push, không phải response của request. Dữ liệu mock chỉ phục vụ giao diện/thử nghiệm và không ghi vào server.
+
 ---
 
 ## 4. Hướng dẫn khởi chạy Cơ sở dữ liệu & Nạp dữ liệu học kỳ

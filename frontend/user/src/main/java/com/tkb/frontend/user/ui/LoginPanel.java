@@ -8,7 +8,6 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -19,11 +18,19 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
+import java.util.Objects;
+import java.util.function.BiConsumer;
 
 /** Màn hình đăng nhập: hai cột, có hiện/ẩn mật khẩu, ghi nhớ đăng nhập và liên kết quên mật khẩu. */
 public class LoginPanel extends HBox {
 
     public LoginPanel(AppUiState st, Runnable onLogin) {
+        this(st, (username, password) -> onLogin.run());
+        Objects.requireNonNull(onLogin, "onLogin");
+    }
+
+    public LoginPanel(AppUiState st, BiConsumer<String, String> onLogin) {
+        Objects.requireNonNull(onLogin, "onLogin");
         setStyle("-fx-background-color: #F6F8FB;");
         setFillHeight(true);
 
@@ -32,7 +39,7 @@ public class LoginPanel extends HBox {
         trai.setPrefWidth(720);
         trai.setStyle("-fx-background-color: linear-gradient(to bottom right, #0F172A, #1E3A8A);");
 
-        Label nhanDau = new Label("PROJECT 15 · SINH VIÊN");
+        Label nhanDau = new Label("PROJECT 15 · THỜI KHÓA BIỂU");
         nhanDau.setTextFill(Color.web("#93C5FD"));
         nhanDau.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
 
@@ -70,14 +77,12 @@ public class LoginPanel extends HBox {
         Label moTaForm = Functions.moTa("Đăng nhập để tiếp tục xây dựng thời khóa biểu học kỳ này.");
 
         TextField txtEmail = Functions.oNhap();
-        txtEmail.setPromptText("email@sv.univ.edu.vn");
-        txtEmail.setText("minh.anh@sv.univ.edu.vn");
-        VBox nhomEmail = new VBox(4, Functions.nhanNho("Email sinh viên"), txtEmail);
+        txtEmail.setPromptText("Tên đăng nhập");
+        VBox nhomEmail = new VBox(4, Functions.nhanNho("Tên đăng nhập"), txtEmail);
 
         PasswordField txtMatKhau = new PasswordField();
         txtMatKhau.setFont(Functions.F_CHU);
         txtMatKhau.setPromptText("Mật khẩu");
-        txtMatKhau.setText("12345678");
         txtMatKhau.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 8; "
                 + "-fx-background-radius: 8; -fx-padding: 8 10 8 10;");
         TextField txtHien = Functions.oNhap();
@@ -121,14 +126,14 @@ public class LoginPanel extends HBox {
         nutDangNhap.setPadding(new Insets(10));
         nutDangNhap.setOnAction(e -> {
             if (txtEmail.getText() == null || txtEmail.getText().isBlank()) {
-                Functions.canhBao(window(), "Vui lòng nhập email sinh viên.");
+                Functions.canhBao(window(), "Vui lòng nhập tên đăng nhập.");
                 return;
             }
             if (txtMatKhau.getText() == null || txtMatKhau.getText().isBlank()) {
                 Functions.canhBao(window(), "Vui lòng nhập mật khẩu.");
                 return;
             }
-            onLogin.run();
+            onLogin.accept(txtEmail.getText().trim(), txtMatKhau.getText());
         });
 
         Label ghiChu = Functions.moTa("Sử dụng tài khoản sinh viên do nhà trường cấp. "

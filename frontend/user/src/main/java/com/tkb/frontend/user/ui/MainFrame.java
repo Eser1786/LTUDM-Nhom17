@@ -17,17 +17,13 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -42,7 +38,6 @@ public class MainFrame extends BorderPane {
     // This is the main shell of the JavaFX app. It owns the sidebar, header, and card stack
     // that switch between the overview, requirements, priority, job, result, comparison, and saved-plan screens.
     static final String CARD_LOGIN = "LOGIN";
-    static final String CARD_APP = "APP";
     static final String CARD_OVERVIEW = "TONG_QUAN";
     static final String CARD_REQ = "NHOM_LOP";
     static final String CARD_JOB = "JOB";
@@ -92,6 +87,10 @@ public class MainFrame extends BorderPane {
     private String trangSoSanhQuayLai = CARD_SAVED;
 
     public MainFrame() {
+        this(false);
+    }
+
+    protected MainFrame(boolean authenticated) {
         // Build the shell and register each panel under a card key so navigation can switch scenes quickly.
         setPrefSize(1360, 860);
         setStyle("-fx-background-color: #F6F8FB;");
@@ -197,11 +196,20 @@ public class MainFrame extends BorderPane {
         cards.put(CARD_RES, panelRes);
         cards.put(CARD_CMP, panelCmp);
         cards.put(CARD_SAVED, panelSaved);
-        cards.put(CARD_LOGIN, new LoginPanel(trangThai, this::sauDangNhap));
 
-        centerStack.getChildren().add(new LoginPanel(trangThai, this::sauDangNhap));
+        if (authenticated) {
+            centerStack.getChildren().add(panelOverview);
+        } else {
+            LoginPanel loginPanel = new LoginPanel(trangThai, this::sauDangNhap);
+            cards.put(CARD_LOGIN, loginPanel);
+            centerStack.getChildren().add(loginPanel);
+        }
         setCenter(centerStack);
-        denTrang(CARD_LOGIN);
+        if (authenticated) {
+            sauDangNhap();
+        } else {
+            denTrang(CARD_LOGIN);
+        }
     }
 
     private Button taoNavItem(String card, String text) {
