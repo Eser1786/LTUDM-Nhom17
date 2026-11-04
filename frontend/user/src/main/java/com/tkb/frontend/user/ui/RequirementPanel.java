@@ -23,7 +23,7 @@ import java.util.Locale;
  * Người dùng chọn các môn cần xếp thời khóa biểu rồi điều chỉnh mức độ ưu tiên ngay trên màn hình này.
  */
 public class RequirementPanel extends ScrollPane {
-    private static final int MOI_TRANG = 8;
+    private static final int MOI_TRANG = 10;
 
     private final TkbClient client;
     private final MainFrame frame;
@@ -43,17 +43,25 @@ public class RequirementPanel extends ScrollPane {
         this.client = client;
         this.frame = frame;
         this.st = frame.trangThai();
-        this.priorityPanel = new PriorityPanel(frame);
+        this.priorityPanel = new PriorityPanel(frame, false);
 
         khung.setPadding(new Insets(22, 26, 20, 26));
         khung.setSpacing(14);
         khung.setStyle("-fx-background-color: #F6F8FB;");
 
-        VBox header = new VBox(4,
+        // Chia tieu de thanh 2 phan de dat "Thiet lap uu tien" ngang voi "Mon muon dang ky".
+        HBox titleRow = new HBox(14);
+        VBox leftTitle = new VBox(4,
                 Functions.chuDe("Môn muốn đăng ký"),
                 Functions.moTa("Chọn những môn bạn muốn học và điều chỉnh mức độ ưu tiên ngay trên cùng một màn hình để tối ưu thời khóa biểu."));
+        HBox.setHgrow(leftTitle, Priority.ALWAYS);
+        VBox rightTitle = new VBox(4,
+                Functions.chuDe("Thiết lập ưu tiên"));
+        rightTitle.setPrefWidth(420);
+        rightTitle.setMinWidth(320);
+        titleRow.getChildren().addAll(leftTitle, rightTitle);
 
-        khung.getChildren().addAll(header, theLayout());
+        khung.getChildren().addAll(titleRow, theLayout());
 
         setContent(khung);
         setFitToWidth(true);
@@ -61,14 +69,37 @@ public class RequirementPanel extends ScrollPane {
         getStyleClass().add("requirement-scroll");
     }
 
-    private VBox theLayout() {
-        VBox vertical = new VBox(14);
+    private HBox theLayout() {
+        HBox horizontal = new HBox(14);
 
+        VBox left = new VBox(14);
+        HBox.setHgrow(left, Priority.ALWAYS);
         VBox listCard = new VBox(12);
         listCard.getChildren().addAll(theBoLoc(), theBang());
+        left.getChildren().addAll(listCard, daChonPanel());
 
-        vertical.getChildren().addAll(listCard, daChonPanel(), priorityPanel);
-        return vertical;
+        Button btnToiUu = Functions.nutChinh("Tối ưu thời khóa biểu");
+        btnToiUu.setMaxWidth(Double.MAX_VALUE);
+        btnToiUu.setPadding(new Insets(10));
+        btnToiUu.setOnAction(e -> {
+            priorityPanel.luuCriteria();
+            frame.batDauXepLich();
+        });
+        left.getChildren().add(btnToiUu);
+
+        VBox right = new VBox(14);
+        right.setPrefWidth(420);
+        right.setMinWidth(320);
+        right.setPadding(new Insets(0, 0, 0, 16));
+        right.setStyle("-fx-border-color: #CBD5E1; -fx-border-width: 0 0 0 1;");
+        HBox.setHgrow(right, Priority.NEVER);
+        // Thu nho bang thiet lap uu tien de dat vao nua ben phai, can len tren.
+        priorityPanel.setPrefWidth(400);
+        priorityPanel.setMaxWidth(400);
+        right.getChildren().add(priorityPanel);
+
+        horizontal.getChildren().addAll(left, right);
+        return horizontal;
     }
 
     private VBox theBoLoc() {
@@ -97,13 +128,18 @@ public class RequirementPanel extends ScrollPane {
         GridPane hang = new GridPane();
         hang.setMaxWidth(Double.MAX_VALUE);
         hang.setStyle("-fx-background-color: #F1F5F9; -fx-background-radius: 8;");
-        String[] cot = {"Chọn", "Mã môn", "Tên môn", "Tín chỉ", "Số lớp"};
+        String[] cot = {"Chọn", "Mã môn", "Tên môn", "Tín chỉ"};
+        double[] rongCot = {10, 18, 52, 20};
         for (int i = 0; i < cot.length; i++) {
             Label l = new Label(cot[i]);
             l.setFont(Functions.F_NHO);
             l.setPadding(new Insets(9, 8, 9, 8));
             GridPane.setHgrow(l, Priority.ALWAYS);
             hang.add(l, i, 0);
+            javafx.scene.layout.ColumnConstraints cc = new javafx.scene.layout.ColumnConstraints();
+            cc.setPercentWidth(rongCot[i]);
+            cc.setHgrow(Priority.ALWAYS);
+            hang.getColumnConstraints().add(cc);
         }
 
         bang.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 8; "
@@ -111,8 +147,8 @@ public class RequirementPanel extends ScrollPane {
         bang.setMaxWidth(Double.MAX_VALUE);
         ScrollPane cuon = new ScrollPane(bang);
         cuon.setFitToWidth(true);
-        cuon.setMinHeight(220);
-        cuon.setPrefHeight(260);
+        cuon.setMinHeight(360);
+        cuon.setPrefHeight(420);
         cuon.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         VBox.setVgrow(cuon, Priority.ALWAYS);
 
@@ -251,6 +287,10 @@ public class RequirementPanel extends ScrollPane {
         boolean daChon = monDaChon(course.maMh());
         CheckBox chk = new CheckBox();
         chk.setSelected(daChon);
+        chk.setPadding(new Insets(9, 8, 9, 8));
+        chk.setAlignment(Pos.CENTER);
+        GridPane.setHalignment(chk, javafx.geometry.HPos.CENTER);
+        GridPane.setValignment(chk, javafx.geometry.VPos.CENTER);
         chk.setOnAction(e -> {
             chuyenTrangThaiMon(course.maMh(), chk.isSelected());
             veBang();
@@ -272,26 +312,18 @@ public class RequirementPanel extends ScrollPane {
         VBox tcBox = new VBox(2);
         tcBox.setPadding(new Insets(9, 8, 9, 8));
         Label tc = new Label(course.soTc() + " tín chỉ");
+        tc.setStyle("-fx-text-fill: #1D4ED8; -fx-font-weight: bold;");
         tcBox.getChildren().add(tc);
 
-        VBox soLopBox = new VBox(2);
-        soLopBox.setPadding(new Insets(9, 8, 9, 8));
-        int soLop = 0;
-        for (SectionSlot s : st.tatCaNhom) {
-            if (s.section().maMh().equals(course.maMh())) {
-                soLop++;
-            }
-        }
-        soLopBox.getChildren().add(new Label(soLop + " nhóm"));
-
-        row.add(new HBox(chk), 0, 0);
+        row.add(chk, 0, 0);
         row.add(maBox, 1, 0);
         row.add(tenBox, 2, 0);
         row.add(tcBox, 3, 0);
-        row.add(soLopBox, 4, 0);
 
-        for (int i = 0; i < 5; i++) {
+        double[] rongCot = {10, 18, 52, 20};
+        for (int i = 0; i < 4; i++) {
             javafx.scene.layout.ColumnConstraints cc = new javafx.scene.layout.ColumnConstraints();
+            cc.setPercentWidth(rongCot[i]);
             cc.setHgrow(Priority.ALWAYS);
             row.getColumnConstraints().add(cc);
         }
