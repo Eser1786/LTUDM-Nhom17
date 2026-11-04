@@ -243,12 +243,12 @@ public class MultiClientTestRunner {
 
             // 4. REGISTER (bo qua neu tai khoan da ton tai tu lan test truoc)
             Request regReq = new Request(reqIdSeq++, Command.REGISTER, Map.of("username", username, "password", password));
-            FrameCodec.WriteEncryptedJsonFrame(out, GSON.toJson(regReq), aesKey);
+            FrameCodec.writeEncryptedJsonFrame(out, GSON.toJson(regReq), aesKey);
             FrameCodec.readEncryptedJsonFrame(in, aesKey);
 
             // 5. LOGIN
             Request loginReq = new Request(reqIdSeq++, Command.LOGIN, Map.of("username", username, "password", password));
-            FrameCodec.WriteEncryptedJsonFrame(out, GSON.toJson(loginReq), aesKey);
+            FrameCodec.writeEncryptedJsonFrame(out, GSON.toJson(loginReq), aesKey);
             Response loginRes = GSON.fromJson(FrameCodec.readEncryptedJsonFrame(in, aesKey), Response.class);
             if (!Boolean.TRUE.equals(loginRes.getOk())) {
                 throw new IllegalStateException("LOGIN that bai: " + loginRes.getError().getMessage());
@@ -256,14 +256,14 @@ public class MultiClientTestRunner {
 
             // 6. LIST_SEMESTERS
             Request semReq = new Request(reqIdSeq++, Command.LIST_SEMESTERS, Map.of());
-            FrameCodec.WriteEncryptedJsonFrame(out, GSON.toJson(semReq), aesKey);
+            FrameCodec.writeEncryptedJsonFrame(out, GSON.toJson(semReq), aesKey);
             Response semRes = GSON.fromJson(FrameCodec.readEncryptedJsonFrame(in, aesKey), Response.class);
             List<Map<String, Object>> semesters = (List<Map<String, Object>>) semRes.getData().get("semesters");
             String semesterCode = semesters.get(0).get("code").toString();
 
             // 7. LIST_COURSES (lay danh sach hoc phan dang mo trong hoc ky)
             Request courseReq = new Request(reqIdSeq++, Command.LIST_COURSES, Map.of("semesterCode", semesterCode));
-            FrameCodec.WriteEncryptedJsonFrame(out, GSON.toJson(courseReq), aesKey);
+            FrameCodec.writeEncryptedJsonFrame(out, GSON.toJson(courseReq), aesKey);
             Response courseRes = GSON.fromJson(FrameCodec.readEncryptedJsonFrame(in, aesKey), Response.class);
             List<Map<String, Object>> courses = (List<Map<String, Object>>) courseRes.getData().get("courses");
 
@@ -282,7 +282,7 @@ public class MultiClientTestRunner {
             optData.put("maxPlans", 3);
 
             Request optReq = new Request(reqIdSeq++, Command.OPTIMIZE, optData);
-            FrameCodec.WriteEncryptedJsonFrame(out, GSON.toJson(optReq), aesKey);
+            FrameCodec.writeEncryptedJsonFrame(out, GSON.toJson(optReq), aesKey);
 
             // Doc cho den khi nhan duoc JOB_DONE
             String jobId = null;
@@ -312,7 +312,7 @@ public class MultiClientTestRunner {
 
             // 9. Gui LOGOUT truoc khi dong ket noi
             Request logoutReq = new Request(reqIdSeq, Command.LOGOUT, Map.of());
-            FrameCodec.WriteEncryptedJsonFrame(out, GSON.toJson(logoutReq), aesKey);
+            FrameCodec.writeEncryptedJsonFrame(out, GSON.toJson(logoutReq), aesKey);
             FrameCodec.readEncryptedJsonFrame(in, aesKey);
 
             return plansFound >= 0;

@@ -189,7 +189,7 @@ public class ClientSession implements Runnable {
 
         // Buoc 3: Server gui READY (da ma hoa bang khoa phien AES-256-GCM)
         Map<String, Object> readyMsg = Map.of("type", "READY");
-        FrameCodec.WriteEncryptedJsonFrame(out, GSON.toJson(readyMsg), aesSessionKey);
+        FrameCodec.writeEncryptedJsonFrame(out, GSON.toJson(readyMsg), aesSessionKey);
         server.log("Bat tay RSA/AES-GCM thanh cong cho phien [" + sessionId + "].");
         return true;
     }
@@ -1011,7 +1011,7 @@ public class ClientSession implements Runnable {
         }
         try {
             String json = GSON.toJson(response);
-            FrameCodec.WriteEncryptedJsonFrame(socketOut, json, aesSessionKey);
+            FrameCodec.writeEncryptedJsonFrame(socketOut, json, aesSessionKey);
         } catch (IOException e) {
             server.log("Khong the gui goi tin ve phien [" + sessionId + "]: " + e.getMessage());
             closeSession();
