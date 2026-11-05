@@ -9,7 +9,7 @@ import com.tkb.frontend.user.model.Types.SectionSlot;
 import com.tkb.frontend.user.model.Types.Semester;
 import com.tkb.frontend.user.model.Types.Student;
 import com.tkb.frontend.user.net.ApiException;
-import com.tkb.frontend.user.net.HttpTkbClient;
+import com.tkb.frontend.user.net.NetworkClient;
 import com.tkb.frontend.user.net.TkbClient;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -62,7 +62,7 @@ public class MainFrame extends BorderPane {
     // selected semester, chosen sections, and generated scheduling results.
     private final TkbClient client = createClient();
     private static TkbClient createClient() {
-        return new HttpTkbClient();
+        return new NetworkClient();
     }
     private final AppUiState trangThai = new AppUiState(client);
     private final Map<String, Node> cards = new LinkedHashMap<>();

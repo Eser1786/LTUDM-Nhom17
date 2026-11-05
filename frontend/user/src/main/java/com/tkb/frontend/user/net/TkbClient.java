@@ -16,6 +16,12 @@ import java.util.List;
  */
 public interface TkbClient {
 
+    /** Dang nhap tai khoan nguoi dung (bat buoc truoc cac lenh USER). */
+    void login(String username, String password) throws ApiException;
+
+    /** Dang xuat (tuy chon). */
+    void logout() throws ApiException;
+
     /** STUDENT_INFO - thong tin sinh vien hien tai (dang nhap). */
     Student sinhVien() throws ApiException;
 
