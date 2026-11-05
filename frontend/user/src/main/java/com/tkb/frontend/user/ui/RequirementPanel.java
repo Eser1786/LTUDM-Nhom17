@@ -75,7 +75,7 @@ public class RequirementPanel extends ScrollPane {
         VBox left = new VBox(14);
         HBox.setHgrow(left, Priority.ALWAYS);
         VBox listCard = new VBox(12);
-        listCard.getChildren().addAll(theBang());
+        listCard.getChildren().addAll(theBoLoc(), theBang());
         left.getChildren().addAll(listCard, daChonPanel());
 
         Button btnToiUu = Functions.nutChinh("Tối ưu thời khóa biểu");
@@ -100,6 +100,23 @@ public class RequirementPanel extends ScrollPane {
 
         horizontal.getChildren().addAll(left, right);
         return horizontal;
+    }
+
+    private VBox theBoLoc() {
+        VBox card = Functions.the(14);
+        txtTimKiem.setPromptText("Tìm theo mã hoặc tên môn...");
+        txtTimKiem.setPrefWidth(320);
+
+        HBox row = new HBox(10, txtTimKiem, Functions.khoangTrong(), btnDatLai);
+        row.setAlignment(Pos.CENTER_LEFT);
+        card.getChildren().add(row);
+
+        btnDatLai.setOnAction(e -> datLaiBoLoc());
+        txtTimKiem.textProperty().addListener((o, a, b) -> {
+            trangHienTai = 0;
+            veBang();
+        });
+        return card;
     }
 
     private VBox theBang() {
@@ -193,6 +210,12 @@ public class RequirementPanel extends ScrollPane {
             }
         }
         return ds;
+    }
+
+    private void datLaiBoLoc() {
+        txtTimKiem.clear();
+        trangHienTai = 0;
+        veBang();
     }
 
     private void veBang() {
@@ -446,9 +469,4 @@ public class RequirementPanel extends ScrollPane {
         phanTrang.getChildren().addAll(sau, Functions.nhanXam(tong + " môn"));
     }
 
-    private void datLaiBoLoc() {
-        txtTimKiem.clear();
-        trangHienTai = 0;
-        veBang();
-    }
 }
