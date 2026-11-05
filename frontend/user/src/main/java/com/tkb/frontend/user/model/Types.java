@@ -8,7 +8,8 @@ public final class Types {
     private Types() {
     }
 
-    public record Semester(String ma, String ten, boolean dangDung,
+    public record Semester(String ma, String ten,
+                           @JsonAlias({"current", "dang_dung", "dangDung"}) boolean dangDung,
                            String ngayBatDau, String ngayKetThuc) {
         @Override
         public String toString() {

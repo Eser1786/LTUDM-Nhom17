@@ -160,16 +160,21 @@ public class RequirementPanel extends ScrollPane {
     }
 
     public void taiDuLieu() {
-        try {
-            if (st.hocKy != null) {
-                st.tatCaNhom = client.listAllSections(st.hocKy.ma());
+        if (st.hocKy != null) {
+            try {
                 st.courses = client.listCourses(st.hocKy.ma());
+            } catch (com.tkb.frontend.user.net.ApiException ex) {
+                Functions.loi(frame.window(), ex);
+                st.courses = new ArrayList<>();
             }
-        } catch (com.tkb.frontend.user.net.ApiException ex) {
-            Functions.loi(frame.window(), ex);
-            return;
+            try {
+                st.tatCaNhom = client.listAllSections(st.hocKy.ma());
+            } catch (com.tkb.frontend.user.net.ApiException ex) {
+                Functions.loi(frame.window(), ex);
+                st.tatCaNhom = new ArrayList<>();
+            }
         }
-        locDuLieu = st.courses;
+        locDuLieu = st.courses == null ? new ArrayList<>() : new ArrayList<>(st.courses);
         priorityPanel.taiLai();
         capNhatMonDaChon();
         veBang();
@@ -198,11 +203,9 @@ public class RequirementPanel extends ScrollPane {
             VBox empty = new VBox(6);
             empty.setPadding(new Insets(30));
             empty.setAlignment(Pos.CENTER);
-            Label t = Functions.tieuDeThe("Không có môn nào phù hợp");
-            Label m = Functions.moTa("Hãy thử tìm kiếm theo mã hoặc tên môn khác.");
-            Button reset = Functions.nutPhu("Đặt lại bộ lọc");
-            reset.setOnAction(e -> datLaiBoLoc());
-            empty.getChildren().addAll(t, m, reset);
+            Label t = Functions.tieuDeThe("Không có môn nào");
+            Label m = Functions.moTa("Chưa có dữ liệu học phần hoặc chưa tải được từ backend.");
+            empty.getChildren().addAll(t, m);
             bang.getChildren().add(empty);
             lblDem.setText("0 môn");
             phanTrang.getChildren().clear();
