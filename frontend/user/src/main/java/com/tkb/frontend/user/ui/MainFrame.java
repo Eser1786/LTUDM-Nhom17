@@ -359,6 +359,9 @@ public class MainFrame extends BorderPane {
         List<Course> courses = new ArrayList<>();
         Criteria criteria = Criteria.macDinh();
         final Set<Integer> daChon = new LinkedHashSet<>();
+        final List<String> uuTienMon = new ArrayList<>();
+        final java.util.Map<String, String> uuTienGiangVien = new java.util.LinkedHashMap<>();
+        final java.util.Map<String, String> khoaNhom = new java.util.LinkedHashMap<>();
         JobResult ketQua;
 
         AppUiState(TkbClient client) {
@@ -376,6 +379,9 @@ public class MainFrame extends BorderPane {
         }
 
         List<String> monDaChon() {
+            if (!uuTienMon.isEmpty()) {
+                return new ArrayList<>(uuTienMon);
+            }
             Set<String> maMon = new LinkedHashSet<>();
             for (SectionSlot slot : tatCaNhom) {
                 if (daChon.contains(slot.section().id())) {

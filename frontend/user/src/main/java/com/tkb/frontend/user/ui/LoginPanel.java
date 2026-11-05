@@ -72,13 +72,13 @@ public class LoginPanel extends HBox {
 
         TextField txtEmail = Functions.oNhap();
         txtEmail.setPromptText("email@sv.univ.edu.vn");
-        txtEmail.setText("minh.anh@sv.univ.edu.vn");
+        txtEmail.setText("admin");
         VBox nhomEmail = new VBox(4, Functions.nhanNho("Email sinh viên"), txtEmail);
 
         PasswordField txtMatKhau = new PasswordField();
         txtMatKhau.setFont(Functions.F_CHU);
         txtMatKhau.setPromptText("Mật khẩu");
-        txtMatKhau.setText("12345678");
+        txtMatKhau.setText("admin12345");
         txtMatKhau.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 8; "
                 + "-fx-background-radius: 8; -fx-padding: 8 10 8 10;");
         TextField txtHien = Functions.oNhap();

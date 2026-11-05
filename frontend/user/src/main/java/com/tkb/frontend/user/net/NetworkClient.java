@@ -171,7 +171,7 @@ public class NetworkClient implements TkbClient {
         pending.put(id, future);
         // write
         try {
-            FrameCodec.WriteEncryptedJsonFrame(out, mapper.writeValueAsString(req), aesKey);
+            FrameCodec.writeEncryptedJsonFrame(out, mapper.writeValueAsString(req), aesKey);
         } catch (Exception e) {
             pending.remove(id);
             throw new ApiException(ErrorCode.NETWORK_ERROR, "Gui yeu cau that bai: " + e.getMessage());
@@ -359,6 +359,14 @@ public class NetworkClient implements TkbClient {
         crit.put("weightMinDays", (double) c.itNgay());
         crit.put("weightMorning", (double) c.uuTienSang());
         crit.put("weightNoGaps", (double) c.khoangTrong());
+        crit.put("timeMode", c.timeMode() == null ? "NONE" : c.timeMode());
+        crit.put("preferredDays", c.preferredDays() == null ? List.of() : c.preferredDays());
+        crit.put("preferredSlotsMask", c.preferredSlotsMask());
+        crit.put("preferredCampus", c.preferredCampus() == null ? "ANY" : c.preferredCampus());
+        crit.put("avoidCampusSwitch", c.avoidCampusSwitch());
+        crit.put("weightCampus", (double) Math.max(1, c.ngayYeuThich()));
+        crit.put("preferredLecturers", c.preferredLecturers() == null ? Map.of() : c.preferredLecturers());
+        crit.put("lockedGroups", c.lockedGroups() == null ? Map.of() : c.lockedGroups());
         data.put("criteria", crit);
         Response resp = sendRequest("OPTIMIZE", data);
         Object jobId = resp.getData() == null ? null : resp.getData().get("jobId");
