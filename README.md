@@ -83,6 +83,8 @@ TimeTableManagement/
 
 Mock trả fixture cho toàn bộ command request trong `common`, với schema đối chiếu từ protocol và server trên `origin/main`. Có thể tùy chỉnh bằng `registerSampleResponse` hoặc responder riêng. `samplePushJson` tạo mẫu `JOB_PROGRESS`/`JOB_DONE` cho job `OPTIMIZE` hoặc `IMPORT`; đây là gói push, không phải response của request. Dữ liệu mock chỉ phục vụ giao diện/thử nghiệm và không ghi vào server.
 
+`TcpNetworkClient` cung cấp kết nối TCP bất đồng bộ, bắt tay RSA/AES theo protocol, ghép response theo ID và nhận push qua listener. Gọi `connect(host, port)` trước khi gửi request; luôn `close()` client khi ứng dụng thoát. `Main` hiện vẫn chạy mock; việc đưa cấu hình server vào giao diện và chọn client thật thuộc C1.4.
+
 ---
 
 ## 4. Hướng dẫn khởi chạy Cơ sở dữ liệu & Nạp dữ liệu học kỳ

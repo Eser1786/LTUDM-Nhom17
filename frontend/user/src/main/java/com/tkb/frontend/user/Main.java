@@ -7,7 +7,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class Main extends Application {
-    // The TCP client replaces the mock when C1.3 is integrated.
+    // Server configuration in C1.4 will select and connect the TCP implementation.
     @Override
     public void start(Stage stage) {
         String mockRole = System.getProperty("tkb.mock.role", "USER");
