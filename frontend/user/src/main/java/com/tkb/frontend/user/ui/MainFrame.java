@@ -55,11 +55,8 @@ public class MainFrame extends BorderPane {
 
     // Shared frontend state is stored here so all UI screens can access the current student,
     // selected semester, chosen sections, and generated scheduling results.
-    private final TkbClient client = createClient();
-    private static TkbClient createClient() {
-        return new TcpTkbClient();
-    }
-    private final AppUiState trangThai = new AppUiState(client);
+    private final TkbClient client;
+    private final AppUiState trangThai;
     private final Map<String, Node> cards = new LinkedHashMap<>();
     private final Map<String, Button> navButtons = new LinkedHashMap<>();
     private final StackPane centerStack = new StackPane();
@@ -80,10 +77,16 @@ public class MainFrame extends BorderPane {
     private String trangSoSanhQuayLai = CARD_SAVED;
 
     public MainFrame() {
-        this(false);
+        this(false, new TcpTkbClient());
     }
 
     protected MainFrame(boolean authenticated) {
+        this(authenticated, new TcpTkbClient());
+    }
+
+    protected MainFrame(boolean authenticated, TkbClient client) {
+        this.client = java.util.Objects.requireNonNull(client, "client");
+        this.trangThai = new AppUiState(client);
         // Build the shell and register each panel under a card key so navigation can switch scenes quickly.
         setPrefSize(1360, 860);
         setStyle("-fx-background-color: #F6F8FB;");

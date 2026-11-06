@@ -4,6 +4,8 @@ import com.tkb.common.protocol.Command;
 import com.tkb.common.protocol.Request;
 import com.tkb.common.protocol.Response;
 import com.tkb.frontend.user.net.NetworkClient;
+import com.tkb.frontend.user.net.ProtocolTkbClient;
+import com.tkb.frontend.user.net.TkbClient;
 import com.tkb.frontend.user.ui.admin.AdminFrame;
 import javafx.application.Platform;
 import javafx.scene.Parent;
@@ -16,10 +18,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ClientApplicationFrame extends BorderPane {
     private final NetworkClient networkClient;
+    private final TkbClient userClient;
     private final AtomicInteger nextRequestId = new AtomicInteger(1);
 
     public ClientApplicationFrame(NetworkClient networkClient) {
+        this(networkClient, new ProtocolTkbClient(networkClient));
+    }
+
+    public ClientApplicationFrame(NetworkClient networkClient, TkbClient userClient) {
         this.networkClient = Objects.requireNonNull(networkClient, "networkClient");
+        this.userClient = Objects.requireNonNull(userClient, "userClient");
         setCenter(new LoginPanel(null, this::login));
     }
 
@@ -65,7 +73,12 @@ public final class ClientApplicationFrame extends BorderPane {
         }
 
         try {
-            Parent roleFrame = RoleRouter.frameForRole(role);
+            if (userClient instanceof ProtocolTkbClient protocolClient) {
+                protocolClient.setAuthenticatedUser(
+                        data.get("username") instanceof String username ? username : "student",
+                        role);
+            }
+            Parent roleFrame = RoleRouter.frameForRole(role, userClient);
             setCenter(roleFrame);
             if (roleFrame instanceof AdminFrame) {
                 setPrefSize(1360, 860);
