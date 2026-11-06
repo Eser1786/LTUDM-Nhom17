@@ -81,6 +81,8 @@ TimeTableManagement/
 
 Khi chạy `com.tkb.frontend.user.Main`, nhập IP/tên máy chủ và cổng TCP (mặc định `localhost:9000`) tại màn hình cấu hình rồi chọn **Kết nối máy chủ**. Kết nối chỉ chuyển sang đăng nhập sau khi bắt tay RSA/AES thành công. Nếu mất kết nối, ứng dụng báo trạng thái, quay về màn hình cấu hình (giữ nguyên IP/cổng) để kết nối lại; sau đó người dùng đăng nhập lại. Có thể đặt mặc định bằng JVM arguments `-Dtkb.backend.host=<host>` và `-Dtkb.backend.port=<port>`.
 
+Màn hình xác thực hỗ trợ đăng nhập và đăng ký tài khoản USER. Client kiểm tra username (3–30 ký tự chữ/số/gạch dưới), mật khẩu (8–64 ký tự) và xác nhận mật khẩu trước khi gửi; sau đăng ký thành công, người dùng đăng nhập để server trả role và điều hướng tới trang tương ứng.
+
 `MockProtocolNetworkClient` vẫn có fixture cho toàn bộ command request trong `common`, với schema đối chiếu từ protocol và server trên `origin/main`, để dùng trong phát triển/kiểm thử. Có thể tùy chỉnh bằng `registerSampleResponse` hoặc responder riêng. `samplePushJson` tạo mẫu `JOB_PROGRESS`/`JOB_DONE` cho job `OPTIMIZE` hoặc `IMPORT`; đây là gói push, không phải response của request. Dữ liệu mock không ghi vào server.
 
 `TcpNetworkClient` cung cấp kết nối TCP bất đồng bộ, bắt tay RSA/AES theo protocol, ghép response theo ID và nhận push qua listener. Luôn `close()` client khi ứng dụng thoát.

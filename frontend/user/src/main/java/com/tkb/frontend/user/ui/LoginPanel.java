@@ -21,19 +21,39 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 
 /** Màn hình đăng nhập: hai cột, có hiện/ẩn mật khẩu, ghi nhớ đăng nhập và liên kết quên mật khẩu. */
 public class LoginPanel extends HBox {
+    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_]{3,30}$");
+
+    private boolean registrationMode;
+    private Label statusLabel;
+    private Button nutDangNhap;
+    private Button toggleMode;
+    private TextField txtEmail;
+    private PasswordField txtMatKhau;
+    private PasswordField txtXacNhan;
 
     public LoginPanel(AppUiState st, Runnable onLogin) {
-        this(st, ignoreCredentials(onLogin), true);
+        this(st, ignoreCredentials(onLogin), null, true);
     }
 
     public LoginPanel(AppUiState st, BiConsumer<String, String> onLogin) {
-        this(st, onLogin, false);
+        this(st, onLogin, null, false);
     }
 
-    private LoginPanel(AppUiState st, BiConsumer<String, String> onLogin, boolean authenticate) {
+    public LoginPanel(
+            BiConsumer<String, String> onLogin,
+            BiConsumer<String, String> onRegister) {
+        this(null, onLogin, Objects.requireNonNull(onRegister, "onRegister"), false);
+    }
+
+    private LoginPanel(
+            AppUiState st,
+            BiConsumer<String, String> onLogin,
+            BiConsumer<String, String> onRegister,
+            boolean authenticate) {
         Objects.requireNonNull(onLogin, "onLogin");
         setStyle("-fx-background-color: #F6F8FB;");
         setFillHeight(true);
@@ -116,6 +136,15 @@ public class LoginPanel extends HBox {
         HBox.setHgrow(khauStack, Priority.ALWAYS);
         VBox nhomKhau = new VBox(4, Functions.nhanNho("Mật khẩu"), khauRow);
 
+        PasswordField txtXacNhan = new PasswordField();
+        txtXacNhan.setFont(Functions.F_CHU);
+        txtXacNhan.setPromptText("Nhập lại mật khẩu");
+        txtXacNhan.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 8; "
+                + "-fx-background-radius: 8; -fx-padding: 8 10 8 10;");
+        VBox nhomXacNhan = new VBox(4, Functions.nhanNho("Xác nhận mật khẩu"), txtXacNhan);
+        nhomXacNhan.setManaged(false);
+        nhomXacNhan.setVisible(false);
+
         CheckBox chkGhiNho = new CheckBox("Ghi nhớ đăng nhập");
         chkGhiNho.setSelected(true);
         Button lienKetQuen = new Button("Quên mật khẩu?");
@@ -129,22 +158,61 @@ public class LoginPanel extends HBox {
         nutDangNhap.setMaxWidth(Double.MAX_VALUE);
         nutDangNhap.setPadding(new Insets(10));
         nutDangNhap.setOnAction(e -> {
-            if (txtEmail.getText() == null || txtEmail.getText().isBlank()) {
-                Functions.canhBao(window(), "Vui lòng nhập tên đăng nhập.");
+            String username = txtEmail.getText() == null ? "" : txtEmail.getText().trim();
+            String password = txtMatKhau.getText() == null ? "" : txtMatKhau.getText();
+            boolean registering = onRegister != null && registrationMode;
+            String validationError = validateCredentials(username, password);
+            if (validationError != null) {
+                showStatus(validationError, true);
                 return;
             }
-            if (txtMatKhau.getText() == null || txtMatKhau.getText().isBlank()) {
-                Functions.canhBao(window(), "Vui lòng nhập mật khẩu.");
+            if (registering) {
+                if (!password.equals(txtXacNhan.getText())) {
+                    showStatus("Mật khẩu xác nhận không khớp.", true);
+                    return;
+                }
+            }
+            setRequestInProgress(true);
+            statusLabel.setText("");
+            if (registering) {
+                onRegister.accept(username, password);
                 return;
             }
             try {
                 if (authenticate) {
-                    st.client.login(txtEmail.getText().trim(), txtMatKhau.getText());
+                    st.client.login(username, password);
                 }
-                onLogin.accept(txtEmail.getText().trim(), txtMatKhau.getText());
+                onLogin.accept(username, password);
             } catch (ApiException ex) {
-                Functions.loi(window(), ex);
+                setRequestInProgress(false);
+                showStatus(ex.getMessage(), true);
+            } catch (RuntimeException ex) {
+                setRequestInProgress(false);
+                showStatus("Không thể gửi yêu cầu đăng nhập: " + ex.getMessage(), true);
             }
+        });
+
+        Label statusLabel = Functions.moTa("");
+        statusLabel.setWrapText(true);
+        Button toggleMode = new Button("Chưa có tài khoản? Đăng ký");
+        toggleMode.setStyle("-fx-background-color: transparent; -fx-text-fill: #1D4ED8; -fx-cursor: hand;");
+        toggleMode.setVisible(onRegister != null);
+        toggleMode.setManaged(onRegister != null);
+        toggleMode.setOnAction(event -> {
+            registrationMode = !registrationMode;
+            boolean registering = registrationMode;
+            nhomXacNhan.setVisible(registering);
+            nhomXacNhan.setManaged(registering);
+            rowGhiNho.setVisible(!registering);
+            rowGhiNho.setManaged(!registering);
+            tieuDeForm.setText(registering ? "Tạo tài khoản" : "Chào mừng trở lại");
+            moTaForm.setText(registering
+                    ? "Đăng ký tài khoản USER để bắt đầu xây dựng thời khóa biểu."
+                    : "Đăng nhập để tiếp tục xây dựng thời khóa biểu học kỳ này.");
+            nutDangNhap.setText(registering ? "Đăng ký" : "Đăng nhập");
+            toggleMode.setText(registering ? "Đã có tài khoản? Đăng nhập" : "Chưa có tài khoản? Đăng ký");
+            txtXacNhan.clear();
+            statusLabel.setText("");
         });
 
         Label ghiChu = Functions.moTa("Sử dụng tài khoản sinh viên do nhà trường cấp. "
@@ -154,10 +222,53 @@ public class LoginPanel extends HBox {
         Label moPhong = Functions.nhanCanhBao("Kết nối máy chủ backend qua TCP · cổng 9000");
 
         theForm.getChildren().addAll(tieuDeForm, moTaForm, Functions.vach(), nhomEmail, nhomKhau,
-                rowGhiNho, nutDangNhap, ghiChu, moPhong);
+                nhomXacNhan, rowGhiNho, nutDangNhap, statusLabel, toggleMode, ghiChu, moPhong);
 
         phai.getChildren().add(theForm);
         getChildren().addAll(trai, phai);
+
+        this.statusLabel = statusLabel;
+        this.nutDangNhap = nutDangNhap;
+        this.toggleMode = toggleMode;
+        this.txtEmail = txtEmail;
+        this.txtMatKhau = txtMatKhau;
+        this.txtXacNhan = txtXacNhan;
+    }
+
+    public void setRequestInProgress(boolean inProgress) {
+        nutDangNhap.setDisable(inProgress);
+        toggleMode.setDisable(inProgress);
+        txtEmail.setDisable(inProgress);
+        txtMatKhau.setDisable(inProgress);
+        txtXacNhan.setDisable(inProgress);
+    }
+
+    public void showStatus(String message, boolean error) {
+        statusLabel.setTextFill(error ? Functions.MA_LOI : Color.web("#15803D"));
+        statusLabel.setText(message == null ? "" : message);
+    }
+
+    public void registrationSucceeded() {
+        setRequestInProgress(false);
+        if (registrationMode) {
+            toggleMode.fire();
+        }
+        txtMatKhau.clear();
+        txtXacNhan.clear();
+        showStatus("Đăng ký thành công. Hãy đăng nhập bằng tài khoản vừa tạo.", false);
+    }
+
+    private String validateCredentials(String username, String password) {
+        if (!USERNAME_PATTERN.matcher(username).matches()) {
+            return "Tên đăng nhập phải từ 3 đến 30 ký tự, chỉ gồm chữ cái, chữ số và dấu gạch dưới (_).";
+        }
+        if (password.isEmpty()) {
+            return "Vui lòng nhập mật khẩu.";
+        }
+        if (password.length() < 8 || password.length() > 64) {
+            return "Mật khẩu phải có độ dài từ 8 đến 64 ký tự.";
+        }
+        return null;
     }
 
     private static BiConsumer<String, String> ignoreCredentials(Runnable onLogin) {

@@ -10,7 +10,6 @@ import com.tkb.frontend.user.ui.admin.AdminFrame;
 import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.layout.BorderPane;
-import javafx.stage.Window;
 
 import java.util.Map;
 import java.util.Objects;
@@ -19,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class ClientApplicationFrame extends BorderPane {
     private final NetworkClient networkClient;
     private final TkbClient userClient;
+    private final LoginPanel loginPanel;
     private final AtomicInteger nextRequestId = new AtomicInteger(1);
 
     public ClientApplicationFrame(NetworkClient networkClient) {
@@ -28,7 +28,8 @@ public final class ClientApplicationFrame extends BorderPane {
     public ClientApplicationFrame(NetworkClient networkClient, TkbClient userClient) {
         this.networkClient = Objects.requireNonNull(networkClient, "networkClient");
         this.userClient = Objects.requireNonNull(userClient, "userClient");
-        setCenter(new LoginPanel(null, this::login));
+        this.loginPanel = new LoginPanel(this::login, this::register);
+        setCenter(loginPanel);
     }
 
     private void login(String username, String password) {
@@ -39,36 +40,73 @@ public final class ClientApplicationFrame extends BorderPane {
             networkClient.send(request).whenComplete((response, failure) ->
                     Platform.runLater(() -> handleLoginResponse(requestId, response, failure)));
         } catch (RuntimeException ex) {
-            Functions.loi(window(), "Không thể gửi yêu cầu đăng nhập: " + ex.getMessage());
+            loginPanel.setRequestInProgress(false);
+            loginPanel.showStatus("Không thể gửi yêu cầu đăng nhập: " + ex.getMessage(), true);
         }
+    }
+
+    private void register(String username, String password) {
+        int requestId = nextRequestId.getAndIncrement();
+        Request request = new Request(requestId, Command.REGISTER,
+                Map.of("username", username, "password", password));
+        try {
+            networkClient.send(request).whenComplete((response, failure) ->
+                    Platform.runLater(() -> handleRegisterResponse(requestId, response, failure)));
+        } catch (RuntimeException ex) {
+            loginPanel.setRequestInProgress(false);
+            loginPanel.showStatus("Không thể gửi yêu cầu đăng ký: " + ex.getMessage(), true);
+        }
+    }
+
+    private void handleRegisterResponse(int requestId, Response response, Throwable failure) {
+        if (failure != null) {
+            loginPanel.setRequestInProgress(false);
+            loginPanel.showStatus("Không thể đăng ký: " + failureMessage(failure), true);
+            return;
+        }
+        if (response == null || !Integer.valueOf(requestId).equals(response.getId())
+                || response.isPush() || response.getOk() == null
+                || (Boolean.TRUE.equals(response.getOk()) && response.getData() == null)) {
+            loginPanel.setRequestInProgress(false);
+            loginPanel.showStatus("Phản hồi đăng ký không hợp lệ.", true);
+            return;
+        }
+        if (!response.getOk()) {
+            loginPanel.setRequestInProgress(false);
+            loginPanel.showStatus(errorMessage(response, "Đăng ký thất bại."), true);
+            return;
+        }
+        loginPanel.registrationSucceeded();
     }
 
     private void handleLoginResponse(int requestId, Response response, Throwable failure) {
         if (failure != null) {
-            Functions.loi(window(), "Không thể đăng nhập: " + failure.getMessage());
+            loginPanel.setRequestInProgress(false);
+            loginPanel.showStatus("Không thể đăng nhập: " + failureMessage(failure), true);
             return;
         }
         if (response == null) {
-            Functions.loi(window(), "Máy chủ không trả về phản hồi đăng nhập.");
+            loginPanel.setRequestInProgress(false);
+            loginPanel.showStatus("Máy chủ không trả về phản hồi đăng nhập.", true);
             return;
         }
-        if (!Integer.valueOf(requestId).equals(response.getId())) {
-            Functions.loi(window(), "Phản hồi đăng nhập không khớp với yêu cầu.");
+        if (!Integer.valueOf(requestId).equals(response.getId())
+                || response.isPush() || response.getOk() == null) {
+            loginPanel.setRequestInProgress(false);
+            loginPanel.showStatus("Phản hồi đăng nhập không hợp lệ hoặc không khớp yêu cầu.", true);
             return;
         }
-        if (!Boolean.TRUE.equals(response.getOk())) {
-            Response.ErrorPayload error = response.getError();
-            String message = error == null || error.getMessage() == null
-                    ? "Đăng nhập thất bại."
-                    : error.getMessage();
-            Functions.loi(window(), message);
+        if (!response.getOk()) {
+            loginPanel.setRequestInProgress(false);
+            loginPanel.showStatus(errorMessage(response, "Đăng nhập thất bại."), true);
             return;
         }
 
         Map<String, Object> data = response.getData();
         Object roleValue = data == null ? null : data.get("role");
         if (!(roleValue instanceof String role) || role.isBlank()) {
-            Functions.loi(window(), "Phản hồi đăng nhập thiếu role hợp lệ.");
+            loginPanel.setRequestInProgress(false);
+            loginPanel.showStatus("Phản hồi đăng nhập thiếu role hợp lệ.", true);
             return;
         }
 
@@ -84,11 +122,25 @@ public final class ClientApplicationFrame extends BorderPane {
                 setPrefSize(1360, 860);
             }
         } catch (IllegalArgumentException ex) {
-            Functions.loi(window(), ex.getMessage());
+            loginPanel.setRequestInProgress(false);
+            loginPanel.showStatus(ex.getMessage(), true);
         }
     }
 
-    private Window window() {
-        return getScene() == null ? null : getScene().getWindow();
+    private String errorMessage(Response response, String fallback) {
+        Response.ErrorPayload error = response.getError();
+        return error == null || error.getMessage() == null || error.getMessage().isBlank()
+                ? fallback
+                : error.getMessage();
+    }
+
+    private String failureMessage(Throwable failure) {
+        Throwable cause = failure;
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause.getMessage() == null || cause.getMessage().isBlank()
+                ? cause.getClass().getSimpleName()
+                : cause.getMessage();
     }
 }
