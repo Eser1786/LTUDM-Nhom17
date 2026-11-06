@@ -54,7 +54,7 @@ public class ResultPanel extends ScrollPane {
         thanhNut.setAlignment(Pos.CENTER_RIGHT);
         btnSoSanh.setOnAction(e -> moSoSanh());
 
-        khung.getChildren().addAll(header, cardsBox, thanhNut, chiTiet);
+        khung.getChildren().addAll(header, chiTiet);
         setContent(khung);
         setFitToWidth(true);
         setStyle("-fx-background-color: #F6F8FB;");
@@ -86,8 +86,7 @@ public class ResultPanel extends ScrollPane {
         List<ScheduleOption> sorted = new ArrayList<>(result.options());
         sorted.sort(Comparator.comparingDouble(ScheduleOption::diem).reversed());
         this.ketQua = new JobResult(result.maHocKy(), sorted);
-        veCards();
-        veChiTiet(sorted.get(0));
+        veTatCaLich(sorted);
         capNhatNutSoSanh();
     }
 
@@ -133,6 +132,38 @@ public class ResultPanel extends ScrollPane {
 
             card.getChildren().addAll(top, mo, Functions.vach(), chiSo, dongNut);
             cardsBox.getChildren().add(card);
+        }
+    }
+
+    private void veTatCaLich(List<ScheduleOption> options) {
+        chiTiet.getChildren().clear();
+        for (ScheduleOption o : options) {
+            VBox theLuoi = Functions.the(14);
+            HBox tieuDe = new HBox(10,
+                    Functions.tieuDeThe("Thời khóa biểu phương án " + o.ten()),
+                    Functions.nhanChinh("Điểm " + Math.round(o.diem()) + "/100"));
+            tieuDe.setAlignment(Pos.CENTER_LEFT);
+            theLuoi.getChildren().add(tieuDe);
+
+            TimetableGridPanel grid = new TimetableGridPanel();
+            grid.setTieuDe("Phương án " + o.ten());
+            grid.setSlots(o.slots());
+            grid.setPrefHeight(560);
+            theLuoi.getChildren().add(grid);
+
+            if (!o.biLoai().isEmpty()) {
+                theLuoi.getChildren().add(Functions.nhanCanhBao("Không xếp được học phần: "
+                        + String.join(", ", o.biLoai())));
+            } else {
+                theLuoi.getChildren().add(Functions.nhanHopLe("Đã xếp đủ tất cả học phần đã chọn · Không trùng giờ"));
+            }
+
+            HBox nut = new HBox(10, Functions.khoangTrong(),
+                    nutLuu("Lưu thời khóa biểu", o));
+            nut.setAlignment(Pos.CENTER_RIGHT);
+            theLuoi.getChildren().add(nut);
+
+            chiTiet.getChildren().add(theLuoi);
         }
     }
 

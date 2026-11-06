@@ -23,7 +23,7 @@ import java.util.Locale;
  * Người dùng chọn các môn cần xếp thời khóa biểu rồi điều chỉnh mức độ ưu tiên ngay trên màn hình này.
  */
 public class RequirementPanel extends ScrollPane {
-    private static final int MOI_TRANG = 8;
+    private static final int MOI_TRANG = 10;
 
     private final TkbClient client;
     private final MainFrame frame;
@@ -43,17 +43,25 @@ public class RequirementPanel extends ScrollPane {
         this.client = client;
         this.frame = frame;
         this.st = frame.trangThai();
-        this.priorityPanel = new PriorityPanel(frame);
+        this.priorityPanel = new PriorityPanel(frame, false);
 
         khung.setPadding(new Insets(22, 26, 20, 26));
         khung.setSpacing(14);
         khung.setStyle("-fx-background-color: #F6F8FB;");
 
-        VBox header = new VBox(4,
+        // Chia tieu de thanh 2 phan de dat "Thiet lap uu tien" ngang voi "Mon muon dang ky".
+        HBox titleRow = new HBox(14);
+        VBox leftTitle = new VBox(4,
                 Functions.chuDe("Môn muốn đăng ký"),
                 Functions.moTa("Chọn những môn bạn muốn học và điều chỉnh mức độ ưu tiên ngay trên cùng một màn hình để tối ưu thời khóa biểu."));
+        HBox.setHgrow(leftTitle, Priority.ALWAYS);
+        VBox rightTitle = new VBox(4,
+                Functions.chuDe("Thiết lập ưu tiên"));
+        rightTitle.setPrefWidth(420);
+        rightTitle.setMinWidth(320);
+        titleRow.getChildren().addAll(leftTitle, rightTitle);
 
-        khung.getChildren().addAll(header, theLayout());
+        khung.getChildren().addAll(titleRow, theLayout());
 
         setContent(khung);
         setFitToWidth(true);
@@ -61,14 +69,37 @@ public class RequirementPanel extends ScrollPane {
         getStyleClass().add("requirement-scroll");
     }
 
-    private VBox theLayout() {
-        VBox vertical = new VBox(14);
+    private HBox theLayout() {
+        HBox horizontal = new HBox(14);
 
+        VBox left = new VBox(14);
+        HBox.setHgrow(left, Priority.ALWAYS);
         VBox listCard = new VBox(12);
         listCard.getChildren().addAll(theBoLoc(), theBang());
+        left.getChildren().addAll(listCard, daChonPanel());
 
-        vertical.getChildren().addAll(listCard, daChonPanel(), priorityPanel);
-        return vertical;
+        Button btnToiUu = Functions.nutChinh("Tối ưu thời khóa biểu");
+        btnToiUu.setMaxWidth(Double.MAX_VALUE);
+        btnToiUu.setPadding(new Insets(10));
+        btnToiUu.setOnAction(e -> {
+            priorityPanel.luuCriteria();
+            frame.batDauXepLich();
+        });
+        left.getChildren().add(btnToiUu);
+
+        VBox right = new VBox(14);
+        right.setPrefWidth(420);
+        right.setMinWidth(320);
+        right.setPadding(new Insets(0, 0, 0, 16));
+        right.setStyle("-fx-border-color: #CBD5E1; -fx-border-width: 0 0 0 1;");
+        HBox.setHgrow(right, Priority.NEVER);
+        // Thu nho bang thiet lap uu tien de dat vao nua ben phai, can len tren.
+        priorityPanel.setPrefWidth(400);
+        priorityPanel.setMaxWidth(400);
+        right.getChildren().add(priorityPanel);
+
+        horizontal.getChildren().addAll(left, right);
+        return horizontal;
     }
 
     private VBox theBoLoc() {
@@ -97,13 +128,18 @@ public class RequirementPanel extends ScrollPane {
         GridPane hang = new GridPane();
         hang.setMaxWidth(Double.MAX_VALUE);
         hang.setStyle("-fx-background-color: #F1F5F9; -fx-background-radius: 8;");
-        String[] cot = {"Chọn", "Mã môn", "Tên môn", "Tín chỉ", "Số lớp"};
+        String[] cot = {"Chọn", "Mã môn", "Tên môn", "Tín chỉ"};
+        double[] rongCot = {10, 18, 52, 20};
         for (int i = 0; i < cot.length; i++) {
             Label l = new Label(cot[i]);
             l.setFont(Functions.F_NHO);
             l.setPadding(new Insets(9, 8, 9, 8));
             GridPane.setHgrow(l, Priority.ALWAYS);
             hang.add(l, i, 0);
+            javafx.scene.layout.ColumnConstraints cc = new javafx.scene.layout.ColumnConstraints();
+            cc.setPercentWidth(rongCot[i]);
+            cc.setHgrow(Priority.ALWAYS);
+            hang.getColumnConstraints().add(cc);
         }
 
         bang.setStyle("-fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 8; "
@@ -111,8 +147,8 @@ public class RequirementPanel extends ScrollPane {
         bang.setMaxWidth(Double.MAX_VALUE);
         ScrollPane cuon = new ScrollPane(bang);
         cuon.setFitToWidth(true);
-        cuon.setMinHeight(220);
-        cuon.setPrefHeight(260);
+        cuon.setMinHeight(360);
+        cuon.setPrefHeight(420);
         cuon.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         VBox.setVgrow(cuon, Priority.ALWAYS);
 
@@ -141,16 +177,21 @@ public class RequirementPanel extends ScrollPane {
     }
 
     public void taiDuLieu() {
-        try {
-            if (st.hocKy != null) {
-                st.tatCaNhom = client.listAllSections(st.hocKy.ma());
+        if (st.hocKy != null) {
+            try {
                 st.courses = client.listCourses(st.hocKy.ma());
+            } catch (com.tkb.frontend.user.net.ApiException ex) {
+                Functions.loi(frame.window(), ex);
+                st.courses = new ArrayList<>();
             }
-        } catch (com.tkb.frontend.user.net.ApiException ex) {
-            Functions.loi(frame.window(), ex);
-            return;
+            try {
+                st.tatCaNhom = client.listAllSections(st.hocKy.ma());
+            } catch (com.tkb.frontend.user.net.ApiException ex) {
+                Functions.loi(frame.window(), ex);
+                st.tatCaNhom = new ArrayList<>();
+            }
         }
-        locDuLieu = st.courses;
+        locDuLieu = st.courses == null ? new ArrayList<>() : new ArrayList<>(st.courses);
         priorityPanel.taiLai();
         capNhatMonDaChon();
         veBang();
@@ -171,6 +212,12 @@ public class RequirementPanel extends ScrollPane {
         return ds;
     }
 
+    private void datLaiBoLoc() {
+        txtTimKiem.clear();
+        trangHienTai = 0;
+        veBang();
+    }
+
     private void veBang() {
         List<Course> ds = loc();
         bang.getChildren().clear();
@@ -179,11 +226,9 @@ public class RequirementPanel extends ScrollPane {
             VBox empty = new VBox(6);
             empty.setPadding(new Insets(30));
             empty.setAlignment(Pos.CENTER);
-            Label t = Functions.tieuDeThe("Không có môn nào phù hợp");
-            Label m = Functions.moTa("Hãy thử tìm kiếm theo mã hoặc tên môn khác.");
-            Button reset = Functions.nutPhu("Đặt lại bộ lọc");
-            reset.setOnAction(e -> datLaiBoLoc());
-            empty.getChildren().addAll(t, m, reset);
+            Label t = Functions.tieuDeThe("Không có môn nào");
+            Label m = Functions.moTa("Chưa có dữ liệu học phần hoặc chưa tải được từ backend.");
+            empty.getChildren().addAll(t, m);
             bang.getChildren().add(empty);
             lblDem.setText("0 môn");
             phanTrang.getChildren().clear();
@@ -209,37 +254,108 @@ public class RequirementPanel extends ScrollPane {
 
     private void capNhatMonDaChon() {
         daChonBox.getChildren().clear();
-        List<String> monChon = new ArrayList<>();
-        for (SectionSlot slot : st.tatCaNhom) {
-            if (st.daChon.contains(slot.section().id()) && !monChon.contains(slot.section().maMh())) {
-                monChon.add(slot.section().maMh());
-            }
-        }
+        List<String> monChon = st.uuTienMon;
         if (monChon.isEmpty()) {
             daChonBox.getChildren().add(Functions.moTa("Chưa có môn nào được chọn."));
             return;
         }
-        for (String ma : monChon) {
+        for (int i = 0; i < monChon.size(); i++) {
+            String ma = monChon.get(i);
             String ten = "";
+            int tc = 0;
             for (Course c : st.courses) {
                 if (c.maMh().equals(ma)) {
                     ten = c.ten();
+                    tc = c.soTc();
                     break;
                 }
             }
-            HBox row = new HBox(8);
-            row.setAlignment(Pos.CENTER_LEFT);
-            row.setPadding(new Insets(6, 10, 6, 10));
-            row.setStyle("-fx-background-color: #DBEAFE; -fx-background-radius: 10; -fx-border-radius: 10;");
+            VBox card = Functions.the(10);
+            card.setStyle(card.getStyle() + " -fx-border-color: #BFDBFE;");
 
+            HBox top = new HBox(8);
+            top.setAlignment(Pos.CENTER_LEFT);
+            Label badge = Functions.nhanXam("Ưu tiên #" + (i + 1));
+            if (i == 0) badge.setStyle("-fx-background-color: #DC2626; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 2 6 2 6;");
+            else if (i == 1) badge.setStyle("-fx-background-color: #2563EB; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 2 6 2 6;");
             Label maLbl = new Label(ma);
             maLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #1D4ED8;");
-            Label tenLbl = new Label("• " + ten);
-            tenLbl.setWrapText(true);
-            tenLbl.setStyle("-fx-text-fill: #1E3A8A;");
-            row.getChildren().addAll(maLbl, tenLbl);
-            daChonBox.getChildren().add(row);
+            Label tenLbl = new Label(ten + " (" + tc + " TC)");
+            tenLbl.setStyle("-fx-text-fill: #0F172A;");
+            top.getChildren().addAll(badge, maLbl, tenLbl, Functions.khoangTrong());
+
+            Button up = Functions.nutPhu("▲");
+            up.setDisable(i == 0);
+            int idx = i;
+            up.setOnAction(e -> { doiThuTu(idx, idx - 1); });
+            Button down = Functions.nutPhu("▼");
+            down.setDisable(i == monChon.size() - 1);
+            down.setOnAction(e -> { doiThuTu(idx, idx + 1); });
+            Button del = Functions.nutPhu("✕");
+            del.setOnAction(e -> { boChonMon(ma); });
+            top.getChildren().addAll(up, down, del);
+
+            // dropdowns
+            javafx.scene.control.ComboBox<String> cbGv = new javafx.scene.control.ComboBox<>();
+            cbGv.getItems().add("Tất cả giảng viên");
+            for (String gv : danhSachGiangVien(ma)) cbGv.getItems().add(gv);
+            String gvHienTai = st.uuTienGiangVien.getOrDefault(ma, "");
+            cbGv.setValue(gvHienTai.isBlank() ? "Tất cả giảng viên" : gvHienTai);
+            cbGv.setOnAction(e -> st.uuTienGiangVien.put(ma, cbGv.getValue()));
+
+            javafx.scene.control.ComboBox<String> cbNhom = new javafx.scene.control.ComboBox<>();
+            cbNhom.getItems().add("Nhóm: Tự động");
+            for (String g : danhSachNhom(ma)) cbNhom.getItems().add("Khóa nhóm " + g);
+            String nhomHienTai = st.khoaNhom.getOrDefault(ma, "");
+            cbNhom.setValue(nhomHienTai.isBlank() ? "Nhóm: Tự động" : "Khóa nhóm " + nhomHienTai);
+            cbNhom.setOnAction(e -> {
+                String v = cbNhom.getValue();
+                st.khoaNhom.put(ma, v.startsWith("Khóa nhóm ") ? v.substring("Khóa nhóm ".length()) : "");
+            });
+
+            HBox dropRow = new HBox(10, cbGv, cbNhom);
+            card.getChildren().addAll(top, dropRow);
+            daChonBox.getChildren().add(card);
         }
+    }
+
+    private void doiThuTu(int from, int to) {
+        if (from < 0 || to < 0 || from >= st.uuTienMon.size() || to >= st.uuTienMon.size()) return;
+        String moved = st.uuTienMon.remove(from);
+        st.uuTienMon.add(to, moved);
+        capNhatMonDaChon();
+    }
+
+    private void boChonMon(String ma) {
+        st.uuTienMon.remove(ma);
+        // remove selection
+        for (SectionSlot slot : st.tatCaNhom) {
+            if (slot.section().maMh().equals(ma)) {
+                st.daChon.remove(slot.section().id());
+            }
+        }
+        veBang();
+        capNhatMonDaChon();
+    }
+
+    private java.util.List<String> danhSachGiangVien(String ma) {
+        java.util.LinkedHashSet<String> set = new java.util.LinkedHashSet<>();
+        for (SectionSlot slot : st.tatCaNhom) {
+            if (slot.section().maMh().equals(ma) && slot.section().giangVien() != null && !slot.section().giangVien().isBlank()) {
+                set.add(slot.section().giangVien());
+            }
+        }
+        return new ArrayList<>(set);
+    }
+
+    private java.util.List<String> danhSachNhom(String ma) {
+        java.util.LinkedHashSet<String> set = new java.util.LinkedHashSet<>();
+        for (SectionSlot slot : st.tatCaNhom) {
+            if (slot.section().maMh().equals(ma) && slot.section().nhom() != null && !slot.section().nhom().isBlank()) {
+                set.add(slot.section().nhom());
+            }
+        }
+        return new ArrayList<>(set);
     }
 
     private GridPane taoDong(Course course) {
@@ -251,6 +367,10 @@ public class RequirementPanel extends ScrollPane {
         boolean daChon = monDaChon(course.maMh());
         CheckBox chk = new CheckBox();
         chk.setSelected(daChon);
+        chk.setPadding(new Insets(9, 8, 9, 8));
+        chk.setAlignment(Pos.CENTER);
+        GridPane.setHalignment(chk, javafx.geometry.HPos.CENTER);
+        GridPane.setValignment(chk, javafx.geometry.VPos.CENTER);
         chk.setOnAction(e -> {
             chuyenTrangThaiMon(course.maMh(), chk.isSelected());
             veBang();
@@ -272,26 +392,18 @@ public class RequirementPanel extends ScrollPane {
         VBox tcBox = new VBox(2);
         tcBox.setPadding(new Insets(9, 8, 9, 8));
         Label tc = new Label(course.soTc() + " tín chỉ");
+        tc.setStyle("-fx-text-fill: #1D4ED8; -fx-font-weight: bold;");
         tcBox.getChildren().add(tc);
 
-        VBox soLopBox = new VBox(2);
-        soLopBox.setPadding(new Insets(9, 8, 9, 8));
-        int soLop = 0;
-        for (SectionSlot s : st.tatCaNhom) {
-            if (s.section().maMh().equals(course.maMh())) {
-                soLop++;
-            }
-        }
-        soLopBox.getChildren().add(new Label(soLop + " nhóm"));
-
-        row.add(new HBox(chk), 0, 0);
+        row.add(chk, 0, 0);
         row.add(maBox, 1, 0);
         row.add(tenBox, 2, 0);
         row.add(tcBox, 3, 0);
-        row.add(soLopBox, 4, 0);
 
-        for (int i = 0; i < 5; i++) {
+        double[] rongCot = {10, 18, 52, 20};
+        for (int i = 0; i < 4; i++) {
             javafx.scene.layout.ColumnConstraints cc = new javafx.scene.layout.ColumnConstraints();
+            cc.setPercentWidth(rongCot[i]);
             cc.setHgrow(Priority.ALWAYS);
             row.getColumnConstraints().add(cc);
         }
@@ -308,6 +420,13 @@ public class RequirementPanel extends ScrollPane {
                     st.daChon.remove(slot.section().id());
                 }
             }
+        }
+        if (chon) {
+            if (!st.uuTienMon.contains(maMh)) st.uuTienMon.add(maMh);
+        } else {
+            st.uuTienMon.remove(maMh);
+            st.uuTienGiangVien.remove(maMh);
+            st.khoaNhom.remove(maMh);
         }
     }
 
@@ -350,9 +469,4 @@ public class RequirementPanel extends ScrollPane {
         phanTrang.getChildren().addAll(sau, Functions.nhanXam(tong + " môn"));
     }
 
-    private void datLaiBoLoc() {
-        txtTimKiem.clear();
-        trangHienTai = 0;
-        veBang();
-    }
 }

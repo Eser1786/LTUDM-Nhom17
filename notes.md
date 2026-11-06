@@ -60,4 +60,15 @@ docker exec -it tkb-mysql mysql -u timetable_user -p
 
 Cả hai thư mục nguồn được biên dịch chung trong module `frontend`.
 
-### Cách chạy: mvn -pl frontend javafx:run
+Cách chạy: mvn -pl frontend javafx:run
+
+### cách chạy full stack:
+1. docker compose up -d
+
+2. cd backend ->mvn -q exec:java -Dexec.mainClass=com.tkb.backend.TkbServer -Dexec.args=9000
+
+sau khi có dòng === TKB SERVER DA KHOI DONG TAI CONG TCP 9000 === thì có thể chuyển sang bước 3
+
+3. mở thêm 1 termainal để chạy frontend 
+cd frontend
+mvn javafx:run

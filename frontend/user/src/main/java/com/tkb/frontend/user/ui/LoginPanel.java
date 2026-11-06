@@ -1,5 +1,6 @@
 package com.tkb.frontend.user.ui;
 
+import com.tkb.frontend.user.net.ApiException;
 import com.tkb.frontend.user.ui.MainFrame.AppUiState;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -25,11 +26,14 @@ import java.util.function.BiConsumer;
 public class LoginPanel extends HBox {
 
     public LoginPanel(AppUiState st, Runnable onLogin) {
-        this(st, (username, password) -> onLogin.run());
-        Objects.requireNonNull(onLogin, "onLogin");
+        this(st, ignoreCredentials(onLogin), true);
     }
 
     public LoginPanel(AppUiState st, BiConsumer<String, String> onLogin) {
+        this(st, onLogin, false);
+    }
+
+    private LoginPanel(AppUiState st, BiConsumer<String, String> onLogin, boolean authenticate) {
         Objects.requireNonNull(onLogin, "onLogin");
         setStyle("-fx-background-color: #F6F8FB;");
         setFillHeight(true);
@@ -133,20 +137,32 @@ public class LoginPanel extends HBox {
                 Functions.canhBao(window(), "Vui lòng nhập mật khẩu.");
                 return;
             }
-            onLogin.accept(txtEmail.getText().trim(), txtMatKhau.getText());
+            try {
+                if (authenticate) {
+                    st.client.login(txtEmail.getText().trim(), txtMatKhau.getText());
+                }
+                onLogin.accept(txtEmail.getText().trim(), txtMatKhau.getText());
+            } catch (ApiException ex) {
+                Functions.loi(window(), ex);
+            }
         });
 
         Label ghiChu = Functions.moTa("Sử dụng tài khoản sinh viên do nhà trường cấp. "
                 + "Cần hỗ trợ? Gọi 1900 0000 hoặc email hotro@univ.edu.vn.");
         ghiChu.setTextAlignment(TextAlignment.LEFT);
 
-        Label moPhong = Functions.nhanCanhBao("Chế độ mô phỏng · chưa kết nối máy chủ thật");
+        Label moPhong = Functions.nhanCanhBao("Kết nối máy chủ backend qua TCP · cổng 9000");
 
         theForm.getChildren().addAll(tieuDeForm, moTaForm, Functions.vach(), nhomEmail, nhomKhau,
                 rowGhiNho, nutDangNhap, ghiChu, moPhong);
 
         phai.getChildren().add(theForm);
         getChildren().addAll(trai, phai);
+    }
+
+    private static BiConsumer<String, String> ignoreCredentials(Runnable onLogin) {
+        Objects.requireNonNull(onLogin, "onLogin");
+        return (username, password) -> onLogin.run();
     }
 
     private StackPane minhHoaLich() {

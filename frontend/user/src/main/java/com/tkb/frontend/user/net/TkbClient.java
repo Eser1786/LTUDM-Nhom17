@@ -11,10 +11,16 @@ import com.tkb.frontend.user.model.Types.Student;
 
 import java.util.List;
 /**
- * Giao thuc goi server. Ban that dung socket/HTTP; ban dev dung MockNetworkClient.
+ * Giao thuc goi server. Frontend su dung TcpTkbClient de ket noi backend thuc.
  * Moi lenh deu nem ApiException khi that bai de lop UI doi thanh thong bao than thien.
  */
 public interface TkbClient {
+
+    /** Dang nhap tai khoan nguoi dung (bat buoc truoc cac lenh USER). */
+    void login(String username, String password) throws ApiException;
+
+    /** Dang xuat (tuy chon). */
+    void logout() throws ApiException;
 
     /** STUDENT_INFO - thong tin sinh vien hien tai (dang nhap). */
     Student sinhVien() throws ApiException;

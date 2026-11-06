@@ -1,6 +1,7 @@
 import pdfplumber
 import pandas as pd
 import json
+import os
 
 
 courses = [ "DKD", "DCM", "DCV", "DCT", "DDL", "DGD", "DGM", "DGT", "DKE", "DDU", "DKM", "DTT", "DKQ", "DKI", "DDE", "DDV", "DKP", "DLU", "DAN", "DQG", "DQK", "DHA", "DQV", "DQT", "DNH", "DDI", "DHO", "DKH", "DSU", "DLD", "DMI", "DVA", "DSI", "DSA", "DTO", "DLI", "DTN", "DTL", "DTU", "DNT", "DVI", "DLS", "DDH"]
@@ -18,7 +19,7 @@ chuyen_nganh_full = ["STT", "Ma_MH", "Ten_mon","So_TC","Si_so","Ho_ten_GV",
 
 fill_chuyen_nganh_cols = ["Ma_MH","Ten_mon","So_TC","Ho_ten_GV","Nhom"]
 
-keep_chuyen_nganh_cols = ["Ma_MH","Ten_mon","Ho_ten_GV","Nhom",
+keep_chuyen_nganh_cols = ["Ma_MH","Ten_mon","So_TC","Ho_ten_GV","Nhom",
              "Thu","TietBD","So_tiet","Ma_phong"]
 
 
@@ -37,9 +38,11 @@ keep_mon_chung_cols = ["Ma_MH","Ten_mon","Ho_ten_GV","Nhom",
 chuyen_nganh =[]
 
 for course in courses:
-    chuyen_nganh.append(pdf_path + course + ".pdf")
+    p = pdf_path + course + ".pdf"
+    if os.path.exists(p):
+        chuyen_nganh.append(p)
 
-mon_chung = [pdf_path + "TKB_monchung.pdf"]
+mon_chung = [pdf_path + "TKB_monchung.pdf"] if os.path.exists(pdf_path + "TKB_monchung.pdf") else []
 
 
 """chuyen nganh co 15 rows"""
@@ -79,6 +82,9 @@ def load_all_pdfs(pdf_paths, subject_type):
     for pdf_file in pdf_paths:
         df = load_pdf(pdf_file, subject_type)
         all_dfs.append(df)
+    if not all_dfs:
+        cols = chuyen_nganh_full if subject_type == "chuyen_nganh" else mon_chung_full
+        return pd.DataFrame(columns=cols)
     return pd.concat(all_dfs, ignore_index=True)
 
 
