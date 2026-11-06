@@ -1,7 +1,6 @@
 package com.tkb.frontend.user.ui;
 
 import com.tkb.frontend.user.model.Types.ClassSession;
-import com.tkb.frontend.user.model.Types.Criteria;
 import com.tkb.frontend.user.model.Types.OptionStats;
 import com.tkb.frontend.user.model.Types.PlanDetail;
 import com.tkb.frontend.user.model.Types.ScheduleOption;
@@ -255,8 +254,6 @@ public class ComparePanel extends ScrollPane {
         final List<SectionSlot> slots;
         final Long id;
         final String maHocKy;
-        final Criteria criteria = Criteria.macDinh();
-
         HoSo(String ten, double diem, String moTa, OptionStats stats, List<SectionSlot> slots,
              Long id, String maHocKy) {
             this.ten = ten;

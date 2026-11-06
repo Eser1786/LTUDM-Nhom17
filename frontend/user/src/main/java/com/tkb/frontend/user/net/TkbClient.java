@@ -11,7 +11,7 @@ import com.tkb.frontend.user.model.Types.Student;
 
 import java.util.List;
 /**
- * Giao thuc goi server. Frontend su dung HttpTkbClient de ket noi backend thuc.
+ * Giao thuc goi server. Frontend su dung TcpTkbClient de ket noi backend thuc.
  * Moi lenh deu nem ApiException khi that bai de lop UI doi thanh thong bao than thien.
  */
 public interface TkbClient {
