@@ -79,11 +79,11 @@ TimeTableManagement/
 
 ### Chạy thử điều hướng Client theo role
 
-Điểm vào `com.tkb.frontend.user.Main` hiện dùng `MockProtocolNetworkClient` cho giai đoạn phát triển. Mock mặc định trả role `USER`; để mở khung Admin, đặt JVM argument `-Dtkb.mock.role=ADMIN`. Form đăng nhập ở chế độ này chỉ kiểm tra trường không rỗng, không xác thực tài khoản thật.
+Khi chạy `com.tkb.frontend.user.Main`, nhập IP/tên máy chủ và cổng TCP (mặc định `localhost:9000`) tại màn hình cấu hình rồi chọn **Kết nối máy chủ**. Kết nối chỉ chuyển sang đăng nhập sau khi bắt tay RSA/AES thành công. Nếu mất kết nối, ứng dụng báo trạng thái, quay về màn hình cấu hình (giữ nguyên IP/cổng) để kết nối lại; sau đó người dùng đăng nhập lại. Có thể đặt mặc định bằng JVM arguments `-Dtkb.backend.host=<host>` và `-Dtkb.backend.port=<port>`.
 
-Mock trả fixture cho toàn bộ command request trong `common`, với schema đối chiếu từ protocol và server trên `origin/main`. Có thể tùy chỉnh bằng `registerSampleResponse` hoặc responder riêng. `samplePushJson` tạo mẫu `JOB_PROGRESS`/`JOB_DONE` cho job `OPTIMIZE` hoặc `IMPORT`; đây là gói push, không phải response của request. Dữ liệu mock chỉ phục vụ giao diện/thử nghiệm và không ghi vào server.
+`MockProtocolNetworkClient` vẫn có fixture cho toàn bộ command request trong `common`, với schema đối chiếu từ protocol và server trên `origin/main`, để dùng trong phát triển/kiểm thử. Có thể tùy chỉnh bằng `registerSampleResponse` hoặc responder riêng. `samplePushJson` tạo mẫu `JOB_PROGRESS`/`JOB_DONE` cho job `OPTIMIZE` hoặc `IMPORT`; đây là gói push, không phải response của request. Dữ liệu mock không ghi vào server.
 
-`TcpNetworkClient` cung cấp kết nối TCP bất đồng bộ, bắt tay RSA/AES theo protocol, ghép response theo ID và nhận push qua listener. Gọi `connect(host, port)` trước khi gửi request; luôn `close()` client khi ứng dụng thoát. `Main` hiện vẫn chạy mock; việc đưa cấu hình server vào giao diện và chọn client thật thuộc C1.4.
+`TcpNetworkClient` cung cấp kết nối TCP bất đồng bộ, bắt tay RSA/AES theo protocol, ghép response theo ID và nhận push qua listener. Luôn `close()` client khi ứng dụng thoát.
 
 ---
 
