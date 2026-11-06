@@ -23,7 +23,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -31,6 +35,7 @@ public final class TcpNetworkClient implements NetworkClient, AutoCloseable {
     public static final int DEFAULT_PORT = 9000;
     private static final int CONNECT_TIMEOUT_MILLIS = 10_000;
     private static final int HANDSHAKE_TIMEOUT_MILLIS = 10_000;
+    private static final long KEEP_ALIVE_INTERVAL_SECONDS = 60;
     private static final int AES_FRAME_OVERHEAD = CryptoUtil.GCM_IV_LENGTH + CryptoUtil.GCM_TAG_BYTES;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -42,10 +47,15 @@ public final class TcpNetworkClient implements NetworkClient, AutoCloseable {
     private final ExecutorService connector = Executors.newSingleThreadExecutor(threadFactory("tkb-connect"));
     private final ExecutorService writer = Executors.newSingleThreadExecutor(threadFactory("tkb-write"));
     private final ExecutorService callbacks = Executors.newSingleThreadExecutor(threadFactory("tkb-callback"));
+    private final ScheduledExecutorService keepAliveScheduler =
+            Executors.newSingleThreadScheduledExecutor(threadFactory("tkb-keepalive"));
+    private final AtomicInteger nextKeepAliveRequestId = new AtomicInteger(Integer.MAX_VALUE);
+    private final AtomicBoolean keepAlivePending = new AtomicBoolean();
 
     private volatile ConnectionState state = ConnectionState.DISCONNECTED;
     private volatile Socket socket;
     private volatile SecretKey sessionKey;
+    private volatile ScheduledFuture<?> keepAliveTask;
     private volatile boolean closed;
 
     public CompletableFuture<Void> connect(String host, int port) {
@@ -84,6 +94,7 @@ public final class TcpNetworkClient implements NetworkClient, AutoCloseable {
                         state = ConnectionState.CONNECTED;
                     }
                     startReader(candidate, key);
+                    startKeepAlive(candidate);
                 } catch (IOException | RuntimeException ex) {
                     terminateConnection(candidate, ex, true);
                     throw new java.util.concurrent.CompletionException(
@@ -152,13 +163,7 @@ public final class TcpNetworkClient implements NetworkClient, AutoCloseable {
                     new NetworkClientException("A request with id " + request.getId() + " is already pending"));
         }
 
-        try {
-            writer.execute(() -> writeRequest(activeSocket, activeKey, request.getId(), requestJson));
-        } catch (RejectedExecutionException ex) {
-            pendingRequests.remove(request.getId(), pending);
-            responseFuture.completeExceptionally(
-                    new NetworkClientException("TCP client is closed", ex));
-        }
+        queueRequest(activeSocket, activeKey, request.getId(), requestJson, pending);
         return responseFuture;
     }
 
@@ -181,7 +186,86 @@ public final class TcpNetworkClient implements NetworkClient, AutoCloseable {
         disconnect();
         connector.shutdownNow();
         writer.shutdownNow();
+        keepAliveScheduler.shutdownNow();
         callbacks.shutdown();
+    }
+
+    private void startKeepAlive(Socket connection) {
+        ScheduledFuture<?> task = keepAliveScheduler.scheduleWithFixedDelay(
+                () -> sendKeepAlive(connection),
+                KEEP_ALIVE_INTERVAL_SECONDS,
+                KEEP_ALIVE_INTERVAL_SECONDS,
+                TimeUnit.SECONDS);
+        synchronized (stateLock) {
+            if (socket != connection || state != ConnectionState.CONNECTED || closed) {
+                task.cancel(false);
+                return;
+            }
+            ScheduledFuture<?> previous = keepAliveTask;
+            keepAliveTask = task;
+            if (previous != null) {
+                previous.cancel(false);
+            }
+        }
+    }
+
+    private void sendKeepAlive(Socket connection) {
+        if (socket != connection || !isConnected() || !keepAlivePending.compareAndSet(false, true)) {
+            return;
+        }
+
+        int requestId = nextKeepAliveRequestId.getAndUpdate(
+                current -> current <= 1 ? Integer.MAX_VALUE : current - 1);
+        Request request = new Request(requestId, Command.PING, Map.of());
+        String requestJson;
+        try {
+            requestJson = objectMapper.writeValueAsString(request);
+        } catch (JsonProcessingException ex) {
+            keepAlivePending.set(false);
+            terminateConnection(connection, ex, true);
+            return;
+        }
+
+        SecretKey key = sessionKey;
+        if (key == null || socket != connection) {
+            keepAlivePending.set(false);
+            return;
+        }
+        CompletableFuture<Response> responseFuture = new CompletableFuture<>();
+        PendingRequest pending = new PendingRequest(connection, responseFuture);
+        if (pendingRequests.putIfAbsent(requestId, pending) != null) {
+            keepAlivePending.set(false);
+            terminateConnection(connection,
+                    new IOException("Could not allocate a unique keep-alive request id"), true);
+            return;
+        }
+
+        responseFuture.whenComplete((response, failure) -> {
+            keepAlivePending.set(false);
+            if (failure != null) {
+                terminateConnection(connection, failure, true);
+            } else if (response == null || !Boolean.TRUE.equals(response.getOk())) {
+                terminateConnection(connection,
+                        new IOException("Server did not accept the keep-alive PING"), true);
+            }
+        });
+        queueRequest(connection, key, requestId, requestJson, pending);
+    }
+
+    private void queueRequest(
+            Socket connection,
+            SecretKey key,
+            int requestId,
+            String requestJson,
+            PendingRequest pending) {
+        try {
+            writer.execute(() -> writeRequest(connection, key, requestId, requestJson));
+        } catch (RejectedExecutionException ex) {
+            if (pendingRequests.remove(requestId, pending)) {
+                pending.future().completeExceptionally(
+                        new NetworkClientException("TCP client is closed", ex));
+            }
+        }
     }
 
     private SecretKey performHandshake(Socket connection) throws IOException {
@@ -309,6 +393,12 @@ public final class TcpNetworkClient implements NetworkClient, AutoCloseable {
             socket = null;
             sessionKey = null;
             state = ConnectionState.DISCONNECTED;
+            ScheduledFuture<?> heartbeat = keepAliveTask;
+            keepAliveTask = null;
+            keepAlivePending.set(false);
+            if (heartbeat != null) {
+                heartbeat.cancel(false);
+            }
             try {
                 connection.close();
             } catch (IOException closeError) {

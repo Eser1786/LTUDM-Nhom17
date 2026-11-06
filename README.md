@@ -85,7 +85,7 @@ Màn hình xác thực hỗ trợ đăng nhập và đăng ký tài khoản USER
 
 `MockProtocolNetworkClient` vẫn có fixture cho toàn bộ command request trong `common`, với schema đối chiếu từ protocol và server trên `origin/main`, để dùng trong phát triển/kiểm thử. Có thể tùy chỉnh bằng `registerSampleResponse` hoặc responder riêng. `samplePushJson` tạo mẫu `JOB_PROGRESS`/`JOB_DONE` cho job `OPTIMIZE` hoặc `IMPORT`; đây là gói push, không phải response của request. Dữ liệu mock không ghi vào server.
 
-`TcpNetworkClient` cung cấp kết nối TCP bất đồng bộ, bắt tay RSA/AES theo protocol, ghép response theo ID và nhận push qua listener. Luôn `close()` client khi ứng dụng thoát.
+`TcpNetworkClient` cung cấp kết nối TCP bất đồng bộ, bắt tay RSA/AES theo protocol, ghép response theo ID và nhận push qua listener. Sau khi kết nối bảo mật thành công, client tự gửi `PING` mỗi 60 giây; heartbeat dừng khi ngắt kết nối và tự chạy lại sau khi kết nối lại. Luôn `close()` client khi ứng dụng thoát.
 
 ---
 
