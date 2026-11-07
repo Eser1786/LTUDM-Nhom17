@@ -94,6 +94,7 @@ public class TkbServer {
         // 1. Kiem tra ket noi MySQL va tao tai khoan ADMIN mac dinh (admin / admin12345) neu chua co (B4.3)
         DatabaseConfig.getDataSource();
         authService.ensureDefaultAdminExists();
+        authService.ensureDefaultUserExists();
 
         // 2. Nap truoc (warm-up) hoc ky hien tai len RAM Cache (B5.1)
         try {
