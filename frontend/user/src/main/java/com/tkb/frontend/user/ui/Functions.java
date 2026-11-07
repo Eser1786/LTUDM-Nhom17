@@ -68,14 +68,6 @@ public final class Functions {
         return v;
     }
 
-    public static VBox theNoiBat() {
-        // Highlighted card used for the recommended option.
-        VBox v = the(16);
-        v.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #1D4ED8; "
-                + "-fx-border-radius: 12; -fx-border-width: 2;");
-        return v;
-    }
-
     public static Region khoangTrong() {
         Region r = new Region();
         HBox.setHgrow(r, Priority.ALWAYS);
@@ -154,15 +146,6 @@ public final class Functions {
         return nhan(text, MA_CHINH, Color.WHITE);
     }
 
-    public static Label nhanF(String text, String bgHex, String fgHex) {
-        Label l = new Label(text);
-        l.setFont(F_NHO);
-        l.setTextFill(Color.web(fgHex));
-        l.setPadding(new Insets(3, 9, 3, 9));
-        l.setStyle("-fx-background-color: " + bgHex + "; -fx-background-radius: 999; -fx-border-radius: 999;");
-        return l;
-    }
-
     // ------------------------------------------------------------------ buttons
 
     public static Button nut(String text, Color bg, Color border, Color fg) {
@@ -196,13 +179,6 @@ public final class Functions {
     }
 
     // ------------------------------------------------------------------ header
-
-    public static VBox dauTrang(String tieuDe, String moTa) {
-        Label title = chuDe(tieuDe);
-        Label desc = moTa(moTa);
-        VBox v = new VBox(4, title, desc);
-        return v;
-    }
 
     // ------------------------------------------------------------------ dialogs
 

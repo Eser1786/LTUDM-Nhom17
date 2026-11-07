@@ -16,7 +16,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.Window;
-import java.util.function.Consumer;
 
 /** Các hộp thoại dùng chung: lưu, đổi tên, xác nhận xóa và xem nhanh thời khóa biểu. */
 public final class MoDals {
@@ -175,10 +174,4 @@ public final class MoDals {
         stage.showAndWait();
     }
 
-    /** Tiện ích cho panel khác nếu cần mở modal tùy biến. */
-    public static Stage moTuyBien(Window owner, String tieuDe, VBox noiDung, Consumer<Stage> ganNut) {
-        Stage stage = mo(owner, tieuDe, noiDung);
-        if (ganNut != null) ganNut.accept(stage);
-        return stage;
-    }
 }

@@ -45,9 +45,6 @@ public final class Types {
                           @JsonAlias({"loai_lop", "loaiLop"}) String loai,
                           @JsonAlias({"si_so", "siSo"}) Integer siSo,
                           @JsonAlias({"giang_vien", "giangVien"}) String giangVien) {
-        public String hienThi() {
-            return maMh + "." + nhom + ("TH".equals(loai) ? "." + toTh : "") + " (" + loai + ")";
-        }
     }
 
     public record ClassSession(int thu, int tietBd, int soTiet, String phong) {

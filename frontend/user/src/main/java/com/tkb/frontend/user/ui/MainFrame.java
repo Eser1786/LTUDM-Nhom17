@@ -23,7 +23,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.Scene;
-import javafx.stage.Stage;
 import javafx.stage.Window;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -325,13 +324,6 @@ public class MainFrame extends BorderPane {
 
     Window window() {
         return getScene() == null ? null : getScene().getWindow();
-    }
-
-    public void showWindow() {
-        Stage stage = new Stage();
-        stage.setTitle("Project 15 – Tối ưu thời khóa biểu sinh viên");
-        stage.setScene(new Scene(this, 1360, 860));
-        stage.show();
     }
 
     public static final class AppUiState {

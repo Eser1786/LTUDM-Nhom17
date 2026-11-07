@@ -63,10 +63,6 @@ public class TimetableGridPanel extends VBox {
         this.tieuDe = tieuDe;
     }
 
-    public String getTieuDe() {
-        return tieuDe;
-    }
-
     public void setSlots(List<SectionSlot> slots) {
         this.slots.clear();
         if (slots != null) {

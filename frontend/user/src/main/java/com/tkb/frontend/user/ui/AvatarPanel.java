@@ -38,9 +38,4 @@ public class AvatarPanel extends StackPane {
         setMaxSize(kichThuoc, kichThuoc);
     }
 
-    public void setKichThuoc(int kichThuoc) {
-        this.kichThuoc = kichThuoc;
-        label.setFont(Font.font("Segoe UI", FontWeight.BOLD, kichThuoc * 0.36));
-        render();
-    }
 }

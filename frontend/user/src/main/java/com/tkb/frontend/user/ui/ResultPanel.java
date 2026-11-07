@@ -25,7 +25,6 @@ public class ResultPanel extends ScrollPane {
     private final TkbClient client;
     private final MainFrame frame;
     private final MainFrame.AppUiState st;
-    private final HBox cardsBox = new HBox(14);
     private final VBox chiTiet = new VBox(14);
     private final VBox khung = new VBox(16);
     private JobResult ketQua;
@@ -43,8 +42,6 @@ public class ResultPanel extends ScrollPane {
                 Functions.chuDe("Kết quả đề xuất"),
                 Functions.moTa("Hệ thống đề xuất các phương án hợp lệ (không trùng giờ, đúng cặp LT–TH). "
                         + "Chọn một phương án để xem lịch chi tiết."));
-
-        cardsBox.setAlignment(Pos.TOP_LEFT);
 
         khung.getChildren().addAll(header, chiTiet);
         setContent(khung);
@@ -80,47 +77,6 @@ public class ResultPanel extends ScrollPane {
         veTatCaLich(sorted);
     }
 
-    private void veCards() {
-        cardsBox.getChildren().clear();
-        List<ScheduleOption> options = ketQua.options();
-        for (int i = 0; i < options.size(); i++) {
-            ScheduleOption o = options.get(i);
-            boolean deXuat = i == 0;
-            VBox card = deXuat ? Functions.theNoiBat() : Functions.the(16);
-            card.setPrefWidth(340);
-            card.setMinWidth(320);
-
-            HBox top = new HBox(8);
-            top.setAlignment(Pos.CENTER_LEFT);
-            Label ten = Functions.tieuDeThe("Phương án " + o.ten());
-            top.getChildren().add(ten);
-            if (deXuat) {
-                top.getChildren().add(Functions.nhanDeXuat("Đề xuất"));
-            }
-            top.getChildren().addAll(Functions.khoangTrong(), Functions.nhanChinh(Math.round(o.diem()) + "/100"));
-
-            Label mo = Functions.moTa(o.moTa());
-
-            FlowPane chiSo = new FlowPane(8, 8);
-            OptionStats s = o.stats();
-            chiSo.getChildren().addAll(
-                    chiSoMuc("Số ngày đến trường", s.soNgayHoc() + " ngày"),
-                    chiSoMuc("Tổng phút trống", s.phutTrong() + " phút"),
-                    chiSoMuc("Tỷ lệ buổi sáng", s.tyLeSang() + "%"));
-
-            Button xem = deXuat ? Functions.nutChinh("Xem lịch") : Functions.nutPhu("Xem lịch");
-            xem.setOnAction(e -> {
-                veChiTiet(o);
-            });
-
-            HBox dongNut = new HBox(10, Functions.khoangTrong(), xem);
-            dongNut.setAlignment(Pos.CENTER_LEFT);
-
-            card.getChildren().addAll(top, mo, Functions.vach(), chiSo, dongNut);
-            cardsBox.getChildren().add(card);
-        }
-    }
-
     private void veTatCaLich(List<ScheduleOption> options) {
         chiTiet.getChildren().clear();
         for (ScheduleOption o : options) {
@@ -151,18 +107,6 @@ public class ResultPanel extends ScrollPane {
 
             chiTiet.getChildren().add(theLuoi);
         }
-    }
-
-    private VBox chiSoMuc(String nhan, String giaTri) {
-        VBox v = new VBox(2);
-        v.setPadding(new Insets(6, 10, 6, 10));
-        v.setStyle("-fx-background-color: #F8FAFC; -fx-background-radius: 8;");
-        v.setMinWidth(140);
-        Label g = new Label(giaTri);
-        g.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-        g.setTextFill(Functions.MA_CHU_DAM);
-        v.getChildren().addAll(Functions.nhanNho(nhan), g);
-        return v;
     }
 
     private void veChiTiet(ScheduleOption o) {
