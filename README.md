@@ -87,6 +87,14 @@ Màn hình xác thực hỗ trợ đăng nhập và đăng ký tài khoản USER
 
 `TcpNetworkClient` cung cấp kết nối TCP bất đồng bộ, bắt tay RSA/AES theo protocol, ghép response theo ID và nhận push qua listener. Sau khi kết nối bảo mật thành công, client tự gửi `PING` mỗi 60 giây; heartbeat dừng khi ngắt kết nối và tự chạy lại sau khi kết nối lại. Luôn `close()` client khi ứng dụng thoát.
 
+Trang **Tổng quan** của Admin gọi `ADMIN_GET_STATS` khi mở trang và khi nhấn **Làm mới**, hiển thị người dùng online, công việc đang chạy, tổng người dùng và nhóm lớp đang hoạt động.
+
+Mã nguồn giao diện Admin được tách theo trách nhiệm: `AdminFrame` điều hướng, `AdminDashboardPane` hiển thị thống kê, `AdminImportPane` xử lý luồng nhập PDF/xem thử, `AdminSemestersPane` quản lý học kỳ, và `AdminRequestClient` dùng chung cho giao tiếp request/response.
+
+Trang **Học kỳ** tải danh sách từ `LIST_SEMESTERS`, tạo học kỳ bằng `ADMIN_CREATE_SEMESTER` và đổi học kỳ hiện hành bằng `ADMIN_SET_CURRENT_SEMESTER`. Mã học kỳ dùng định dạng `NNNN-NNNN-N`; danh sách được tải lại sau khi thao tác thành công.
+
+Trang **Nhập dữ liệu** tải danh sách học kỳ, cho chọn tệp PDF tối đa `20 MiB` và gửi tuần tự qua `IMPORT_BEGIN` / `IMPORT_CHUNK`, mỗi chunk tối đa `512 KiB`. Sau khi tải lên, Admin chạy `IMPORT_COMMIT` với `dryRun=true` để xem số dòng, thống kê, lỗi và cảnh báo theo STT. Chỉ khi xem thử không có lỗi mới bật xác nhận ghi thật (`dryRun=false`); tiến độ và kết quả job được nhận qua `JOB_PROGRESS` / `JOB_DONE`.
+
 ---
 
 ## 4. Hướng dẫn khởi chạy Cơ sở dữ liệu & Nạp dữ liệu học kỳ

@@ -112,6 +112,7 @@ public final class TcpNetworkClient implements NetworkClient, AutoCloseable {
         return state == ConnectionState.CONNECTED && socket != null && !closed;
     }
 
+    @Override
     public AutoCloseable addPushListener(Consumer<Response> listener) {
         Objects.requireNonNull(listener, "listener");
         pushListeners.add(listener);
