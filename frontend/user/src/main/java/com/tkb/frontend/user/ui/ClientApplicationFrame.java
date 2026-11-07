@@ -116,7 +116,7 @@ public final class ClientApplicationFrame extends BorderPane {
                         data.get("username") instanceof String username ? username : "student",
                         role);
             }
-            Parent roleFrame = RoleRouter.frameForRole(role, userClient);
+            Parent roleFrame = RoleRouter.frameForRole(role, userClient, networkClient);
             setCenter(roleFrame);
             if (roleFrame instanceof AdminFrame) {
                 setPrefSize(1360, 860);

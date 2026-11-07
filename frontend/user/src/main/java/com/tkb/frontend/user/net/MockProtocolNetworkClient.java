@@ -16,11 +16,15 @@ import java.util.Objects;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
+import java.util.function.Consumer;
 
 public final class MockProtocolNetworkClient implements NetworkClient {
     private final ObjectMapper objectMapper;
     private final Map<Command, Function<Request, Response>> responders = new ConcurrentHashMap<>();
+    private final CopyOnWriteArrayList<Consumer<Response>> pushListeners = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<Map<String, Object>> mockSemesters = new CopyOnWriteArrayList<>();
 
     public MockProtocolNetworkClient() {
         this("USER");
@@ -83,9 +87,15 @@ public final class MockProtocolNetworkClient implements NetworkClient {
         registerSuccessResponse(Command.REGISTER, Map.of());
         registerSuccessResponse(Command.LOGOUT, Map.of());
         registerSuccessResponse(Command.GET_SECTIONS, Map.of("sections", List.of(section)));
-        registerSuccessResponse(Command.LIST_SEMESTERS, Map.of("semesters", List.of(
-                Map.of("code", "2026-2027-1", "name", "Học kỳ I - Năm học 2026-2027", "current", true),
-                Map.of("code", "2025-2026-2", "name", "Học kỳ II - Năm học 2025-2026", "current", false))));
+        mockSemesters.add(Map.of(
+                "code", "2026-2027-1",
+                "name", "Học kỳ I - Năm học 2026-2027",
+                "current", true));
+        mockSemesters.add(Map.of(
+                "code", "2025-2026-2",
+                "name", "Học kỳ II - Năm học 2025-2026",
+                "current", false));
+        registerResponder(Command.LIST_SEMESTERS, this::listMockSemesters);
         registerSuccessResponse(Command.LIST_COURSES, Map.of("courses", List.of(course)));
         registerSuccessResponse(Command.OPTIMIZE, Map.of("jobId", "mock-job-1"));
         registerSuccessResponse(Command.CANCEL_JOB, Map.of());
@@ -108,8 +118,8 @@ public final class MockProtocolNetworkClient implements NetworkClient {
         registerSuccessResponse(Command.ADMIN_SET_USER_ROLE, Map.of());
         registerSuccessResponse(Command.ADMIN_RESET_PASSWORD, Map.of());
         registerSuccessResponse(Command.ADMIN_DELETE_USER, Map.of());
-        registerSuccessResponse(Command.ADMIN_CREATE_SEMESTER, Map.of());
-        registerSuccessResponse(Command.ADMIN_SET_CURRENT_SEMESTER, Map.of());
+        registerResponder(Command.ADMIN_CREATE_SEMESTER, this::createMockSemester);
+        registerResponder(Command.ADMIN_SET_CURRENT_SEMESTER, this::setMockCurrentSemester);
         registerSuccessResponse(Command.ADMIN_LIST_COURSES, Map.of("courses", List.of(adminCourse)));
         registerSuccessResponse(Command.ADMIN_UPSERT_COURSE, Map.of());
         registerSuccessResponse(Command.ADMIN_DELETE_COURSE, Map.of());
@@ -139,6 +149,45 @@ public final class MockProtocolNetworkClient implements NetworkClient {
                         "remoteAddress", "127.0.0.1",
                         "connectedAt", "2026-10-31T09:30:00"))));
         registerSuccessResponse(Command.ADMIN_KICK_SESSION, Map.of());
+    }
+
+    private Response listMockSemesters(Request request) {
+        List<Map<String, Object>> semesters = objectMapper.convertValue(
+                mockSemesters, new TypeReference<List<Map<String, Object>>>() {});
+        return Response.success(request.getId(), Map.of("semesters", semesters));
+    }
+
+    private synchronized Response createMockSemester(Request request) {
+        String code = request.getString("code");
+        String name = request.getString("name");
+        if (code == null || name == null || code.isBlank() || name.isBlank()) {
+            return Response.error(request.getId(), ErrorCode.VALIDATION_FAILED);
+        }
+        if (mockSemesters.stream().anyMatch(semester -> code.equals(semester.get("code")))) {
+            return Response.error(request.getId(), ErrorCode.SEMESTER_EXISTS);
+        }
+        mockSemesters.add(Map.of("code", code, "name", name, "current", false));
+        return Response.successEmpty(request.getId());
+    }
+
+    private synchronized Response setMockCurrentSemester(Request request) {
+        String code = request.getString("semesterCode");
+        if (code == null || code.isBlank()) {
+            return Response.error(request.getId(), ErrorCode.SEMESTER_NOT_FOUND);
+        }
+        boolean found = mockSemesters.stream()
+                .anyMatch(semester -> code.equals(semester.get("code")));
+        if (!found) {
+            return Response.error(request.getId(), ErrorCode.SEMESTER_NOT_FOUND);
+        }
+        for (int index = 0; index < mockSemesters.size(); index++) {
+            Map<String, Object> semester = mockSemesters.get(index);
+            mockSemesters.set(index, Map.of(
+                    "code", semester.get("code"),
+                    "name", semester.get("name"),
+                    "current", code.equals(semester.get("code"))));
+        }
+        return Response.successEmpty(request.getId());
     }
 
     public void registerResponder(Command command, Function<Request, Response> responder) {
@@ -188,6 +237,45 @@ public final class MockProtocolNetworkClient implements NetworkClient {
         }
     }
 
+    @Override
+    public AutoCloseable addPushListener(Consumer<Response> listener) {
+        Objects.requireNonNull(listener, "listener");
+        pushListeners.add(listener);
+        return () -> pushListeners.remove(listener);
+    }
+
+    private void emitImportJobPushes(Request request) {
+        Object rawDryRun = request.getData().get("dryRun");
+        boolean dryRun = Boolean.TRUE.equals(rawDryRun);
+        CompletableFuture.runAsync(() -> {
+            Map<String, Object> progressData = Map.of(
+                    "jobId", "mock-import-job-1",
+                    "jobType", "IMPORT",
+                    "status", "RUNNING",
+                    "percent", 50,
+                    "message", "Đang phân tích dữ liệu mẫu");
+            notifyPushListeners(Response.pushMessage(Command.JOB_PROGRESS, progressData));
+
+            Map<String, Object> doneData = Map.of(
+                    "jobId", "mock-import-job-1",
+                    "jobType", "IMPORT",
+                    "status", "DONE",
+                    "result", sampleImportReport(dryRun));
+            notifyPushListeners(Response.pushMessage(Command.JOB_DONE, doneData));
+        });
+    }
+
+    private void notifyPushListeners(Response push) {
+        for (Consumer<Response> listener : pushListeners) {
+            try {
+                listener.accept(objectMapper.convertValue(push, Response.class));
+            } catch (RuntimeException ex) {
+                System.getLogger(MockProtocolNetworkClient.class.getName()).log(
+                        System.Logger.Level.WARNING, "Mock push listener failed", ex);
+            }
+        }
+    }
+
     private Map<String, Object> copyResponseData(Map<String, Object> data) {
         return objectMapper.convertValue(data, new TypeReference<LinkedHashMap<String, Object>>() {});
     }
@@ -220,7 +308,7 @@ public final class MockProtocolNetworkClient implements NetworkClient {
             if (normalizedJobType.equals("OPTIMIZE")) {
                 data.put("result", Map.of("droppedCourses", List.of(), "plans", List.of(samplePlan())));
             } else {
-                data.put("result", sampleImportReport());
+                data.put("result", sampleImportReport(true));
             }
         }
 
@@ -231,9 +319,9 @@ public final class MockProtocolNetworkClient implements NetworkClient {
         }
     }
 
-    private Map<String, Object> sampleImportReport() {
+    private Map<String, Object> sampleImportReport(boolean dryRun) {
         return Map.of(
-                "dryRun", true,
+                "dryRun", dryRun,
                 "detectedRows", 1,
                 "courses", Map.of("inserted", 0, "updated", 1),
                 "sections", Map.of("inserted", 0, "updated", 1, "deactivated", 0),
@@ -282,7 +370,11 @@ public final class MockProtocolNetworkClient implements NetworkClient {
     @Override
     public CompletableFuture<Response> send(Request request) {
         try {
-            return CompletableFuture.completedFuture(createResponse(request));
+            Response response = createResponse(request);
+            if (request.resolveCommand() == Command.IMPORT_COMMIT && Boolean.TRUE.equals(response.getOk())) {
+                emitImportJobPushes(request);
+            }
+            return CompletableFuture.completedFuture(response);
         } catch (NetworkClientException ex) {
             return CompletableFuture.failedFuture(ex);
         } catch (RuntimeException ex) {
