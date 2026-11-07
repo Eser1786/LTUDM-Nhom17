@@ -34,10 +34,12 @@ pip install requirements.txt : tải các thư viện cần thiết của python
 ```bash
 
 docker compose up -d
-mvn clean compile
-# (chạy file main tiếp theo)
+mvn -pl common install -DskipTests
+mvn -pl backend exec:java
 
-python tools/import_tkb_mysql.py csv/2026-2027-1/thoi_khoa_bieu.csv # nạp file csv hiện tại vào mysql
+# Tai khoan mac dinh:
+#   Admin:  admin / admin12345
+#   User:   student / student12345
 
 ```
 
@@ -63,12 +65,16 @@ Cả hai thư mục nguồn được biên dịch chung trong module `frontend`.
 Cách chạy: mvn -pl frontend javafx:run
 
 ### cách chạy full stack:
-1. docker compose up -d
-
-2. cd backend ->mvn -q exec:java -Dexec.mainClass=com.tkb.backend.TkbServer -Dexec.args=9000
-
-sau khi có dòng === TKB SERVER DA KHOI DONG TAI CONG TCP 9000 === thì có thể chuyển sang bước 3
-
-3. mở thêm 1 termainal để chạy frontend 
-cd frontend
-mvn javafx:run
+1. Start MySQL:
+docker compose up -d
+2. Install the shared module (once, or after common changes):
+mvn -pl common install -DskipTests
+3. Start backend (terminal 1):
+mvn -pl backend exec:java "-Dexec.mainClass=com.tkb.backend.TkbServer" "-Dexec.args=9000"
+Wait for:
+=== TKB SERVER DA KHOI DONG TAI CONG TCP 9000 ===
+4. Start frontend (terminal 2):
+mvn -pl frontend javafx:run
+Default accounts:
+- Admin: admin / admin12345
+- Normal user: student / student12345

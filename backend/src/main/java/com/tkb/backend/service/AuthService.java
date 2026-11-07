@@ -77,6 +77,24 @@ public class AuthService {
         }
     }
 
+    public void ensureDefaultUserExists() {
+        String userUser = getEnvOrDefault("USER_USER", "student");
+        String userPass = getEnvOrDefault("USER_PASS", "student12345");
+        try {
+            UserAuthRecord existing = userDao.findByUsername(userUser);
+            if (existing == null) {
+                String hash = hashPassword(userPass);
+                long id = userDao.createUser(userUser, hash, UserDto.ROLE_USER);
+                System.out.printf("[AuthService] Da tao tai khoan USER mac dinh: username='%s' (id=%d)%n", userUser, id);
+            } else if (!UserDto.ROLE_USER.equalsIgnoreCase(existing.role())) {
+                userDao.updateUserRole(existing.id(), UserDto.ROLE_USER);
+                System.out.printf("[AuthService] Da dat lai quyen USER cho tai khoan '%s'%n", userUser);
+            }
+        } catch (SQLException e) {
+            System.err.println("[AuthService] Loi khi kiem tra/tao tai khoan USER mac dinh: " + e.getMessage());
+        }
+    }
+
     /**
      * B4.1 & B4.2 - Dang ky tai khoan moi (REGISTER).
      */
