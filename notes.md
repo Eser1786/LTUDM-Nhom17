@@ -70,7 +70,7 @@ docker compose up -d
 2. Install the shared module (once, or after common changes):
 mvn -pl common install -DskipTests
 3. Start backend (terminal 1):
-mvn -pl backend exec:java -Dexec.mainClass=com.tkb.backend.TkbServer -Dexec.args=9000
+mvn -pl backend exec:java "-Dexec.mainClass=com.tkb.backend.TkbServer" "-Dexec.args=9000"
 Wait for:
 === TKB SERVER DA KHOI DONG TAI CONG TCP 9000 ===
 4. Start frontend (terminal 2):
