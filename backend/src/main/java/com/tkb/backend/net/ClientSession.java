@@ -483,6 +483,12 @@ public class ClientSession implements Runnable {
         data.put("jobType", dto.getJobType());
         data.put("status", dto.getStatus());
         data.put("percent", dto.getPercent());
+        if (dto.getResult() != null) {
+            data.put("result", dto.getResult());
+        }
+        if (dto.getError() != null) {
+            data.put("error", dto.getError());
+        }
         return Response.success(req.getId(), data);
     }
 

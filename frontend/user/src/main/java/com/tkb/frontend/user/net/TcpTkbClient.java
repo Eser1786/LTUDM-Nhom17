@@ -133,30 +133,35 @@ public class TcpTkbClient implements TkbClient {
     }
 
     private void handlePush(Response resp) {
-        String push = resp.getPush();
-        Map<String, Object> data = resp.getData();
-        if (data == null) return;
-        if ("JOB_PROGRESS".equals(push)) {
-            Object jid = data.get("jobId");
-            Object pct = data.get("percent");
-            if (jid != null) {
-                jobProgress.put(String.valueOf(jid), pct instanceof Number ? ((Number) pct).intValue() : 0);
+        try {
+            String push = resp.getPush();
+            Map<String, Object> data = resp.getData();
+            if (data == null) return;
+            if ("JOB_PROGRESS".equals(push)) {
+                Object jid = data.get("jobId");
+                Object pct = data.get("percent");
+                if (jid != null) {
+                    jobProgress.put(String.valueOf(jid), pct instanceof Number ? ((Number) pct).intValue() : 0);
+                }
+            } else if ("JOB_DONE".equals(push)) {
+                Object jid = data.get("jobId");
+                if (jid == null) return;
+                String jobId = String.valueOf(jid);
+                String status = String.valueOf(data.getOrDefault("status", ""));
+                if ("DONE".equals(status) || "COMPLETED".equals(status)) {
+                    Object resultObj = data.get("result");
+                    JobResult jr = mapJobResult(resultObj);
+                    if (jr != null) jobResults.put(jobId, jr);
+                } else if ("FAILED".equals(status)) {
+                    Object err = data.get("error");
+                    String msg = "Xep lich that bai";
+                    if (err instanceof Map<?, ?> m && m.get("message") != null) msg = String.valueOf(m.get("message"));
+                    jobErrors.put(jobId, msg);
+                }
             }
-        } else if ("JOB_DONE".equals(push)) {
-            Object jid = data.get("jobId");
-            if (jid == null) return;
-            String jobId = String.valueOf(jid);
-            String status = String.valueOf(data.getOrDefault("status", ""));
-            if ("DONE".equals(status) || "COMPLETED".equals(status)) {
-                Object resultObj = data.get("result");
-                JobResult jr = mapJobResult(resultObj);
-                if (jr != null) jobResults.put(jobId, jr);
-            } else if ("FAILED".equals(status)) {
-                Object err = data.get("error");
-                String msg = "Xep lich that bai";
-                if (err instanceof Map<?, ?> m && m.get("message") != null) msg = String.valueOf(m.get("message"));
-                jobErrors.put(jobId, msg);
-            }
+        } catch (Exception e) {
+            // Swallow to keep the reader loop alive; log for debugging.
+            System.err.println("[TcpTkbClient] handlePush error: " + e);
         }
     }
 
@@ -386,14 +391,14 @@ public class TcpTkbClient implements TkbClient {
         if (d != null && d.get("percent") instanceof Number) pct = ((Number) d.get("percent")).intValue();
         // wait for result if done
         JobResult result = jobResults.get(jobId);
-        if (state == JobStatus.State.DONE && result == null) {
-            for (int i = 0; i < 50 && result == null; i++) {
-                try { Thread.sleep(100); } catch (InterruptedException ignored) {}
-                result = jobResults.get(jobId);
-                if (jobErrors.containsKey(jobId)) break;
-            }
+        if (result == null && d != null && d.get("result") != null) {
+            result = mapJobResult(d.get("result"));
+            if (result != null) jobResults.put(jobId, result);
         }
         String err = jobErrors.get(jobId);
+        if (err == null && d != null && d.get("error") instanceof Map<?, ?> em && em.get("message") != null) {
+            err = String.valueOf(em.get("message"));
+        }
         return new JobStatus(jobId, state, pct, result, err);
     }
 

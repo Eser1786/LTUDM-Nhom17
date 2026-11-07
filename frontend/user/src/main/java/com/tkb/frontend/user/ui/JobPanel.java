@@ -27,6 +27,7 @@ public class JobPanel extends VBox {
     private String jobId;
     private Timeline poller;
     private Runnable onHuy;
+    private int doneWaitCount = 0;
 
     public JobPanel(TkbClient client, MainFrame frame) {
         this.client = client;
@@ -91,6 +92,7 @@ public class JobPanel extends VBox {
     public void batDau(String jobId, Runnable onHuy) {
         this.jobId = jobId;
         this.onHuy = onHuy;
+        this.doneWaitCount = 0;
         hienLoi(false, null);
         lblTrangThai.setText("Đang chuẩn bị kết quả...");
         progress.setProgress(0.02);
@@ -106,8 +108,14 @@ public class JobPanel extends VBox {
             JobStatus status = client.jobStatus(jobId);
             capNhat(status);
             if (status.state() == JobStatus.State.DONE) {
-                dungPoll();
-                frame.jobXong(status.ketQua());
+                if (status.ketQua() != null) {
+                    dungPoll();
+                    frame.jobXong(status.ketQua());
+                } else if (++doneWaitCount > 25) {
+                    dungPoll();
+                    frame.jobXong(null);
+                }
+                // else: keep polling until the push delivers the result
             } else if (status.state() == JobStatus.State.CANCELLED) {
                 dungPoll();
                 frame.jobHuy();
