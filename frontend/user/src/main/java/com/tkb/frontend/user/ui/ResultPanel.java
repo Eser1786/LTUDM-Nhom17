@@ -8,7 +8,6 @@ import com.tkb.frontend.user.net.TkbClient;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.FlowPane;
@@ -17,7 +16,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Comparator;
@@ -30,8 +28,6 @@ public class ResultPanel extends ScrollPane {
     private final HBox cardsBox = new HBox(14);
     private final VBox chiTiet = new VBox(14);
     private final VBox khung = new VBox(16);
-    private final Map<String, CheckBox> chkSoSanh = new LinkedHashMap<>();
-    private final Button btnSoSanh = Functions.nutPhu("So sánh phương án đã chọn");
     private JobResult ketQua;
 
     public ResultPanel(TkbClient client, MainFrame frame) {
@@ -49,10 +45,6 @@ public class ResultPanel extends ScrollPane {
                         + "Chọn một phương án để xem lịch chi tiết."));
 
         cardsBox.setAlignment(Pos.TOP_LEFT);
-
-        HBox thanhNut = new HBox(10, Functions.khoangTrong(), btnSoSanh);
-        thanhNut.setAlignment(Pos.CENTER_RIGHT);
-        btnSoSanh.setOnAction(e -> moSoSanh());
 
         khung.getChildren().addAll(header, chiTiet);
         setContent(khung);
@@ -78,7 +70,6 @@ public class ResultPanel extends ScrollPane {
 
     public void hienKetQua(JobResult result) {
         this.ketQua = result;
-        this.chkSoSanh.clear();
         if (result == null || result.options().isEmpty()) {
             hienTrangThai();
             return;
@@ -87,7 +78,6 @@ public class ResultPanel extends ScrollPane {
         sorted.sort(Comparator.comparingDouble(ScheduleOption::diem).reversed());
         this.ketQua = new JobResult(result.maHocKy(), sorted);
         veTatCaLich(sorted);
-        capNhatNutSoSanh();
     }
 
     private void veCards() {
@@ -118,16 +108,12 @@ public class ResultPanel extends ScrollPane {
                     chiSoMuc("Tổng phút trống", s.phutTrong() + " phút"),
                     chiSoMuc("Tỷ lệ buổi sáng", s.tyLeSang() + "%"));
 
-            CheckBox chk = new CheckBox("So sánh");
-            chkSoSanh.put(o.ten(), chk);
-            chk.setOnAction(e -> capNhatNutSoSanh());
-
             Button xem = deXuat ? Functions.nutChinh("Xem lịch") : Functions.nutPhu("Xem lịch");
             xem.setOnAction(e -> {
                 veChiTiet(o);
             });
 
-            HBox dongNut = new HBox(10, chk, Functions.khoangTrong(), xem);
+            HBox dongNut = new HBox(10, Functions.khoangTrong(), xem);
             dongNut.setAlignment(Pos.CENTER_LEFT);
 
             card.getChildren().addAll(top, mo, Functions.vach(), chiSo, dongNut);
@@ -244,25 +230,4 @@ public class ResultPanel extends ScrollPane {
         return sb.toString();
     }
 
-    private void capNhatNutSoSanh() {
-        long n = chkSoSanh.values().stream().filter(CheckBox::isSelected).count();
-        btnSoSanh.setDisable(n < 2);
-        btnSoSanh.setText(n < 2 ? "So sánh phương án đã chọn (chọn 2–3)"
-                : "So sánh " + n + " phương án đã chọn");
-    }
-
-    private void moSoSanh() {
-        List<ScheduleOption> ds = new ArrayList<>();
-        for (ScheduleOption o : ketQua.options()) {
-            CheckBox chk = chkSoSanh.get(o.ten());
-            if (chk != null && chk.isSelected()) {
-                ds.add(o);
-            }
-        }
-        if (ds.size() < 2) {
-            Functions.canhBao(frame.window(), "Hãy chọn ít nhất 2 phương án để so sánh.");
-            return;
-        }
-        frame.moSoSanhPhuongAn(MainFrame.CARD_RES, ds);
-    }
 }

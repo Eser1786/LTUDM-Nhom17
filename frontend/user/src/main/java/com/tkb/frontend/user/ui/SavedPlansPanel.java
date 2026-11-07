@@ -7,7 +7,6 @@ import com.tkb.frontend.user.net.TkbClient;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -15,10 +14,8 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /** Màn hình Thời khóa biểu đã lưu: card lịch, xem nhanh, mở, đổi tên, xóa và so sánh 2 lịch. */
 public class SavedPlansPanel extends ScrollPane {
@@ -26,8 +23,6 @@ public class SavedPlansPanel extends ScrollPane {
     private final MainFrame frame;
     private final MainFrame.AppUiState st;
     private final TextField txtTimKiem = Functions.oNhap();
-    private final Button btnSoSanh = Functions.nutChinh("So sánh 2 lịch đã chọn");
-    private final Map<Long, CheckBox> chkSoSanh = new LinkedHashMap<>();
     private final VBox danhSach = new VBox(12);
     private final VBox khung = new VBox(14);
     private List<SavedPlan> tatCa = List.of();
@@ -43,16 +38,14 @@ public class SavedPlansPanel extends ScrollPane {
 
         VBox header = new VBox(4,
                 Functions.chuDe("Thời khóa biểu đã lưu"),
-                Functions.moTa("Mở lại lịch, đổi tên, xóa hoặc chọn 2 lịch để so sánh chi tiết."));
+                Functions.moTa("Mở lại lịch, đổi tên hoặc xóa lịch đã lưu."));
 
         VBox thanhCongCu = Functions.the(12);
         txtTimKiem.setPromptText("Tìm theo tên lịch...");
         txtTimKiem.setPrefWidth(260);
         Button btnMoi = Functions.nutPhu("Tạo phương án mới");
         btnMoi.setOnAction(e -> frame.denTrang(MainFrame.CARD_REQ));
-        btnSoSanh.setDisable(true);
-        btnSoSanh.setOnAction(e -> moSoSanh());
-        HBox row = new HBox(10, txtTimKiem, Functions.khoangTrong(), btnMoi, btnSoSanh);
+        HBox row = new HBox(10, txtTimKiem, Functions.khoangTrong(), btnMoi);
         row.setAlignment(Pos.CENTER_LEFT);
         thanhCongCu.getChildren().add(row);
 
@@ -87,7 +80,6 @@ public class SavedPlansPanel extends ScrollPane {
 
     private void veDanhSach() {
         danhSach.getChildren().clear();
-        chkSoSanh.clear();
         List<SavedPlan> ds = loc();
         if (ds.isEmpty()) {
             VBox empty = Functions.the(24);
@@ -101,26 +93,20 @@ public class SavedPlansPanel extends ScrollPane {
             moi.setOnAction(e -> frame.denTrang(MainFrame.CARD_REQ));
             empty.getChildren().add(moi);
             danhSach.getChildren().add(empty);
-            capNhatNutSoSanh();
             return;
         }
         for (SavedPlan p : ds) {
             danhSach.getChildren().add(theLich(p));
         }
-        capNhatNutSoSanh();
     }
 
     private VBox theLich(SavedPlan p) {
         VBox card = Functions.the(16);
 
-        CheckBox chk = new CheckBox();
-        chkSoSanh.put(p.id(), chk);
-        chk.setOnAction(e -> capNhatNutSoSanh());
-
         HBox top = new HBox(10);
         top.setAlignment(Pos.CENTER_LEFT);
         Label ten = Functions.tieuDeThe(p.ten());
-        top.getChildren().addAll(chk, ten, Functions.khoangTrong(),
+        top.getChildren().addAll(ten, Functions.khoangTrong(),
                 Functions.nhanChinh(Math.round(p.diem()) + "/100"));
 
         String hocKy = st.hocKy == null ? p.maHocKy() : "Học kỳ I · 2026–2027";
@@ -164,12 +150,6 @@ public class SavedPlansPanel extends ScrollPane {
         return box;
     }
 
-    private void capNhatNutSoSanh() {
-        long n = chkSoSanh.values().stream().filter(CheckBox::isSelected).count();
-        btnSoSanh.setDisable(n != 2);
-        btnSoSanh.setText(n == 2 ? "So sánh 2 lịch đã chọn" : "Chọn đúng 2 lịch để so sánh");
-    }
-
     private void moLich(SavedPlan p) {
         try {
             PlanDetail d = client.getPlan(p.id());
@@ -187,17 +167,4 @@ public class SavedPlansPanel extends ScrollPane {
         MoDals.xacNhanXoa(frame.window(), client, p.id(), p.ten(), this::taiDanhSach);
     }
 
-    private void moSoSanh() {
-        List<Long> ids = new ArrayList<>();
-        chkSoSanh.forEach((id, chk) -> {
-            if (chk.isSelected()) {
-                ids.add(id);
-            }
-        });
-        if (ids.size() != 2) {
-            Functions.canhBao(frame.window(), "Hãy chọn đúng 2 lịch để so sánh.");
-            return;
-        }
-        frame.moSoSanhDaLuu(MainFrame.CARD_SAVED, ids);
-    }
 }

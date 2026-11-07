@@ -4,7 +4,6 @@ import com.tkb.frontend.user.model.Types.Criteria;
 import com.tkb.frontend.user.model.Types.Course;
 import com.tkb.frontend.user.model.Types.JobResult;
 import com.tkb.frontend.user.model.Types.PlanRequest;
-import com.tkb.frontend.user.model.Types.ScheduleOption;
 import com.tkb.frontend.user.model.Types.SectionSlot;
 import com.tkb.frontend.user.model.Types.Semester;
 import com.tkb.frontend.user.model.Types.Student;
@@ -41,7 +40,6 @@ public class MainFrame extends BorderPane {
     static final String CARD_REQ = "NHOM_LOP";
     static final String CARD_JOB = "JOB";
     static final String CARD_RES = "KET_QUA";
-    static final String CARD_CMP = "SO_SANH";
     static final String CARD_SAVED = "DA_LUU";
 
     // Screen titles shown in the breadcrumb and sidebar navigation.
@@ -50,7 +48,6 @@ public class MainFrame extends BorderPane {
             CARD_REQ, "Nhóm lớp học phần",
             CARD_JOB, "Đang xử lý",
             CARD_RES, "Kết quả đề xuất",
-            CARD_CMP, "So sánh lịch",
             CARD_SAVED, "Thời khóa biểu đã lưu");
 
     // Shared frontend state is stored here so all UI screens can access the current student,
@@ -72,9 +69,7 @@ public class MainFrame extends BorderPane {
     private final JobPanel panelJob;
     private final ResultPanel panelRes;
     private final SavedPlansPanel panelSaved;
-    private final ComparePanel panelCmp;
     private String jobId;
-    private String trangSoSanhQuayLai = CARD_SAVED;
 
     public MainFrame() {
         this(false, new TcpTkbClient());
@@ -95,7 +90,6 @@ public class MainFrame extends BorderPane {
         panelJob = new JobPanel(client, this);
         panelRes = new ResultPanel(client, this);
         panelSaved = new SavedPlansPanel(client, this);
-        panelCmp = new ComparePanel(this);
 
         // Sidebar and header sections are created here.
         VBox sidebar = new VBox(10);
@@ -126,9 +120,8 @@ public class MainFrame extends BorderPane {
         Button overviewBtn = taoNavItem(CARD_OVERVIEW, "Tổng quan");
         Button reqBtn = taoNavItem(CARD_REQ, "Nhóm lớp học phần");
         Button resBtn = taoNavItem(CARD_RES, "Kết quả đề xuất");
-        Button cmpBtn = taoNavItem(CARD_CMP, "So sánh lịch");
         Button savedBtn = taoNavItem(CARD_SAVED, "Thời khóa biểu đã lưu");
-        sidebar.getChildren().addAll(overviewBtn, reqBtn, resBtn, cmpBtn, savedBtn);
+        sidebar.getChildren().addAll(overviewBtn, reqBtn, resBtn, savedBtn);
 
         VBox semBox = new VBox(0);
         semBox.setStyle("-fx-background-color: #1E293B; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #1E293B;");
@@ -190,7 +183,6 @@ public class MainFrame extends BorderPane {
         cards.put(CARD_REQ, panelReq);
         cards.put(CARD_JOB, panelJob);
         cards.put(CARD_RES, panelRes);
-        cards.put(CARD_CMP, panelCmp);
         cards.put(CARD_SAVED, panelSaved);
 
         if (authenticated) {
@@ -236,7 +228,6 @@ public class MainFrame extends BorderPane {
             case CARD_OVERVIEW -> panelOverview.taiLai();
             case CARD_REQ -> panelReq.taiDuLieu();
             case CARD_SAVED -> panelSaved.taiDanhSach();
-            case CARD_CMP -> panelCmp.taiDuLieu();
             case CARD_RES -> panelRes.hienTrangThai();
             default -> {}
         }
@@ -328,26 +319,8 @@ public class MainFrame extends BorderPane {
         denTrang(CARD_REQ);
     }
 
-    void moSoSanhPhuongAn(String quayLaiCard, List<ScheduleOption> ds) {
-        // Compare selected result options side by side using a dedicated comparison view.
-        trangSoSanhQuayLai = quayLaiCard;
-        panelCmp.napPhuongAn(ds);
-        denTrang(CARD_CMP);
-    }
-
-    void moSoSanhDaLuu(String quayLaiCard, List<Long> ids) {
-        // Comparison can also be opened from saved plans using the selected saved-plan IDs.
-        trangSoSanhQuayLai = quayLaiCard;
-        panelCmp.napDaLuu(ids);
-        denTrang(CARD_CMP);
-    }
-
     AppUiState trangThai() {
         return trangThai;
-    }
-
-    void quayLaiTuSoSanh() {
-        denTrang(trangSoSanhQuayLai);
     }
 
     Window window() {
