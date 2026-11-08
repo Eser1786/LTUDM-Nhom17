@@ -49,11 +49,26 @@ public class ResultPanel extends ScrollPane {
         setStyle("-fx-background-color: #F6F8FB;");
     }
 
+    private void resetKhung() {
+        khung.getChildren().setAll(
+                Functions.chuDe("Kết quả đề xuất"),
+                Functions.moTa("Hệ thống đề xuất các phương án hợp lệ (không trùng giờ, đúng cặp LT–TH). "
+                        + "Chọn một phương án để xem lịch chi tiết."),
+                chiTiet
+        );
+
+        chiTiet.getChildren().clear();
+    }
+
     public void hienTrangThai() {
-        if (ketQua == null) {
-            khung.getChildren().setAll(Functions.chuDe("Chưa có kết quả đề xuất"),
+        resetKhung();
+
+        if (ketQua == null || ketQua.options().isEmpty()) {
+            chiTiet.getChildren().setAll(
+                    Functions.chuDe("Chưa có kết quả đề xuất"),
                     Functions.moTa("Hãy thiết lập ưu tiên và chạy “Tối ưu thời khóa biểu” để nhận các phương án."),
-                    theNutChay());
+                    theNutChay()
+            );
         } else {
             hienKetQua(ketQua);
         }
@@ -67,6 +82,7 @@ public class ResultPanel extends ScrollPane {
 
     public void hienKetQua(JobResult result) {
         this.ketQua = result;
+        resetKhung();
         if (result == null || result.options().isEmpty()) {
             hienTrangThai();
             return;
