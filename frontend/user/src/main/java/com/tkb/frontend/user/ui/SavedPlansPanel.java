@@ -121,13 +121,11 @@ public class SavedPlansPanel extends ScrollPane {
                 Functions.nhanXam(p.soBuoi() + " buổi/tuần"));
 
         HBox actions = new HBox(8);
-        Button mo = Functions.nutPhu("Mở lịch");
         Button doi = Functions.nutPhu("Đổi tên");
         Button xoa = Functions.nutXoa("Xóa");
-        mo.setOnAction(e -> moLich(p));
         doi.setOnAction(e -> doiTen(p));
         xoa.setOnAction(e -> xoa(p));
-        actions.getChildren().addAll(mo, doi, xoa);
+        actions.getChildren().addAll(doi, xoa);
 
         card.getChildren().addAll(top, meta, chiSo, theXemNhanh(p), actions);
         return card;
@@ -148,15 +146,6 @@ public class SavedPlansPanel extends ScrollPane {
             box.getChildren().add(Functions.moTa("Không tải được chi tiết lịch."));
         }
         return box;
-    }
-
-    private void moLich(SavedPlan p) {
-        try {
-            PlanDetail d = client.getPlan(p.id());
-            MoDals.xemLich(frame.window(), d);
-        } catch (ApiException ex) {
-            Functions.loi(frame.window(), ex);
-        }
     }
 
     private void doiTen(SavedPlan p) {

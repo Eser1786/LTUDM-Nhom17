@@ -109,40 +109,6 @@ public class ResultPanel extends ScrollPane {
         }
     }
 
-    private void veChiTiet(ScheduleOption o) {
-        chiTiet.getChildren().clear();
-        HBox tieuDe = new HBox(10,
-                Functions.tieuDeThe("Thời khóa biểu phương án " + o.ten()),
-                Functions.nhanChinh("Điểm " + Math.round(o.diem()) + "/100"));
-        tieuDe.setAlignment(Pos.CENTER_LEFT);
-
-        VBox theLuoi = Functions.the(14);
-        theLuoi.getChildren().add(tieuDe);
-        TimetableGridPanel grid = new TimetableGridPanel();
-        grid.setTieuDe("Phương án " + o.ten());
-        grid.setSlots(o.slots());
-        grid.setPrefHeight(560);
-        theLuoi.getChildren().add(grid);
-
-        VBox theDiem = Functions.the(14);
-        theDiem.getChildren().addAll(
-                Functions.tieuDeThe("Điểm đáp ứng từng tiêu chí"),
-                Functions.moTa(dienDatTieuChi(o)));
-        if (!o.biLoai().isEmpty()) {
-            theDiem.getChildren().add(Functions.nhanCanhBao("Không xếp được học phần: "
-                    + String.join(", ", o.biLoai())));
-        } else {
-            theDiem.getChildren().add(Functions.nhanHopLe("Đã xếp đủ tất cả học phần đã chọn · Không trùng giờ"));
-        }
-
-        HBox nut = new HBox(10, Functions.khoangTrong(),
-                nutLuu("Lưu thời khóa biểu", o));
-        nut.setAlignment(Pos.CENTER_RIGHT);
-        theDiem.getChildren().add(nut);
-
-        chiTiet.getChildren().addAll(theLuoi, theDiem);
-    }
-
     private Button nutLuu(String text, ScheduleOption o) {
         Button b = Functions.nutChinh(text);
         b.setOnAction(e -> {
@@ -153,25 +119,6 @@ public class ResultPanel extends ScrollPane {
                     () -> frame.denTrang(MainFrame.CARD_SAVED));
         });
         return b;
-    }
-
-    private String dienDatTieuChi(ScheduleOption o) {
-        Criteria c = st.criteria;
-        OptionStats s = o.stats();
-        StringBuilder sb = new StringBuilder();
-        sb.append("• Ưu tiên buổi sáng: ").append(s.tyLeSang()).append("% tiết học buổi sáng");
-        sb.append(" (trọng số ").append(c.uuTienSang()).append("/5).\n");
-        sb.append("• Ít ngày đến trường: ").append(s.soNgayHoc()).append(" ngày");
-        sb.append(" (trọng số ").append(c.itNgay()).append("/5).\n");
-        sb.append("• Khoảng trống ngắn: ").append(s.phutTrong()).append(" phút trống");
-        sb.append(" (trọng số ").append(c.khoangTrong()).append("/5).\n");
-        sb.append("• Ngày học yêu thích: trọng số ").append(c.ngayYeuThich()).append("/5");
-        if (c.ngayChon() != null && !c.ngayChon().isEmpty()) {
-            sb.append(", các ngày T").append(String.join(", T", c.ngayChon().stream().map(String::valueOf).toList()));
-        }
-        sb.append(".\n");
-        sb.append("Vì vậy phương án này đạt điểm ").append(Math.round(o.diem())).append("/100 và được xếp hạng tương ứng.");
-        return sb.toString();
     }
 
 }
