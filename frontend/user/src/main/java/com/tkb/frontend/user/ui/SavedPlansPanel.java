@@ -113,12 +113,7 @@ public class SavedPlansPanel extends ScrollPane {
         Label meta = Functions.nhanNho(hocKy + " · Lưu ngày " + p.ngayTao());
 
         FlowPane chiSo = new FlowPane(8, 8);
-        chiSo.getChildren().addAll(
-                Functions.nhanXam(p.soHocPhan() + " học phần"),
-                Functions.nhanXam(p.soTinChi() + " tín chỉ"),
-                Functions.nhanXam(p.stats().soNgayHoc() + " ngày học"),
-                Functions.nhanXam(p.stats().phutTrong() + " phút trống"),
-                Functions.nhanXam(p.soBuoi() + " buổi/tuần"));
+        chiSo.getChildren().addAll(Functions.nhanXam(p.stats().soNgayHoc() + " ngày học"));
 
         HBox actions = new HBox(8);
         Button doi = Functions.nutPhu("Đổi tên");
