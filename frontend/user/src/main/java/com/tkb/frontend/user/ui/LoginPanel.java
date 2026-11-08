@@ -102,6 +102,7 @@ public class LoginPanel extends HBox {
 
         TextField txtEmail = Functions.oNhap();
         txtEmail.setPromptText("Tên đăng nhập");
+        txtEmail.setText("student");
         VBox nhomEmail = new VBox(4, Functions.nhanNho("Tên đăng nhập"), txtEmail);
 
         PasswordField txtMatKhau = new PasswordField();

@@ -132,15 +132,6 @@ public class MainFrame extends BorderPane {
         semBox.getChildren().addAll(lblSemSidebar, lblSemNgaySidebar);
         sidebar.getChildren().add(semBox);
 
-        Button infoBtn = new Button("Dữ liệu học phần từ backend");
-        infoBtn.setMaxWidth(Double.MAX_VALUE);
-        infoBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #CBD5E1; -fx-alignment: center-left;");
-        infoBtn.setOnAction(e -> Functions.thongTin(getScene() == null ? null : getScene().getWindow(), "Dữ liệu đang được lấy trực tiếp từ server backend. Nếu không thấy dữ liệu, hãy kiểm tra server đã khởi động và URL backend đúng."));
-        Button helpBtn = new Button("Hướng dẫn sử dụng");
-        helpBtn.setMaxWidth(Double.MAX_VALUE);
-        helpBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #CBD5E1; -fx-alignment: center-left;");
-        helpBtn.setOnAction(e -> Functions.thongTin(getScene() == null ? null : getScene().getWindow(), "1. Chọn môn và thiết lập ưu tiên trên cùng trang\n2. Chạy tối ưu và xem phương án đề xuất từ backend."));
-        sidebar.getChildren().addAll(infoBtn, helpBtn);
 
         HBox header = new HBox(12);
         header.setPadding(new Insets(0, 12, 0, 12));
