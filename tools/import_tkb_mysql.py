@@ -11,6 +11,7 @@ Cai dat thu vien:
     pip install mysql-connector-python
 """
 
+import argparse
 import csv
 import os
 import re
@@ -378,17 +379,17 @@ def ensure_schema_columns_and_constraints(cursor) -> None:
         )
     if "tuan_hoc" not in existing_cols:
         cursor.execute(
-            "ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR(62) NULL AFTER loai"
+            "ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR(255) NULL AFTER loai"
         )
     else:
-        # Tuong thich DB cu: neu tuan_hoc nho hon 62 ky tu thi mo rong.
+        # Tuong thich DB cu: neu tuan_hoc nho hon 255 ky tu thi mo rong.
         col_map = {row[0]: row for row in rows}
         tuan_hoc_row = col_map.get("tuan_hoc")
         if tuan_hoc_row is not None:
             col_type = str(tuan_hoc_row[1]).lower()  # vd: 'varchar(30)'
             m = re.search(r"varchar\((\d+)\)", col_type)
-            if m and int(m.group(1)) < 62:
-                cursor.execute("ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR(62) NULL")
+            if m and int(m.group(1)) < 255:
+                cursor.execute("ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR(255) NULL")
     if "tuan_mask" not in existing_cols:
         cursor.execute(
             "ALTER TABLE lich_hoc ADD COLUMN tuan_mask BIGINT NOT NULL DEFAULT 32767 AFTER tuan_hoc"
@@ -539,22 +540,60 @@ def import_to_mysql(
 
 
 def infer_semester_from_path(csv_path: Path) -> Tuple[str, str]:
+    explicit_semester = os.getenv("SEMESTER")
+    if explicit_semester and explicit_semester.strip():
+        semester_value = explicit_semester.strip()
+        parts = semester_value.split("-")
+        if len(parts) == 3 and re.match(r"^\d{4}$", parts[0]) and re.match(r"^\d{4}$", parts[1]) and re.match(r"^\d$", parts[2]):
+            return semester_value, f"Học kỳ {parts[2]} - Năm học {parts[0]}-{parts[1]}"
+
     parent_name = csv_path.parent.name
     if re.match(r"^\d{4}-\d{4}-\d$", parent_name):
         parts = parent_name.split("-")
         return parent_name, f"Học kỳ {parts[2]} - Năm học {parts[0]}-{parts[1]}"
+    fallback = os.getenv("SEMESTER", "2026-2027-1")
+    fallback_parts = fallback.split("-")
+    if len(fallback_parts) == 3:
+        return fallback, f"Học kỳ {fallback_parts[2]} - Năm học {fallback_parts[0]}-{fallback_parts[1]}"
     return "2026-2027-1", "Học kỳ 1 - Năm học 2026-2027"
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Chuyển CSV thời khóa biểu thành dữ liệu chuẩn và nạp vào MySQL.")
+    parser.add_argument("csv_path", nargs="?", default=None, help="Đường dẫn CSV đầu vào. Mặc định: csv/<semester>/thoi_khoa_bieu.csv")
+    parser.add_argument("--semester", default=None, help="Mã học kỳ, ví dụ 2026-2027-1")
+    parser.add_argument("--csv-only", action="store_true", help="Chỉ tạo/chuẩn hóa CSV, không nạp MySQL")
+    parser.add_argument("--db-host", default=None, help="Host MySQL. Mặc định đọc từ biến MYSQL_HOST/DB_HOST")
+    parser.add_argument("--db-port", type=int, default=None, help="Port MySQL. Mặc định đọc từ biến MYSQL_PORT/DB_PORT")
+    parser.add_argument("--db-name", default=None, help="Tên database. Mặc định đọc từ biến MYSQL_DATABASE/MYSQL_NAME")
+    parser.add_argument("--db-user", default=None, help="User MySQL. Mặc định đọc từ biến MYSQL_USER/DB_USER")
+    parser.add_argument("--db-password", default=None, help="Mật khẩu MySQL. Mặc định đọc từ biến MYSQL_PASSWORD/DB_PASS")
+    return parser.parse_args()
+
+
 def main():
-    csv_arg = sys.argv[1] if len(sys.argv) > 1 else "csv/2026-2027-1/thoi_khoa_bieu.csv"
-    csv_path = Path(csv_arg)
+    args = parse_args()
+    if args.semester:
+        os.environ["SEMESTER"] = args.semester
+    if args.db_host:
+        os.environ["MYSQL_HOST"] = args.db_host
+    if args.db_port is not None:
+        os.environ["MYSQL_PORT"] = str(args.db_port)
+    if args.db_name:
+        os.environ["MYSQL_DATABASE"] = args.db_name
+    if args.db_user:
+        os.environ["MYSQL_USER"] = args.db_user
+    if args.db_password:
+        os.environ["MYSQL_PASSWORD"] = args.db_password
+
+    csv_value = args.csv_path if args.csv_path else f"csv/{os.getenv('SEMESTER', '2026-2027-1')}/thoi_khoa_bieu.csv"
+    csv_path = Path(csv_value)
     ma_hk, ten_hk = infer_semester_from_path(csv_path)
 
     print(f"=== XU LY CSV & NAP MYSQL CHO HOC KY: {ma_hk} ===")
     courses, sections = process_and_enrich_csv(csv_path)
 
-    if "--csv-only" in sys.argv:
+    if args.csv_only or "--csv-only" in sys.argv:
         print("Da cap nhat xong file CSV (--csv-only, bo qua buoc ket noi MySQL).")
         return
 
