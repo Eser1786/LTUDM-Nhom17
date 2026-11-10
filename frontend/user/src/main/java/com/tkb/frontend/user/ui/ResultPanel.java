@@ -109,15 +109,19 @@ public class ResultPanel extends ScrollPane {
             grid.setPrefHeight(560);
             theLuoi.getChildren().add(grid);
 
-            if (!o.biLoai().isEmpty()) {
-                theLuoi.getChildren().add(Functions.nhanCanhBao("Không xếp được học phần: "
-                        + String.join(", ", o.biLoai())));
+            String biLoaiText = o.biLoai() == null || o.biLoai().isEmpty()
+                    ? ""
+                    : String.join(", ", o.biLoai());
+            if (!biLoaiText.isEmpty()) {
+                theLuoi.getChildren().add(Functions.nhanCanhBao("Không xếp được học phần: " + biLoaiText));
             } else {
                 theLuoi.getChildren().add(Functions.nhanHopLe("Đã xếp đủ tất cả học phần đã chọn · Không trùng giờ"));
             }
 
+            Button xuat = Functions.nutPhu("Xuất PNG");
+            xuat.setOnAction(e -> Functions.xuatPng(grid, frame.window(), "Phương án " + o.ten()));
             HBox nut = new HBox(10, Functions.khoangTrong(),
-                    nutLuu("Lưu thời khóa biểu", o));
+                    xuat, nutLuu("Lưu thời khóa biểu", o));
             nut.setAlignment(Pos.CENTER_RIGHT);
             theLuoi.getChildren().add(nut);
 

@@ -2,7 +2,15 @@ package com.tkb.frontend.user.ui;
 
 import com.tkb.frontend.user.net.ApiException;
 import javafx.geometry.Insets;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.image.WritableImage;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.awt.image.BufferedImage;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -179,6 +187,27 @@ public final class Functions {
     }
 
     // ------------------------------------------------------------------ header
+
+    public static void xuatPng(Node node, Window owner, String tenGoiY) {
+        if (node == null) return;
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Xuất thời khóa biểu ra PNG");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Image", "*.png"));
+        String ten = (tenGoiY == null || tenGoiY.isBlank()) ? "thoi-khoa-bieu" : tenGoiY.replaceAll("[\\\\/:*?\"<>|]", "_");
+        fc.setInitialFileName(ten + ".png");
+        File file = fc.showSaveDialog(owner);
+        if (file == null) return;
+        try {
+            SnapshotParameters params = new SnapshotParameters();
+            params.setFill(javafx.scene.paint.Color.WHITE);
+            WritableImage image = node.snapshot(params, null);
+            BufferedImage bi = SwingFXUtils.fromFXImage(image, null);
+            ImageIO.write(bi, "png", file);
+            thongTin(owner, "Đã xuất ảnh: " + file.getAbsolutePath());
+        } catch (Exception ex) {
+            loi(owner, "Xuất PNG thất bại: " + ex.getMessage());
+        }
+    }
 
     // ------------------------------------------------------------------ dialogs
 

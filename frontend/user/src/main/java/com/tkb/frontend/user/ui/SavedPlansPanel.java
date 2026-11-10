@@ -115,32 +115,33 @@ public class SavedPlansPanel extends ScrollPane {
         FlowPane chiSo = new FlowPane(8, 8);
         chiSo.getChildren().addAll(Functions.nhanXam(p.stats().soNgayHoc() + " ngày học"));
 
-        HBox actions = new HBox(8);
-        Button doi = Functions.nutPhu("Đổi tên");
-        Button xoa = Functions.nutXoa("Xóa");
-        doi.setOnAction(e -> doiTen(p));
-        xoa.setOnAction(e -> xoa(p));
-        actions.getChildren().addAll(doi, xoa);
-
-        card.getChildren().addAll(top, meta, chiSo, theXemNhanh(p), actions);
-        return card;
-    }
-
-    private VBox theXemNhanh(SavedPlan p) {
-        VBox box = new VBox(6);
+        VBox xemNhanhBox = new VBox(6);
         Label t = Functions.nhanNho("Xem nhanh thời khóa biểu");
-        box.getChildren().add(t);
+        xemNhanhBox.getChildren().add(t);
+        TimetableGridPanel grid = null;
         try {
             PlanDetail d = client.getPlan(p.id());
-            TimetableGridPanel grid = new TimetableGridPanel();
+            grid = new TimetableGridPanel();
             grid.setTieuDe(p.ten());
             grid.setSlots(d.slots());
             grid.setPrefHeight(280);
-            box.getChildren().add(grid);
+            xemNhanhBox.getChildren().add(grid);
         } catch (ApiException ex) {
-            box.getChildren().add(Functions.moTa("Không tải được chi tiết lịch."));
+            xemNhanhBox.getChildren().add(Functions.moTa("Không tải được chi tiết lịch."));
         }
-        return box;
+        final TimetableGridPanel gridRef = grid;
+
+        HBox actions = new HBox(8);
+        Button doi = Functions.nutPhu("Đổi tên");
+        Button xoa = Functions.nutXoa("Xóa");
+        Button xuat = Functions.nutPhu("Xuất PNG");
+        doi.setOnAction(e -> doiTen(p));
+        xoa.setOnAction(e -> xoa(p));
+        xuat.setOnAction(e -> Functions.xuatPng(gridRef, frame.window(), p.ten()));
+        actions.getChildren().addAll(doi, xoa, xuat);
+
+        card.getChildren().addAll(top, meta, chiSo, xemNhanhBox, actions);
+        return card;
     }
 
     private void doiTen(SavedPlan p) {

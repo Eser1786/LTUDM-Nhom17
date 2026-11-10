@@ -453,7 +453,15 @@ public class TcpTkbClient implements TkbClient {
         List<String> biLoai = new ArrayList<>();
         if (pdto.getDroppedCourses() != null) {
             for (PlanDto.DroppedCourseDto dc : pdto.getDroppedCourses()) {
-                biLoai.add(dc.getCourseCode());
+                String code = dc.getCourseCode() == null ? "" : dc.getCourseCode().trim();
+                String name = dc.getName() == null ? "" : dc.getName().trim();
+                if (!code.isEmpty() && !name.isEmpty()) {
+                    biLoai.add(code + " - " + name);
+                } else if (!code.isEmpty()) {
+                    biLoai.add(code);
+                } else if (!name.isEmpty()) {
+                    biLoai.add(name);
+                }
             }
         }
         OptionStats stats = new OptionStats(
@@ -539,7 +547,17 @@ public class TcpTkbClient implements TkbClient {
         }
         List<String> biLoai = new ArrayList<>();
         if (pdto.getDroppedCourses() != null) {
-            for (PlanDto.DroppedCourseDto dc : pdto.getDroppedCourses()) biLoai.add(dc.getCourseCode());
+            for (PlanDto.DroppedCourseDto dc : pdto.getDroppedCourses()) {
+                String code = dc.getCourseCode() == null ? "" : dc.getCourseCode().trim();
+                String name = dc.getName() == null ? "" : dc.getName().trim();
+                if (!code.isEmpty() && !name.isEmpty()) {
+                    biLoai.add(code + " - " + name);
+                } else if (!code.isEmpty()) {
+                    biLoai.add(code);
+                } else if (!name.isEmpty()) {
+                    biLoai.add(name);
+                }
+            }
         }
         OptionStats stats = new OptionStats(
                 pdto.getMetrics() == null ? 0 : pdto.getMetrics().getStudyDays(),
