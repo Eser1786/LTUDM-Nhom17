@@ -23,7 +23,7 @@ import java.util.Locale;
  * Người dùng chọn các môn cần xếp thời khóa biểu rồi điều chỉnh mức độ ưu tiên ngay trên màn hình này.
  */
 public class RequirementPanel extends ScrollPane {
-    private static final int MOI_TRANG = 10;
+    private static final int MOI_TRANG = 5;
 
     private final TkbClient client;
     private final MainFrame frame;
@@ -52,8 +52,7 @@ public class RequirementPanel extends ScrollPane {
         // Chia tieu de thanh 2 phan de dat "Thiet lap uu tien" ngang voi "Mon muon dang ky".
         HBox titleRow = new HBox(14);
         VBox leftTitle = new VBox(4,
-                Functions.chuDe("Môn muốn đăng ký"),
-                Functions.moTa("Chọn những môn bạn muốn học và điều chỉnh mức độ ưu tiên ngay trên cùng một màn hình để tối ưu thời khóa biểu."));
+                Functions.chuDe("Môn muốn đăng ký"));
         HBox.setHgrow(leftTitle, Priority.ALWAYS);
         VBox rightTitle = new VBox(4,
                 Functions.chuDe("Thiết lập ưu tiên"));
@@ -147,8 +146,9 @@ public class RequirementPanel extends ScrollPane {
         bang.setMaxWidth(Double.MAX_VALUE);
         ScrollPane cuon = new ScrollPane(bang);
         cuon.setFitToWidth(true);
-        cuon.setMinHeight(360);
-        cuon.setPrefHeight(420);
+        cuon.setMinHeight(220);
+        cuon.setPrefHeight(220);
+        cuon.setMaxHeight(220);
         cuon.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         VBox.setVgrow(cuon, Priority.ALWAYS);
 
@@ -227,19 +227,32 @@ public class RequirementPanel extends ScrollPane {
     }
 
     private void veBang() {
-        List<Course> ds = loc();
+        String q = txtTimKiem.getText() == null ? "" : txtTimKiem.getText().trim();
         bang.getChildren().clear();
+        phanTrang.getChildren().clear();
 
+        if (q.isBlank()) {
+            lblDem.setText(locDuLieu.size() + " môn (nhập từ khóa để tìm)");
+            VBox empty = new VBox(6);
+            empty.setPadding(new Insets(30));
+            empty.setAlignment(Pos.CENTER);
+            Label t = Functions.tieuDeThe("Nhập từ khóa để tìm môn");
+            Label m = Functions.moTa("Danh sách môn sẽ hiện khi bạn gõ mã hoặc tên môn.");
+            empty.getChildren().addAll(t, m);
+            bang.getChildren().add(empty);
+            return;
+        }
+
+        List<Course> ds = loc();
         if (ds.isEmpty()) {
             VBox empty = new VBox(6);
             empty.setPadding(new Insets(30));
             empty.setAlignment(Pos.CENTER);
-            Label t = Functions.tieuDeThe("Không có môn nào");
-            Label m = Functions.moTa("Chưa có dữ liệu học phần hoặc chưa tải được từ backend.");
+            Label t = Functions.tieuDeThe("Không tìm thấy môn nào");
+            Label m = Functions.moTa("Thử từ khóa khác.");
             empty.getChildren().addAll(t, m);
             bang.getChildren().add(empty);
             lblDem.setText("0 môn");
-            phanTrang.getChildren().clear();
             return;
         }
 
@@ -456,7 +469,23 @@ public class RequirementPanel extends ScrollPane {
             veBang();
         });
         phanTrang.getChildren().add(truoc);
-        for (int i = 0; i < soTrang; i++) {
+
+        // Hien thi toi da ~7 nut trang, dung "..." cho khoang trong.
+        // Hien thi toi da 7 o: 6 o truot (khong gom trang cuoi) + o thu 7 luon la trang cuoi.
+        java.util.List<Integer> pages = new java.util.ArrayList<>();
+        if (soTrang <= 5) {
+            for (int i = 0; i < soTrang; i++) pages.add(i);
+        } else {
+            int last = soTrang - 1;
+            // 6 o truot trong khoang [0, last-1], can giua vao trang hien tai.
+            int half = 3;
+            int start = Math.max(0, Math.min(trangHienTai - half, last - 6));
+            int end = Math.min(last - 1, start + 5);
+            start = Math.max(0, end - 5);
+            for (int i = start; i <= end; i++) pages.add(i);
+            if (!pages.contains(last)) pages.add(last);
+        }
+        for (int i : pages) {
             int tr = i;
             Button b = Functions.nutPhu(String.valueOf(i + 1));
             if (i == trangHienTai) {

@@ -66,13 +66,13 @@ public class PriorityPanel extends VBox {
         }
 
         priorityItems.addAll(List.of(
-                new PriorityItem(KEY_TIME, "Khung thời gian & Ma trận tiết muốn học",
+                new PriorityItem(KEY_TIME, "Khung thời gian",
                         "Chọn ưu tiên Sáng, Chiều hoặc tự quét chọn các tiết rảnh trên lưới 7 ngày × 10 tiết."),
-                new PriorityItem(KEY_CAMPUS, "Ưu tiên Cơ sở học & Chống chạy cơ sở liên tiết",
+                new PriorityItem(KEY_CAMPUS, "Ưu tiên Cơ sở",
                         "Ký tự đầu mã phòng: C (Chính), 1 (Cơ sở 1), 2 (Cơ sở 2). Phạt nặng nếu 2 tiết kế nhau khác cơ sở."),
-                new PriorityItem(KEY_DAYS, "Số ngày đi học & Thanh chọn ngày trong tuần",
+                new PriorityItem(KEY_DAYS, "Số ngày trong tuần",
                         "Chọn các thứ muốn đến trường và gom lịch vào ít ngày nhất."),
-                new PriorityItem(KEY_GAPS, "Tránh tiết trống giữa buổi (Học liền mạch)",
+                new PriorityItem(KEY_GAPS, "Tránh tiết trống",
                         "Ưu tiên các ca học trong cùng ngày nối tiếp nhau liên tục.")
         ));
 
@@ -331,14 +331,14 @@ public class PriorityPanel extends VBox {
             }
             priorityItems.clear();
             priorityItems.addAll(List.of(
-                    new PriorityItem(KEY_TIME, "Khung thời gian & Ma trận tiết muốn học",
-                            "Chọn ưu tiên Sáng, Chiều hoặc tự quét chọn các tiết rảnh trên lưới 7 ngày × 10 tiết."),
-                    new PriorityItem(KEY_CAMPUS, "Ưu tiên Cơ sở học & Chống chạy cơ sở liên tiết",
-                            "Ký tự đầu mã phòng: C (Chính), 1 (Cơ sở 1), 2 (Cơ sở 2). Phạt nặng nếu 2 tiết kế nhau khác cơ sở."),
-                    new PriorityItem(KEY_DAYS, "Số ngày đi học & Thanh chọn ngày trong tuần",
-                            "Chọn các thứ muốn đến trường và gom lịch vào ít ngày nhất."),
-                    new PriorityItem(KEY_GAPS, "Tránh tiết trống giữa buổi (Học liền mạch)",
-                            "Ưu tiên các ca học trong cùng ngày nối tiếp nhau liên tục.")
+                new PriorityItem(KEY_TIME, "Khung thời gian",
+                        "Chọn ưu tiên Sáng, Chiều hoặc tự quét chọn các tiết rảnh trên lưới 7 ngày × 10 tiết."),
+                new PriorityItem(KEY_CAMPUS, "Ưu tiên Cơ sở",
+                        "Ký tự đầu mã phòng: C (Chính), 1 (Cơ sở 1), 2 (Cơ sở 2). Phạt nặng nếu 2 tiết kế nhau khác cơ sở."),
+                new PriorityItem(KEY_DAYS, "Số ngày trong tuần",
+                        "Chọn các thứ muốn đến trường và gom lịch vào ít ngày nhất."),
+                new PriorityItem(KEY_GAPS, "Tránh tiết trống",
+                        "Ưu tiên các ca học trong cùng ngày nối tiếp nhau liên tục.")
             ));
             for (PriorityItem pi : priorityItems) pi.enabled = true;
             veCotPhai();
