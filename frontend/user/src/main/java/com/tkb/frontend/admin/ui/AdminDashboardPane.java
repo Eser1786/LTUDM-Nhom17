@@ -1,4 +1,4 @@
-package com.tkb.frontend.user.ui.admin;
+package com.tkb.frontend.admin.ui;
 
 import com.tkb.common.protocol.Command;
 import javafx.application.Platform;

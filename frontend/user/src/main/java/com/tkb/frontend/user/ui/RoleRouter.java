@@ -1,6 +1,6 @@
 package com.tkb.frontend.user.ui;
 
-import com.tkb.frontend.user.ui.admin.AdminFrame;
+import com.tkb.frontend.admin.ui.AdminFrame;
 import com.tkb.frontend.user.net.NetworkClient;
 import com.tkb.frontend.user.net.TcpTkbClient;
 import com.tkb.frontend.user.net.TkbClient;

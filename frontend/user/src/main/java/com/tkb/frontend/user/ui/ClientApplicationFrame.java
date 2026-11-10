@@ -6,7 +6,7 @@ import com.tkb.common.protocol.Response;
 import com.tkb.frontend.user.net.NetworkClient;
 import com.tkb.frontend.user.net.ProtocolTkbClient;
 import com.tkb.frontend.user.net.TkbClient;
-import com.tkb.frontend.user.ui.admin.AdminFrame;
+import com.tkb.frontend.admin.ui.AdminFrame;
 import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.layout.BorderPane;

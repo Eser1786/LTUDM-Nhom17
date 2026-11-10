@@ -1,4 +1,4 @@
-package com.tkb.frontend.user.ui.admin;
+package com.tkb.frontend.admin.ui;
 
 import com.tkb.frontend.user.net.NetworkClient;
 import javafx.geometry.Insets;

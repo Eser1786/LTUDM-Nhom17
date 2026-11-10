@@ -177,7 +177,15 @@ public class RequirementPanel extends ScrollPane {
     }
 
     public void taiDuLieu() {
-        if (st.hocKy != null) {
+        taiDuLieuNoiBo(true);
+    }
+
+    public void taiDuLieuTuBoNho() {
+        taiDuLieuNoiBo(false);
+    }
+
+    private void taiDuLieuNoiBo(boolean napTuServer) {
+        if (napTuServer && st.hocKy != null) {
             try {
                 st.courses = client.listCourses(st.hocKy.ma());
             } catch (com.tkb.frontend.user.net.ApiException ex) {

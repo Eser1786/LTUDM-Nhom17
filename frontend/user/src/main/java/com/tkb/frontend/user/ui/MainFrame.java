@@ -10,6 +10,7 @@ import com.tkb.frontend.user.model.Types.Student;
 import com.tkb.frontend.user.net.ApiException;
 import com.tkb.frontend.user.net.TcpTkbClient;
 import com.tkb.frontend.user.net.TkbClient;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -22,7 +23,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.Scene;
 import javafx.stage.Window;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 public class MainFrame extends BorderPane {
     // This is the main shell of the JavaFX app. It owns the sidebar, header, and card stack
@@ -216,7 +217,7 @@ public class MainFrame extends BorderPane {
         }
         switch (card) {
             case CARD_OVERVIEW -> panelOverview.taiLai();
-            case CARD_REQ -> panelReq.taiDuLieu();
+            case CARD_REQ -> panelReq.taiDuLieuTuBoNho();
             case CARD_SAVED -> panelSaved.taiDanhSach();
             case CARD_RES -> panelRes.hienTrangThai();
             default -> {}
@@ -224,26 +225,61 @@ public class MainFrame extends BorderPane {
     }
 
     private void sauDangNhap() {
-        // After login, the app loads the current student, semester list, default semester,
-        // and the initial requirement screen data used by the rest of the workflow.
-        try {
-            trangThai.sinhVien = client.sinhVien();
-            trangThai.semesters = client.listSemesters();
-            for (Semester s : trangThai.semesters) {
-                if (s.dangDung()) {
-                    trangThai.hocKy = s;
-                    break;
-                }
-            }
-        } catch (ApiException ex) {
-            Functions.loi(getScene() == null ? null : getScene().getWindow(), ex);
-            return;
-        }
-        capNhatHeader();
-        capNhatSidebarHocKy();
-        panelReq.taiDuLieu();
-        trangThai.chonMacDinh();
-        denTrang(CARD_OVERVIEW);
+        // Load the initial user dataset off the FX thread to keep the UI responsive after login.
+        centerStack.getChildren().setAll(panelOverview);
+        crumb.setText("Trang chủ / Đang tải dữ liệu");
+        CompletableFuture
+                .supplyAsync(() -> {
+                    try {
+                        Student sinhVien = client.sinhVien();
+                        List<Semester> semesters = client.listSemesters();
+                        Semester hocKyHienTai = null;
+                        for (Semester s : semesters) {
+                            if (s.dangDung()) {
+                                hocKyHienTai = s;
+                                break;
+                            }
+                        }
+                        List<SectionSlot> tatCaNhom = hocKyHienTai == null ? List.of() : client.listAllSections(hocKyHienTai.ma());
+                        List<Course> courses = hocKyHienTai == null ? List.of() : client.listCourses(hocKyHienTai.ma());
+                        return new InitialData(sinhVien, semesters, hocKyHienTai, tatCaNhom, courses);
+                    } catch (ApiException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                })
+                .thenAccept(data -> Platform.runLater(() -> {
+                    trangThai.sinhVien = data.sinhVien();
+                    trangThai.semesters = data.semesters();
+                    trangThai.hocKy = data.hocKy();
+                    trangThai.tatCaNhom = data.tatCaNhom();
+                    trangThai.courses = data.courses();
+                    capNhatHeader();
+                    capNhatSidebarHocKy();
+                    panelReq.taiDuLieuTuBoNho();
+                    denTrang(CARD_OVERVIEW);
+                }))
+                .exceptionally(ex -> {
+                    Throwable cause = ex;
+                    while (cause.getCause() != null) {
+                        cause = cause.getCause();
+                    }
+                    final Throwable finalCause = cause;
+                    Platform.runLater(() -> {
+                        String message = finalCause.getMessage() == null || finalCause.getMessage().isBlank()
+                                ? "Không tải được dữ liệu ban đầu sau khi đăng nhập."
+                                : finalCause.getMessage();
+                        Functions.loi(getScene() == null ? null : getScene().getWindow(), message);
+                    });
+                    return null;
+                });
+    }
+
+    private record InitialData(
+            Student sinhVien,
+            List<Semester> semesters,
+            Semester hocKy,
+            List<SectionSlot> tatCaNhom,
+            List<Course> courses) {
     }
 
     private void capNhatHeader() {
