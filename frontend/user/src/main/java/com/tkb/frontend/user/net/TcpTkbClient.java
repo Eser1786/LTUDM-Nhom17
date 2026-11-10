@@ -243,7 +243,8 @@ public class TcpTkbClient implements TkbClient {
         Map<String, Object> d = resp.getData();
         this.username = username;
         this.role = d != null ? String.valueOf(d.getOrDefault("role", "USER")) : "USER";
-        this.student = new Student(username, username, role, username + "@sv.univ.edu.vn");
+        Student registered = com.tkb.frontend.user.ui.LoginPanel.REGISTERED_PROFILES.get(username);
+        this.student = (registered != null) ? registered : new Student(username, username, role, username + "@sv.univ.edu.vn");
     }
 
     @Override
@@ -257,6 +258,11 @@ public class TcpTkbClient implements TkbClient {
             return new Student("Sinh vien", "unknown", "SV", "");
         }
         return student;
+    }
+
+    @Override
+    public void setSinhVien(Student student) {
+        this.student = student;
     }
 
     @Override

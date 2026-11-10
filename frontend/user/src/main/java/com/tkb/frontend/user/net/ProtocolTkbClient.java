@@ -59,6 +59,10 @@ public final class ProtocolTkbClient implements TkbClient {
         Response response = send(Command.LOGIN, data);
         String role = value(response.getData(), "role", "USER");
         setAuthenticatedUser(username, role);
+        Student registered = com.tkb.frontend.user.ui.LoginPanel.REGISTERED_PROFILES.get(username);
+        if (registered != null) {
+            student = registered;
+        }
     }
 
     @Override
@@ -71,6 +75,11 @@ public final class ProtocolTkbClient implements TkbClient {
     public Student sinhVien() {
         Student current = student;
         return current == null ? new Student("Sinh viên", "unknown", "SV", "") : current;
+    }
+
+    @Override
+    public void setSinhVien(Student student) {
+        this.student = student;
     }
 
     @Override

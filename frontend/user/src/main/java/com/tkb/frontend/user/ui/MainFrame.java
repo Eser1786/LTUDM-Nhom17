@@ -41,6 +41,7 @@ public class MainFrame extends BorderPane {
     static final String CARD_JOB = "JOB";
     static final String CARD_RES = "KET_QUA";
     static final String CARD_SAVED = "DA_LUU";
+    static final String CARD_INFO = "THONG_TIN_CA_NHAN";
 
     // Screen titles shown in the breadcrumb and sidebar navigation.
     private static final Map<String, String> TEN_TRANG = Map.of(
@@ -48,7 +49,8 @@ public class MainFrame extends BorderPane {
             CARD_REQ, "Nhóm lớp học phần",
             CARD_JOB, "Đang xử lý",
             CARD_RES, "Kết quả đề xuất",
-            CARD_SAVED, "Thời khóa biểu đã lưu");
+            CARD_SAVED, "Thời khóa biểu đã lưu",
+            CARD_INFO, "Thông tin cá nhân");
 
     // Shared frontend state is stored here so all UI screens can access the current student,
     // selected semester, chosen sections, and generated scheduling results.
@@ -58,6 +60,8 @@ public class MainFrame extends BorderPane {
     private final Map<String, Button> navButtons = new LinkedHashMap<>();
     private final StackPane centerStack = new StackPane();
     private final Label crumb = new Label("Trang chủ");
+    private HBox headerBar;
+    private VBox sidebarBar;
     private final Label lblSemSidebar = new Label("—");
     private final Label lblSemNgaySidebar = new Label("—");
     private final Label lblHeaderSem = new Label();
@@ -69,6 +73,7 @@ public class MainFrame extends BorderPane {
     private final JobPanel panelJob;
     private final ResultPanel panelRes;
     private final SavedPlansPanel panelSaved;
+    private final PersonalInfoPanel panelInfo;
     private String jobId;
 
     public MainFrame() {
@@ -90,6 +95,7 @@ public class MainFrame extends BorderPane {
         panelJob = new JobPanel(client, this);
         panelRes = new ResultPanel(client, this);
         panelSaved = new SavedPlansPanel(client, this);
+        panelInfo = new PersonalInfoPanel(this);
 
         // Sidebar and header sections are created here.
         VBox sidebar = new VBox(10);
@@ -122,6 +128,12 @@ public class MainFrame extends BorderPane {
         Button resBtn = taoNavItem(CARD_RES, "Kết quả đề xuất");
         Button savedBtn = taoNavItem(CARD_SAVED, "Thời khóa biểu đã lưu");
         sidebar.getChildren().addAll(overviewBtn, reqBtn, resBtn, savedBtn);
+
+        Button logoutBtn = Functions.nutXoa("Đăng xuất");
+        logoutBtn.setMaxWidth(Double.MAX_VALUE);
+        logoutBtn.setAlignment(Pos.CENTER_LEFT);
+        logoutBtn.setOnAction(e -> dangXuat());
+        sidebar.getChildren().add(logoutBtn);
 
         VBox semBox = new VBox(0);
         semBox.setStyle("-fx-background-color: #1E293B; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #1E293B;");
@@ -166,15 +178,20 @@ public class MainFrame extends BorderPane {
         lblHeaderMssv.setFont(Font.font("Segoe UI", 11));
         identity.getChildren().addAll(lblHeaderTen, lblHeaderMssv);
         right.getChildren().addAll(lblHeaderSem, identity, avatar);
+        right.setCursor(javafx.scene.Cursor.HAND);
+        right.setOnMouseClicked(e -> denTrang(CARD_INFO));
         header.getChildren().add(right);
         setTop(header);
         setLeft(sidebar);
+        this.headerBar = header;
+        this.sidebarBar = sidebar;
 
         cards.put(CARD_OVERVIEW, panelOverview);
         cards.put(CARD_REQ, panelReq);
         cards.put(CARD_JOB, panelJob);
         cards.put(CARD_RES, panelRes);
         cards.put(CARD_SAVED, panelSaved);
+        cards.put(CARD_INFO, panelInfo);
 
         if (authenticated) {
             centerStack.getChildren().add(panelOverview);
@@ -200,6 +217,29 @@ public class MainFrame extends BorderPane {
         b.setOnAction(e -> denTrang(card));
         navButtons.put(card, b);
         return b;
+    }
+
+    void dangXuat() {
+        try {
+            client.logout();
+        } catch (Exception ignored) {
+        }
+        trangThai.username = null;
+        trangThai.sinhVien = null;
+        trangThai.password = null;
+        LoginPanel loginPanel = new LoginPanel(trangThai, (u, p) -> {
+            trangThai.username = u;
+            trangThai.password = p;
+            sauDangNhap();
+        });
+        cards.put(CARD_LOGIN, loginPanel);
+        centerStack.getChildren().setAll(loginPanel);
+        setTop(null);
+        setLeft(null);
+        crumb.setText("Trang chủ / Đăng nhập");
+        for (Button b : navButtons.values()) {
+            b.setStyle("-fx-background-color: transparent; -fx-text-fill: #CBD5E1; -fx-padding: 10 8 10 8; -fx-alignment: center-left;");
+        }
     }
 
     void denTrang(String card) {
@@ -248,7 +288,12 @@ public class MainFrame extends BorderPane {
                     }
                 })
                 .thenAccept(data -> Platform.runLater(() -> {
+                    setTop(headerBar);
+                    setLeft(sidebarBar);
                     trangThai.sinhVien = data.sinhVien();
+                    if (trangThai.username == null && trangThai.sinhVien != null) {
+                        trangThai.username = trangThai.sinhVien.mssv();
+                    }
                     trangThai.semesters = data.semesters();
                     trangThai.hocKy = data.hocKy();
                     trangThai.tatCaNhom = data.tatCaNhom();
@@ -282,7 +327,7 @@ public class MainFrame extends BorderPane {
             List<Course> courses) {
     }
 
-    private void capNhatHeader() {
+    void capNhatHeader() {
         Student sv = trangThai.sinhVien;
         if (sv == null) return;
         lblHeaderTen.setText(sv.hoTen());
@@ -355,6 +400,8 @@ public class MainFrame extends BorderPane {
 
     public static final class AppUiState {
         final TkbClient client;
+        String username;
+        String password;
         Student sinhVien;
         List<Semester> semesters = new ArrayList<>();
         Semester hocKy;

@@ -24,6 +24,7 @@ public interface TkbClient {
 
     /** STUDENT_INFO - thong tin sinh vien hien tai (dang nhap). */
     Student sinhVien() throws ApiException;
+    void setSinhVien(Student student);
 
     /** LIST_SEMESTERS */
     List<Semester> listSemesters() throws ApiException;
