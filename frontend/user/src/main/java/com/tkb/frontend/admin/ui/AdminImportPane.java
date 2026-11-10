@@ -29,6 +29,7 @@ import javafx.stage.FileChooser;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
@@ -50,6 +51,7 @@ final class AdminImportPane extends ScrollPane {
     private final Label reportSummary = new Label();
     private final ProgressBar progress = new ProgressBar(0);
     private final Button chooseButton = new Button("Chọn tệp PDF");
+    private final Button autoDownloadButton = new Button("Tải PDF tự động");
     private final Button uploadButton = new Button("Tải PDF lên máy chủ");
     private final Button abortButton = new Button("Hủy phiên tải");
     private final Button previewButton = new Button("Xem thử, chưa ghi dữ liệu");
@@ -115,7 +117,9 @@ final class AdminImportPane extends ScrollPane {
         fileLabel.setWrapText(true);
         styleSecondaryButton(chooseButton);
         chooseButton.setOnAction(event -> choosePdf());
-        HBox fileRow = new HBox(12, chooseButton, fileLabel);
+        styleSecondaryButton(autoDownloadButton);
+        autoDownloadButton.setOnAction(event -> autoDownloadPdfs());
+        HBox fileRow = new HBox(12, chooseButton, autoDownloadButton, fileLabel);
         fileRow.setAlignment(Pos.CENTER_LEFT);
 
         Label fileHint = new Label("PDF tối đa 20 MiB; mỗi chunk tối đa 512 KiB, gửi tuần tự.");
@@ -283,6 +287,126 @@ final class AdminImportPane extends ScrollPane {
         } catch (IOException ex) {
             showError("Không thể đọc thông tin tệp PDF: " + AdminRequestClient.messageOf(ex));
         }
+    }
+
+    private void autoDownloadPdfs() {
+        AdminSemesterOption semester = semesterSelector.getValue();
+        if (semester == null) {
+            showError("Hãy chọn học kỳ trước khi tải PDF tự động.");
+            return;
+        }
+        if (uploading || aborting || submittingJob) {
+            return;
+        }
+
+        Path projectRoot = findProjectRoot();
+        Path outputDir = projectRoot.resolve("pdf").resolve(semester.code()).normalize();
+        Path scriptPath = projectRoot.resolve("tools").resolve("pdf_download.py").normalize();
+        Path pythonBin = projectRoot.resolve(".venv").resolve("bin").resolve("python").normalize();
+        if (!Files.exists(scriptPath)) {
+            showError("Không tìm thấy script tải PDF trong tools/pdf_download.py.");
+            return;
+        }
+        final String pythonCommand = Files.exists(pythonBin) ? pythonBin.toString() : "python3";
+
+        uploading = true;
+        progress.setProgress(0.1);
+        showStatus("Đang tải dữ liệu PDF cho học kỳ " + semester.code() + "...");
+        updateControls();
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                List<String> command = new ArrayList<>();
+                command.add(pythonCommand);
+                command.add(scriptPath.toString());
+                command.add("--semester");
+                command.add(semester.code());
+                command.add("--output-dir");
+                command.add(outputDir.toString());
+                ProcessBuilder process = new ProcessBuilder(command);
+                process.directory(projectRoot.toFile());
+                process.redirectErrorStream(true);
+                Process started = process.start();
+                StringBuilder output = new StringBuilder();
+                try (var reader = new java.io.BufferedReader(
+                        new java.io.InputStreamReader(started.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        output.append(line).append(System.lineSeparator());
+                    }
+                }
+                int exitCode = started.waitFor();
+                if (exitCode != 0) {
+                    throw new IllegalStateException("Script PDF trả về mã lỗi " + exitCode + ".\n" + output);
+                }
+                File[] downloaded = outputDir.toFile().listFiles((dir, name) -> name.toLowerCase(java.util.Locale.ROOT).endsWith(".pdf"));
+                if (downloaded == null || downloaded.length == 0) {
+                    throw new IllegalStateException("Không có file PDF nào được tải về cho học kỳ " + semester.code() + ".");
+                }
+                java.util.Arrays.sort(downloaded, Comparator.comparing(File::getName));
+                File chosenPdf = downloaded[0];
+                long size = Files.size(chosenPdf.toPath());
+
+                Path csvDir = projectRoot.resolve("csv").resolve(semester.code()).normalize();
+                Path csvOutput = csvDir.resolve("thoi_khoa_bieu.csv");
+                List<String> csvCommand = new ArrayList<>();
+                csvCommand.add(pythonCommand);
+                csvCommand.add(projectRoot.resolve("tools").resolve("processing_data_v2.py").toString());
+                csvCommand.add("--semester");
+                csvCommand.add(semester.code());
+                csvCommand.add("--pdf-dir");
+                csvCommand.add(outputDir.toString());
+                csvCommand.add("--csv-dir");
+                csvCommand.add(csvDir.toString());
+                Process csvProcess = new ProcessBuilder(csvCommand)
+                        .directory(projectRoot.toFile())
+                        .redirectErrorStream(true)
+                        .start();
+                try (var csvReader = new java.io.BufferedReader(
+                        new java.io.InputStreamReader(csvProcess.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = csvReader.readLine()) != null) {
+                        // Drain output until the process exits.
+                    }
+                }
+                int csvExitCode = csvProcess.waitFor();
+                if (csvExitCode != 0 || !Files.exists(csvOutput) || Files.size(csvOutput) == 0) {
+                    throw new IllegalStateException("Không thể tạo CSV thời khóa biểu từ các PDF đã tải về.");
+                }
+
+                Platform.runLater(() -> {
+                    selectedPdf = chosenPdf;
+                    fileLabel.setText(chosenPdf.getName() + " (" + formatFileSize(size) + ")");
+                    progress.setProgress(1);
+                    clearReport();
+                    showStatus("Đã tải xong " + downloaded.length + " PDF và xuất dữ liệu cho học kỳ " + semester.code() + ".");
+                    updateControls();
+                });
+            } catch (Exception ex) {
+                throw new CompletionException(ex);
+            }
+        }).whenComplete((ignored, failure) -> Platform.runLater(() -> {
+            uploading = false;
+            if (failure != null) {
+                showError("Tải PDF tự động thất bại: " + AdminRequestClient.messageOf(failure));
+            }
+            updateControls();
+        }));
+    }
+
+    private static Path findProjectRoot() {
+        Path current = Path.of("").toAbsolutePath().normalize();
+        for (int i = 0; i < 20; i++) {
+            if (Files.exists(current.resolve("pom.xml")) && Files.exists(current.resolve("tools"))) {
+                return current;
+            }
+            Path parent = current.getParent();
+            if (parent == null) {
+                break;
+            }
+            current = parent;
+        }
+        return Path.of("").toAbsolutePath().normalize();
     }
 
     private void uploadPdf() {
@@ -604,6 +728,8 @@ final class AdminImportPane extends ScrollPane {
         boolean busy = uploading || aborting || submittingJob;
         semesterSelector.setDisable(loadingSemesters || busy || staged);
         chooseButton.setDisable(busy || staged);
+        autoDownloadButton.setDisable(!semestersLoaded || semesterSelector.getValue() == null
+                || loadingSemesters || busy || staged);
         uploadButton.setDisable(!requests.isAvailable() || !semestersLoaded
                 || semesterSelector.getValue() == null || selectedPdf == null
                 || loadingSemesters || busy || staged);
