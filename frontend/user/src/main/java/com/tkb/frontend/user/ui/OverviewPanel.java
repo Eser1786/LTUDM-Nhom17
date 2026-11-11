@@ -67,7 +67,7 @@ public class OverviewPanel extends VBox {
 
     public void taiLai() {
         MainFrame.AppUiState st = frame.trangThai();
-        String ten = st.sinhVien == null ? "bạn" : tenNgan(st.sinhVien.hoTen());
+        String ten = (st.username == null || st.username.isBlank()) ? "bạn" : tenNgan(st.username);
         lblChao.setText("Chào " + ten + ", sẵn sàng cho học kỳ mới?");
 
         List<SectionSlot> tatCa = frame.trangThai().tatCaNhom;

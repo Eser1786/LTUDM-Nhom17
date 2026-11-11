@@ -19,9 +19,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
-import com.tkb.frontend.user.model.Types.Student;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
@@ -29,8 +26,6 @@ import java.util.regex.Pattern;
 /** Màn hình đăng nhập: hai cột, có hiện/ẩn mật khẩu, ghi nhớ đăng nhập và liên kết quên mật khẩu. */
 public class LoginPanel extends HBox {
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_]{3,30}$");
-    /** Hồ sơ đăng ký tạm thời (chưa có backend lưu) — dùng khi đăng nhập. */
-    public static final Map<String, Student> REGISTERED_PROFILES = new LinkedHashMap<>();
 
     private boolean registrationMode;
     private Label statusLabel;
@@ -39,10 +34,6 @@ public class LoginPanel extends HBox {
     private TextField txtEmail;
     private PasswordField txtMatKhau;
     private PasswordField txtXacNhan;
-    private TextField txtHoTen;
-    private TextField txtMssv;
-    private TextField txtLop;
-    private TextField txtEmailSv;
 
     public LoginPanel(AppUiState st, Runnable onLogin) {
         this(st, ignoreCredentials(onLogin), null, true);
@@ -114,22 +105,6 @@ public class LoginPanel extends HBox {
         txtEmail.setText("student");
         VBox nhomEmail = new VBox(4, Functions.nhanNho("Tên đăng nhập"), txtEmail);
 
-        TextField txtHoTen = Functions.oNhap();
-        txtHoTen.setPromptText("Họ và tên");
-        TextField txtMssv = Functions.oNhap();
-        txtMssv.setPromptText("Mã số sinh viên");
-        TextField txtLop = Functions.oNhap();
-        txtLop.setPromptText("Lớp");
-        TextField txtEmailSv = Functions.oNhap();
-        txtEmailSv.setPromptText("Email");
-        VBox nhomThongTinSv = new VBox(4,
-                Functions.nhanNho("Họ tên"), txtHoTen,
-                Functions.nhanNho("Mã số sinh viên"), txtMssv,
-                Functions.nhanNho("Lớp"), txtLop,
-                Functions.nhanNho("Email"), txtEmailSv);
-        nhomThongTinSv.setManaged(false);
-        nhomThongTinSv.setVisible(false);
-
         PasswordField txtMatKhau = new PasswordField();
         txtMatKhau.setFont(Functions.F_CHU);
         txtMatKhau.setPromptText("Mật khẩu");
@@ -197,27 +172,6 @@ public class LoginPanel extends HBox {
                     showStatus("Mật khẩu xác nhận không khớp.", true);
                     return;
                 }
-                String hoTen = txtHoTen.getText() == null ? "" : txtHoTen.getText().trim();
-                String mssv = txtMssv.getText() == null ? "" : txtMssv.getText().trim();
-                String lop = txtLop.getText() == null ? "" : txtLop.getText().trim();
-                String email = txtEmailSv.getText() == null ? "" : txtEmailSv.getText().trim();
-                if (hoTen.isBlank() || mssv.isBlank()) {
-                    showStatus("Vui lòng nhập họ tên và mã số sinh viên.", true);
-                    return;
-                }
-                if (!mssv.matches("\\d{10}")) {
-                    showStatus("Mã số sinh viên phải gồm đúng 10 chữ số.", true);
-                    return;
-                }
-                for (Student existing : REGISTERED_PROFILES.values()) {
-                    if (existing.mssv().equalsIgnoreCase(mssv)) {
-                        showStatus("Mã số sinh viên đã được đăng ký.", true);
-                        return;
-                    }
-                }
-                if (email.isBlank()) email = username + "@sv.univ.edu.vn";
-                if (lop.isBlank()) lop = "SV";
-                REGISTERED_PROFILES.put(username, new Student(hoTen, mssv, lop, email));
             }
             setRequestInProgress(true);
             statusLabel.setText("");
@@ -248,8 +202,6 @@ public class LoginPanel extends HBox {
         toggleMode.setOnAction(event -> {
             registrationMode = !registrationMode;
             boolean registering = registrationMode;
-            nhomThongTinSv.setVisible(registering);
-            nhomThongTinSv.setManaged(registering);
             nhomXacNhan.setVisible(registering);
             nhomXacNhan.setManaged(registering);
             rowGhiNho.setVisible(!registering);
@@ -270,7 +222,7 @@ public class LoginPanel extends HBox {
 
         Label moPhong = Functions.nhanCanhBao("Kết nối máy chủ backend qua TCP · cổng 9000");
 
-        theForm.getChildren().addAll(tieuDeForm, moTaForm, Functions.vach(), nhomEmail, nhomThongTinSv, nhomKhau,
+        theForm.getChildren().addAll(tieuDeForm, moTaForm, Functions.vach(), nhomEmail, nhomKhau,
                 nhomXacNhan, rowGhiNho, nutDangNhap, statusLabel, toggleMode, ghiChu, moPhong);
 
         phai.getChildren().add(theForm);
@@ -282,10 +234,6 @@ public class LoginPanel extends HBox {
         this.txtEmail = txtEmail;
         this.txtMatKhau = txtMatKhau;
         this.txtXacNhan = txtXacNhan;
-        this.txtHoTen = txtHoTen;
-        this.txtMssv = txtMssv;
-        this.txtLop = txtLop;
-        this.txtEmailSv = txtEmailSv;
     }
 
     public void setRequestInProgress(boolean inProgress) {

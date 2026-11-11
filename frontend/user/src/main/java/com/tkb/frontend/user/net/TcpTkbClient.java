@@ -25,7 +25,6 @@ import com.tkb.frontend.user.model.Types.ScheduleOption;
 import com.tkb.frontend.user.model.Types.Section;
 import com.tkb.frontend.user.model.Types.SectionSlot;
 import com.tkb.frontend.user.model.Types.Semester;
-import com.tkb.frontend.user.model.Types.Student;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -59,7 +58,6 @@ public class TcpTkbClient implements TkbClient {
 
     private volatile String username;
     private volatile String role;
-    private volatile Student student;
 
     private final java.util.concurrent.atomic.AtomicLong idSeq = new java.util.concurrent.atomic.AtomicLong(1);
     private final Map<Integer, CompletableFuture<Response>> pending = new ConcurrentHashMap<>();
@@ -243,26 +241,21 @@ public class TcpTkbClient implements TkbClient {
         Map<String, Object> d = resp.getData();
         this.username = username;
         this.role = d != null ? String.valueOf(d.getOrDefault("role", "USER")) : "USER";
-        Student registered = com.tkb.frontend.user.ui.LoginPanel.REGISTERED_PROFILES.get(username);
-        this.student = (registered != null) ? registered : new Student(username, username, role, username + "@sv.univ.edu.vn");
     }
 
     @Override
     public void logout() throws ApiException {
-        try { sendRequest("LOGOUT", null); } finally { username = null; }
+        try { sendRequest("LOGOUT", null); } finally { username = null; role = null; }
     }
 
     @Override
-    public Student sinhVien() throws ApiException {
-        if (student == null) {
-            return new Student("Sinh vien", "unknown", "SV", "");
-        }
-        return student;
+    public String getUsername() {
+        return username == null ? "" : username;
     }
 
     @Override
-    public void setSinhVien(Student student) {
-        this.student = student;
+    public String getRole() {
+        return role == null ? "USER" : role;
     }
 
     @Override

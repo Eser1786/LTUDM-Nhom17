@@ -7,7 +7,6 @@ import com.tkb.frontend.user.model.Types.PlanDetail;
 import com.tkb.frontend.user.model.Types.PlanRequest;
 import com.tkb.frontend.user.model.Types.SavedPlan;
 import com.tkb.frontend.user.model.Types.Semester;
-import com.tkb.frontend.user.model.Types.Student;
 
 import java.util.List;
 /**
@@ -23,8 +22,8 @@ public interface TkbClient {
     void logout() throws ApiException;
 
     /** STUDENT_INFO - thong tin sinh vien hien tai (dang nhap). */
-    Student sinhVien() throws ApiException;
-    void setSinhVien(Student student);
+    String getUsername();
+    String getRole();
 
     /** LIST_SEMESTERS */
     List<Semester> listSemesters() throws ApiException;

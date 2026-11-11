@@ -19,7 +19,6 @@ import com.tkb.frontend.user.model.Types.ScheduleOption;
 import com.tkb.frontend.user.model.Types.Section;
 import com.tkb.frontend.user.model.Types.SectionSlot;
 import com.tkb.frontend.user.model.Types.Semester;
-import com.tkb.frontend.user.model.Types.Student;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,15 +41,16 @@ public final class ProtocolTkbClient implements TkbClient {
     private final NetworkClient networkClient;
     private final ObjectMapper mapper = new ObjectMapper();
     private final AtomicInteger nextRequestId = new AtomicInteger(1);
-    private volatile Student student;
+    private volatile String username;
+    private volatile String role;
 
     public ProtocolTkbClient(NetworkClient networkClient) {
         this.networkClient = Objects.requireNonNull(networkClient, "networkClient");
     }
 
     public void setAuthenticatedUser(String username, String role) {
-        String displayName = username == null || username.isBlank() ? "Sinh viên" : username;
-        student = new Student(displayName, displayName, role, displayName + "@sv.univ.edu.vn");
+        this.username = (username == null || username.isBlank()) ? "user" : username;
+        this.role = (role == null || role.isBlank()) ? "USER" : role;
     }
 
     @Override
@@ -59,27 +59,23 @@ public final class ProtocolTkbClient implements TkbClient {
         Response response = send(Command.LOGIN, data);
         String role = value(response.getData(), "role", "USER");
         setAuthenticatedUser(username, role);
-        Student registered = com.tkb.frontend.user.ui.LoginPanel.REGISTERED_PROFILES.get(username);
-        if (registered != null) {
-            student = registered;
-        }
     }
 
     @Override
     public void logout() throws ApiException {
         send(Command.LOGOUT, Map.of());
-        student = null;
+        username = null;
+        role = null;
     }
 
     @Override
-    public Student sinhVien() {
-        Student current = student;
-        return current == null ? new Student("Sinh viên", "unknown", "SV", "") : current;
+    public String getUsername() {
+        return username == null ? "" : username;
     }
 
     @Override
-    public void setSinhVien(Student student) {
-        this.student = student;
+    public String getRole() {
+        return role == null ? "USER" : role;
     }
 
     @Override

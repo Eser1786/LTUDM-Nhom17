@@ -6,7 +6,6 @@ import com.tkb.frontend.user.model.Types.JobResult;
 import com.tkb.frontend.user.model.Types.PlanRequest;
 import com.tkb.frontend.user.model.Types.SectionSlot;
 import com.tkb.frontend.user.model.Types.Semester;
-import com.tkb.frontend.user.model.Types.Student;
 import com.tkb.frontend.user.net.ApiException;
 import com.tkb.frontend.user.net.TcpTkbClient;
 import com.tkb.frontend.user.net.TkbClient;
@@ -225,7 +224,7 @@ public class MainFrame extends BorderPane {
         } catch (Exception ignored) {
         }
         trangThai.username = null;
-        trangThai.sinhVien = null;
+        trangThai.role = null;
         trangThai.password = null;
         LoginPanel loginPanel = new LoginPanel(trangThai, (u, p) -> {
             trangThai.username = u;
@@ -271,7 +270,8 @@ public class MainFrame extends BorderPane {
         CompletableFuture
                 .supplyAsync(() -> {
                     try {
-                        Student sinhVien = client.sinhVien();
+                        String username = client.getUsername();
+                        String role = client.getRole();
                         List<Semester> semesters = client.listSemesters();
                         Semester hocKyHienTai = null;
                         for (Semester s : semesters) {
@@ -282,7 +282,7 @@ public class MainFrame extends BorderPane {
                         }
                         List<SectionSlot> tatCaNhom = hocKyHienTai == null ? List.of() : client.listAllSections(hocKyHienTai.ma());
                         List<Course> courses = hocKyHienTai == null ? List.of() : client.listCourses(hocKyHienTai.ma());
-                        return new InitialData(sinhVien, semesters, hocKyHienTai, tatCaNhom, courses);
+                        return new InitialData(username, role, semesters, hocKyHienTai, tatCaNhom, courses);
                     } catch (ApiException ex) {
                         throw new RuntimeException(ex);
                     }
@@ -290,10 +290,8 @@ public class MainFrame extends BorderPane {
                 .thenAccept(data -> Platform.runLater(() -> {
                     setTop(headerBar);
                     setLeft(sidebarBar);
-                    trangThai.sinhVien = data.sinhVien();
-                    if (trangThai.username == null && trangThai.sinhVien != null) {
-                        trangThai.username = trangThai.sinhVien.mssv();
-                    }
+                    trangThai.username = data.username();
+                    trangThai.role = data.role();
                     trangThai.semesters = data.semesters();
                     trangThai.hocKy = data.hocKy();
                     trangThai.tatCaNhom = data.tatCaNhom();
@@ -320,7 +318,8 @@ public class MainFrame extends BorderPane {
     }
 
     private record InitialData(
-            Student sinhVien,
+            String username,
+            String role,
             List<Semester> semesters,
             Semester hocKy,
             List<SectionSlot> tatCaNhom,
@@ -328,11 +327,14 @@ public class MainFrame extends BorderPane {
     }
 
     void capNhatHeader() {
-        Student sv = trangThai.sinhVien;
-        if (sv == null) return;
-        lblHeaderTen.setText(sv.hoTen());
-        lblHeaderMssv.setText(sv.mssv() + " · " + sv.lop());
-        avatar.setChu(sv.chuDau());
+        String username = trangThai.username;
+        if (username == null || username.isBlank()) username = "user";
+        String role = trangThai.role;
+        if (role == null || role.isBlank()) role = "USER";
+        lblHeaderTen.setText(username);
+        lblHeaderMssv.setText(username + " · " + role);
+        String chu = username.length() >= 2 ? ("" + username.charAt(0) + username.charAt(1)).toUpperCase() : username.toUpperCase();
+        avatar.setChu(chu);
         lblHeaderSem.setText(nganHocKy(trangThai.hocKy));
     }
 
@@ -402,7 +404,7 @@ public class MainFrame extends BorderPane {
         final TkbClient client;
         String username;
         String password;
-        Student sinhVien;
+        String role;
         List<Semester> semesters = new ArrayList<>();
         Semester hocKy;
         List<SectionSlot> tatCaNhom = new ArrayList<>();

@@ -17,20 +17,6 @@ public final class Types {
         }
     }
 
-    public record Student(String hoTen, String mssv, String lop, String email) {
-        public String chuDau() {
-            String[] tu = hoTen.trim().split("\\s+");
-            if (tu.length == 0 || tu[0].isBlank()) {
-                return "?";
-            }
-            if (tu.length == 1) {
-                return Character.toString(tu[0].charAt(0)).toUpperCase();
-            }
-            return (Character.toString(tu[tu.length - 2].charAt(0))
-                    + Character.toString(tu[tu.length - 1].charAt(0))).toUpperCase();
-        }
-    }
-
     public record Course(
             @JsonAlias({"ma_mh", "maMH", "maMon", "ma_mon"}) String maMh,
             @JsonAlias({"ten_hp", "tenHocPhan", "ten_mon", "tenMon", "tenHocPhan"}) String ten,
