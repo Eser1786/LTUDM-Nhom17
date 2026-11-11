@@ -336,7 +336,8 @@ public final class ProtocolTkbClient implements TkbClient {
                         slot.getDayOfWeek(),
                         slot.getStartPeriod(),
                         slot.getPeriodCount(),
-                        slot.getRoom()))
+                        slot.getRoom(),
+                        slot.getWeeks()))
                 .toList();
         return new SectionSlot(section, dto.getCourseName(),
                 credits == null ? 0 : credits, sessions);

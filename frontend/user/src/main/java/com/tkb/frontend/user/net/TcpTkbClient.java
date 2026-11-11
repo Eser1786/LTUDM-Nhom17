@@ -320,7 +320,7 @@ public class TcpTkbClient implements TkbClient {
         List<ClassSession> sessions = new ArrayList<>();
         if (dto.getSlots() != null) {
             for (SlotDto s : dto.getSlots()) {
-                sessions.add(new ClassSession(s.getDayOfWeek(), s.getStartPeriod(), s.getPeriodCount(), s.getRoom()));
+                sessions.add(new ClassSession(s.getDayOfWeek(), s.getStartPeriod(), s.getPeriodCount(), s.getRoom(), s.getWeeks()));
             }
         }
         return new SectionSlot(section, dto.getCourseName(), dto.getCredits(), sessions);

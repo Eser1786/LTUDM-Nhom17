@@ -33,7 +33,10 @@ public final class Types {
                           @JsonAlias({"giang_vien", "giangVien"}) String giangVien) {
     }
 
-    public record ClassSession(int thu, int tietBd, int soTiet, String phong) {
+    public record ClassSession(int thu, int tietBd, int soTiet, String phong, String weeks) {
+        public ClassSession(int thu, int tietBd, int soTiet, String phong) {
+            this(thu, tietBd, soTiet, phong, "");
+        }
     }
 
     public record SectionSlot(Section section,

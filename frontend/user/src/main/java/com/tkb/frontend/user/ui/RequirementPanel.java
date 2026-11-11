@@ -1,6 +1,7 @@
 package com.tkb.frontend.user.ui;
 
 import com.tkb.frontend.user.model.Types.Course;
+import com.tkb.frontend.user.model.Types.Section;
 import com.tkb.frontend.user.model.Types.SectionSlot;
 import com.tkb.frontend.user.net.TkbClient;
 import javafx.geometry.Insets;
@@ -13,7 +14,13 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.stage.Window;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -127,8 +134,8 @@ public class RequirementPanel extends ScrollPane {
         GridPane hang = new GridPane();
         hang.setMaxWidth(Double.MAX_VALUE);
         hang.setStyle("-fx-background-color: #F1F5F9; -fx-background-radius: 8;");
-        String[] cot = {"Chọn", "Mã môn", "Tên môn", "Tín chỉ"};
-        double[] rongCot = {10, 18, 52, 20};
+        String[] cot = {"Chọn", "Mã môn", "Tên môn", "Tín chỉ", "Chi tiết"};
+        double[] rongCot = {8, 16, 46, 16, 14};
         for (int i = 0; i < cot.length; i++) {
             Label l = new Label(cot[i]);
             l.setFont(Functions.F_NHO);
@@ -379,6 +386,129 @@ public class RequirementPanel extends ScrollPane {
         return new ArrayList<>(set);
     }
 
+    private void xemChiTietMon(Course course) {
+        // Thu thap giang vien va thong tin khac cua mon.
+        java.util.LinkedHashSet<String> giangVienSet = new java.util.LinkedHashSet<>();
+        int soNhom = 0;
+        for (SectionSlot slot : st.tatCaNhom) {
+            if (course.maMh().equals(slot.section().maMh())) {
+                soNhom++;
+                String gv = slot.section().giangVien();
+                if (gv != null && !gv.isBlank()) giangVienSet.add(gv);
+            }
+        }
+
+        Stage stage = new Stage();
+        stage.initStyle(StageStyle.TRANSPARENT);
+        stage.initModality(Modality.WINDOW_MODAL);
+        Window owner = frame.window();
+        if (owner != null) stage.initOwner(owner);
+
+        VBox hop = Functions.the(24);
+        hop.setSpacing(14);
+        hop.setPrefWidth(640);
+        hop.setMinWidth(520);
+        Label td = Functions.chuDe("Chi tiết: " + course.ten());
+        hop.getChildren().addAll(td, Functions.vach());
+
+        // Danh sach nhom: moi dong = 1 nhom, hien thi giang vien, nhom, tuan hoc + nut xem TKB cua nhom do.
+        VBox danhSachNhom = new VBox(8);
+        for (SectionSlot slot : st.tatCaNhom) {
+            if (!course.maMh().equals(slot.section().maMh())) continue;
+            Section sec = slot.section();
+            java.util.LinkedHashSet<String> weeksSet = new java.util.LinkedHashSet<>();
+            for (com.tkb.frontend.user.model.Types.ClassSession cs : slot.sessions()) {
+                if (cs.weeks() != null && !cs.weeks().isBlank()) weeksSet.add(cs.weeks());
+            }
+            String weeksStr = weeksSet.isEmpty() ? "—" : String.join(", ", weeksSet);
+            String nhom = sec.nhom() + ("TH".equals(sec.loai()) ? "." + sec.toTh() : "") + " (" + sec.loai() + ")";
+            String gv = sec.giangVien() == null || sec.giangVien().isBlank() ? "—" : sec.giangVien();
+
+            HBox dong = new HBox(16);
+            dong.setAlignment(Pos.CENTER_LEFT);
+            dong.setStyle("-fx-background-color: #F8FAFC; -fx-background-radius: 8; -fx-padding: 10 14 10 14;");
+            Label lGv = Functions.moTa("GV: " + gv);
+            lGv.setStyle("-fx-text-fill: #0F172A; -fx-font-size: 13px;");
+            Label lNhom = Functions.moTa("Nhóm " + nhom);
+            lNhom.setStyle("-fx-text-fill: #0F172A; -fx-font-size: 13px;");
+            Label lTuan = Functions.moTa("Số tuần học: " + hienThiTuan(weeksStr));
+            lTuan.setStyle("-fx-text-fill: #0F172A; -fx-font-size: 13px;");
+            Button btnXem = Functions.nutPhu("Xem TKB");
+            btnXem.setOnAction(e -> {
+                Stage st2 = new Stage();
+                st2.initStyle(StageStyle.TRANSPARENT);
+                st2.initModality(Modality.WINDOW_MODAL);
+                if (owner != null) st2.initOwner(owner);
+                TimetableGridPanel grid = new TimetableGridPanel();
+                grid.setTieuDe(course.ten() + " - " + nhom);
+                grid.setSlots(java.util.List.of(slot));
+                grid.setPrefHeight(420);
+                VBox hop2 = Functions.the(24);
+                hop2.setSpacing(14);
+                hop2.setPrefWidth(760);
+                hop2.setMinWidth(600);
+                hop2.getChildren().addAll(Functions.chuDe("Thời khóa biểu: " + course.ten()), Functions.vach(), grid);
+                Button dong2 = Functions.nutChinh("Đóng");
+                dong2.setOnAction(ev -> st2.close());
+                HBox nut2 = new HBox(Functions.khoangTrong(), dong2);
+                nut2.setAlignment(Pos.CENTER_RIGHT);
+                hop2.getChildren().add(nut2);
+                StackPane overlay2 = new StackPane(hop2);
+                overlay2.setPadding(new Insets(40));
+                overlay2.setStyle("-fx-background-color: rgba(15,23,42,0.15);");
+                overlay2.setAlignment(Pos.CENTER);
+                Scene sc2 = new Scene(overlay2);
+                sc2.setFill(javafx.scene.paint.Color.TRANSPARENT);
+                sc2.getStylesheets().add("data:text/css,.root{-fx-font-family:'Segoe UI';}");
+                st2.setScene(sc2);
+                st2.showAndWait();
+            });
+            HBox.setHgrow(lGv, Priority.ALWAYS);
+            dong.getChildren().addAll(lGv, lNhom, lTuan, btnXem);
+            danhSachNhom.getChildren().add(dong);
+        }
+        hop.getChildren().add(danhSachNhom);
+
+        Button dong = Functions.nutChinh("Đóng");
+        dong.setOnAction(e -> stage.close());
+        HBox nut = new HBox(Functions.khoangTrong(), dong);
+        nut.setAlignment(Pos.CENTER_RIGHT);
+        hop.getChildren().add(nut);
+
+        StackPane overlay = new StackPane(hop);
+        overlay.setPadding(new Insets(40));
+        overlay.setStyle("-fx-background-color: rgba(15,23,42,0.15);");
+        overlay.setAlignment(Pos.CENTER);
+        Scene scene = new Scene(overlay);
+        scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+        scene.getStylesheets().add("data:text/css,.root{-fx-font-family:'Segoe UI';}");
+        stage.setScene(scene);
+        stage.showAndWait();
+    }
+
+    private void themDong(GridPane g, int row, String nhan, String giaTri) {
+        Label l = Functions.nhanNho(nhan);
+        Label v = Functions.moTa(giaTri == null || giaTri.isBlank() ? "—" : giaTri);
+        v.setStyle("-fx-text-fill: #0F172A; -fx-font-size: 13px;");
+        g.add(l, 0, row);
+        g.add(v, 1, row);
+    }
+
+    private String hienThiTuan(String weeks) {
+        if (weeks == null || weeks.isBlank()) return "—";
+        // Mot hoc ky chi co ~15-18 tuan; chi dem trong 15 ky tu dau de tranh
+        // cac chuoi dai do gop o (merged cell) bi dem nham.
+        int count = 0;
+        int limit = Math.min(weeks.length(), 15);
+        for (int i = 0; i < limit; i++) {
+            char c = weeks.charAt(i);
+            if (c != '-' && c != ' ' && c != '_' && c != '.') {
+                count++;
+            }
+        }
+        return count <= 0 ? "—" : String.valueOf(count);
+    }
+
     private GridPane taoDong(Course course) {
         GridPane row = new GridPane();
         row.setPadding(new Insets(2, 0, 2, 0));
@@ -421,8 +551,17 @@ public class RequirementPanel extends ScrollPane {
         row.add(tenBox, 2, 0);
         row.add(tcBox, 3, 0);
 
-        double[] rongCot = {10, 18, 52, 20};
-        for (int i = 0; i < 4; i++) {
+        Button btnChiTiet = new Button("☰");
+        btnChiTiet.setStyle("-fx-background-color: #F1F5F9; -fx-text-fill: #1E293B; -fx-border-color: #CBD5E1; "
+                + "-fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 4 8 4 8; -fx-cursor: hand;");
+        btnChiTiet.setOnAction(e -> xemChiTietMon(course));
+        VBox chiTietBox = new VBox(btnChiTiet);
+        chiTietBox.setPadding(new Insets(9, 8, 9, 8));
+        chiTietBox.setAlignment(Pos.CENTER);
+        row.add(chiTietBox, 4, 0);
+
+        double[] rongCot = {8, 16, 46, 16, 14};
+        for (int i = 0; i < 5; i++) {
             javafx.scene.layout.ColumnConstraints cc = new javafx.scene.layout.ColumnConstraints();
             cc.setPercentWidth(rongCot[i]);
             cc.setHgrow(Priority.ALWAYS);
