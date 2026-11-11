@@ -10,6 +10,7 @@ Vi tri dat file:
     tools/processing_data.py (hoac thu muc goc cua du an)
 """
 
+import argparse
 import os
 import re
 import sys
@@ -53,9 +54,25 @@ courses = [
     "DVI", "DLS", "DDH",
 ]
 
-semester = "2026-2027-1"
-pdf_dir = f"pdf/{semester}/"
-output_csv_path = f"csv/{semester}/thoi_khoa_bieu.csv"
+
+def resolve_semester(explicit: Optional[str] = None) -> str:
+    value = explicit.strip() if explicit and explicit.strip() else os.getenv("SEMESTER", "2026-2027-1")
+    return value.strip() or "2026-2027-1"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Bóc tách PDF thời khóa biểu theo học kỳ linh hoạt.")
+    parser.add_argument("--semester", default=None, help="Mã học kỳ, ví dụ 2026-2027-1")
+    parser.add_argument("--pdf-dir", default=None, help="Thư mục chứa PDF. Mặc định: pdf/<semester>")
+    parser.add_argument("--csv-dir", default=None, help="Thư mục lưu CSV. Mặc định: csv/<semester>")
+    parser.add_argument("--csv-only", action="store_true", help="Chỉ xuất CSV, không nạp MySQL")
+    return parser.parse_args()
+
+
+args = parse_args()
+semester = resolve_semester(args.semester)
+pdf_dir = str(Path(args.pdf_dir) if args.pdf_dir else Path("pdf") / semester)
+output_csv_path = str(Path(args.csv_dir) / "thoi_khoa_bieu.csv" if args.csv_dir else Path("csv") / semester / "thoi_khoa_bieu.csv")
 
 # Cau truc 15 cot cua file PDF Chuyen nganh
 chuyen_nganh_full = [
@@ -447,15 +464,15 @@ def import_dataframe_to_mysql(df: pd.DataFrame, ma_hoc_ky: str) -> None:
         if "loai" not in existing_cols:
             cursor.execute("ALTER TABLE lich_hoc ADD COLUMN loai ENUM('LT','TH') NOT NULL DEFAULT 'LT' AFTER to_th")
         if "tuan_hoc" not in existing_cols:
-            cursor.execute("ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR(62) NULL AFTER loai")
+            cursor.execute("ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR(255) NULL AFTER loai")
         else:
             col_map = {row[0]: row for row in rows}
             tuan_hoc_row = col_map.get("tuan_hoc")
             if tuan_hoc_row is not None:
                 col_type = str(tuan_hoc_row[1]).lower()  # vd: 'varchar(30)'
                 m = re.search(r"varchar\((\d+)\)", col_type)
-                if m and int(m.group(1)) < 62:
-                    cursor.execute("ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR(62) NULL")
+                if m and int(m.group(1)) < 255:
+                    cursor.execute("ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR(255) NULL")
         if "tuan_mask" not in existing_cols:
             cursor.execute("ALTER TABLE lich_hoc ADD COLUMN tuan_mask BIGINT NOT NULL DEFAULT 32767 AFTER tuan_hoc")
         try:

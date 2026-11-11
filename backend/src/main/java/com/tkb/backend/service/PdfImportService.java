@@ -264,40 +264,51 @@ public class PdfImportService {
     // =========================================================================
 
     private List<ParsedCsvRow> extractRowsFromPdfOrExistingCsv(Path pdfPath, Path outCsvPath, String semesterCode) throws IOException {
-        // Uu tien 1: Goi script Python tools/processing_data.py neu co san tren may Server
-        Path scriptPath = Path.of("tools", "processing_data.py");
+        // Uu tien 1: neu du lieu PDF theo hoc ky da duoc tai ve va xu ly bang script v2,
+        // tim file csv/<semester>/thoi_khoa_bieu.csv de lay du lieu goc.
+        Path existingCsv = Path.of("csv", semesterCode, "thoi_khoa_bieu.csv");
+        Path downloadedPdfDir = Path.of("pdf", semesterCode);
+        Path scriptPath = Path.of("tools", "processing_data_v2.py");
+
         if (Files.exists(scriptPath)) {
-            String pythonBin = Files.exists(Path.of("venv", "bin", "python"))
-                    ? Path.of("venv", "bin", "python").toString()
+            String pythonBin = Files.exists(Path.of(".venv", "bin", "python"))
+                    ? Path.of(".venv", "bin", "python").toString()
                     : "python3";
             try {
-                ProcessBuilder pb = new ProcessBuilder(
-                        pythonBin, "-c",
-                        "import sys, processing_data; "
-                                + "rows = processing_data.extract_schedule_from_pdf(sys.argv[1]); "
-                                + "processing_data.save_to_csv(rows, sys.argv[2])",
-                        pdfPath.toAbsolutePath().toString(),
-                        outCsvPath.toAbsolutePath().toString()
-                );
-                pb.directory(Path.of("tools").toFile());
+                List<String> command = new ArrayList<>();
+                command.add(pythonBin);
+                command.add(scriptPath.toString());
+                command.add("--semester");
+                command.add(semesterCode);
+                if (Files.isDirectory(downloadedPdfDir) && Files.list(downloadedPdfDir).findAny().isPresent()) {
+                    command.add("--pdf-dir");
+                    command.add(downloadedPdfDir.toString());
+                } else {
+                    command.add("--pdf-dir");
+                    command.add(pdfPath.getParent() != null ? pdfPath.getParent().toString() : ".");
+                }
+                command.add("--csv-dir");
+                command.add(existingCsv.getParent() != null ? existingCsv.getParent().toString() : "csv");
+                ProcessBuilder pb = new ProcessBuilder(command);
+                pb.directory(Path.of("").toAbsolutePath().normalize().toFile());
                 pb.redirectErrorStream(true);
                 Process proc = pb.start();
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream(), StandardCharsets.UTF_8))) {
-                    while (reader.readLine() != null) {
-                        // Doc het output cua tien trinh con
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        // Doc het output tien trinh con de tranh treo tien trinh.
                     }
                 }
                 int code = proc.waitFor();
-                if (code == 0 && Files.exists(outCsvPath) && Files.size(outCsvPath) > 0) {
-                    return readCsvRows(outCsvPath);
+                if (code == 0 && Files.exists(existingCsv) && Files.size(existingCsv) > 0) {
+                    return readCsvRows(existingCsv);
                 }
             } catch (Exception ignored) {
-                // Neu script khong nhan tham so CLI tren, chuyen sang doc file CSV cua hoc ky
+                // Neu khong the goi duoc script moi, tiep tuc kiem tra file CSV co san.
             }
         }
 
-        // Uu tien 2: Doc file csv/<semesterCode>/thoi_khoa_bieu.csv da duoc processing_data.py xuat san
-        Path existingCsv = Path.of("csv", semesterCode, "thoi_khoa_bieu.csv");
+        // Uu tien 2: Doc file csv/<semesterCode>/thoi_khoa_bieu.csv da duoc script xuat san
         if (Files.exists(existingCsv)) {
             return readCsvRows(existingCsv);
         }
@@ -386,6 +397,12 @@ public class PdfImportService {
 
         // Neu co loi nghiem trong hoac la che do dryRun -> thong ke so luong insert/update du kien ma khong ghi DB
         try (Connection conn = DatabaseConfig.getConnection()) {
+            try (Statement ensureSchema = conn.createStatement()) {
+                ensureSchema.execute("ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR(255) NULL");
+            } catch (SQLException ignored) {
+                // Nếu cột đã đúng kích thước hoặc chưa tồn tại trong schema cũ, bỏ qua.
+            }
+
             Set<String> existingCourses = loadExistingCourseCodes(conn);
             Set<String> existingSectionKeys = loadExistingSectionKeys(conn, semesterCode);
 

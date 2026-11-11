@@ -68,9 +68,10 @@ CREATE TABLE lich_hoc (
   phong        VARCHAR(20) NULL,
   to_th        VARCHAR(5)  NOT NULL DEFAULT '',       -- '' nếu là LT, hoặc số tổ thực hành ('01', '02'...)
   loai         ENUM('LT','TH') NOT NULL DEFAULT 'LT', -- phân biệt buổi Lý thuyết ('LT') và Thực hành ('TH')
-    tuan_hoc     VARCHAR(62) NULL,                      -- chuỗi tuần học nguyên bản trong PDF/CSV
+    tuan_hoc     VARCHAR(255) NULL,                     -- chuỗi tuần học nguyên bản trong PDF/CSV
   -- Mặt nạ tuần: bit 0 = tuần 1, bit 1 = tuần 2, ... (tối đa 62 tuần, dùng BIGINT có dấu cho dễ
   -- đọc bằng JDBC). Hai buổi chỉ trùng nhau khi cùng thứ, giao nhau về tiết VÀ (mask_a & mask_b) <> 0.
+  -- `tuan_hoc` cần đủ lớn để chứa chuỗi tuần học dài từ PDF (có thể tới 200+ ký tự), nên đặt 255.
   tuan_mask    BIGINT NOT NULL DEFAULT 32767,
   PRIMARY KEY (id),
   KEY idx_lich_hoc_nhom (nhom_lop_id),
