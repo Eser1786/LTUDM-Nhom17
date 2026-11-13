@@ -63,8 +63,8 @@ public class RequirementPanel extends ScrollPane {
         HBox.setHgrow(leftTitle, Priority.ALWAYS);
         VBox rightTitle = new VBox(4,
                 Functions.chuDe("Thiết lập ưu tiên"));
-        rightTitle.setPrefWidth(420);
-        rightTitle.setMinWidth(320);
+        rightTitle.setPrefWidth(500);
+        rightTitle.setMinWidth(400);
         titleRow.getChildren().addAll(leftTitle, rightTitle);
 
         khung.getChildren().addAll(titleRow, theLayout());
@@ -94,14 +94,14 @@ public class RequirementPanel extends ScrollPane {
         left.getChildren().add(btnToiUu);
 
         VBox right = new VBox(14);
-        right.setPrefWidth(420);
-        right.setMinWidth(320);
+        right.setPrefWidth(500);
+        right.setMinWidth(400);
         right.setPadding(new Insets(0, 0, 0, 16));
         right.setStyle("-fx-border-color: #CBD5E1; -fx-border-width: 0 0 0 1;");
         HBox.setHgrow(right, Priority.NEVER);
-        // Thu nho bang thiet lap uu tien de dat vao nua ben phai, can len tren.
-        priorityPanel.setPrefWidth(400);
-        priorityPanel.setMaxWidth(400);
+        // Mo rong cot thiet lap uu tien de cac nut Sáng/Chiều/Tự chọn không bị cắt chữ.
+        priorityPanel.setPrefWidth(460);
+        priorityPanel.setMaxWidth(460);
         right.getChildren().add(priorityPanel);
 
         horizontal.getChildren().addAll(left, right);

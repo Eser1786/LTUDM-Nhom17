@@ -77,8 +77,8 @@ public class PriorityPanel extends VBox {
         ));
 
         VBox phaiCard = Functions.the(16);
-        phaiCard.setPrefWidth(420);
-        phaiCard.setMinWidth(360);
+        phaiCard.setPrefWidth(480);
+        phaiCard.setMinWidth(420);
         cotPhai.setFillWidth(true);
         phaiCard.getChildren().add(cotPhai);
 
@@ -162,7 +162,7 @@ public class PriorityPanel extends VBox {
             chkCompact.setOnAction(e -> { minDaysCompact = chkCompact.isSelected(); });
             body.getChildren().addAll(Functions.nhanNho("Ngày muốn đi học"), ngayRow, chkCompact);
         } else if (item.key().equals(KEY_TIME)) {
-            HBox modeRow = new HBox(6);
+            FlowPane modeRow = new FlowPane(6, 6);
             Button bSang = modeBtn("☀ Sáng (1–5)", "MORNING", item.enabled);
             Button bChieu = modeBtn("🌤 Chiều (6–10)", "AFTERNOON", item.enabled);
             Button bTuChon = modeBtn("📅 Tự chọn", "CUSTOM_MATRIX", item.enabled);
@@ -245,6 +245,8 @@ public class PriorityPanel extends VBox {
 
     private Button modeBtn(String text, String mode, boolean enabled) {
         Button b = Functions.nutPhu(text);
+        b.setMinWidth(120);
+        b.setWrapText(true);
         b.setDisable(!enabled);
         if (timeMode.equals(mode) && enabled) {
             b.setStyle("-fx-background-color: #1D4ED8; -fx-text-fill: white; -fx-border-color: #1D4ED8; -fx-border-radius: 8; -fx-background-radius: 8;");
