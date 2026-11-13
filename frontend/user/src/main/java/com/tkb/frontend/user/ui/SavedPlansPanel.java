@@ -103,33 +103,47 @@ public class SavedPlansPanel extends ScrollPane {
     private VBox theLich(SavedPlan p) {
         VBox card = Functions.the(16);
 
-        HBox top = new HBox(10);
-        top.setAlignment(Pos.CENTER_LEFT);
-        Label ten = Functions.tieuDeThe(p.ten());
-        top.getChildren().addAll(ten, Functions.khoangTrong(),
-                Functions.nhanChinh(Math.round(p.diem()) + "/100"));
+        // Hiển thị thẻ lịch đã lưu theo cùng phong cách với thẻ kết quả đề xuất:
+        // tiêu đề + điểm, lưới thời khóa biểu lớn, ghi chú xếp đủ/không xếp được.
+        HBox tieuDe = new HBox(10,
+                Functions.tieuDeThe("Thời khóa biểu " + p.ten()),
+                Functions.nhanChinh("Điểm " + Math.round(p.diem()) + "/100"));
+        tieuDe.setAlignment(Pos.CENTER_LEFT);
 
         String hocKy = st.hocKy == null ? p.maHocKy() : "Học kỳ I · 2026–2027";
         Label meta = Functions.nhanNho(hocKy + " · Lưu ngày " + p.ngayTao());
 
         FlowPane chiSo = new FlowPane(8, 8);
-        chiSo.getChildren().addAll(Functions.nhanXam(p.stats().soNgayHoc() + " ngày học"));
+        chiSo.getChildren().addAll(
+                Functions.nhanXam(p.stats().soNgayHoc() + " ngày học"),
+                Functions.nhanXam(p.soTinChi() + " tín chỉ"),
+                Functions.nhanXam(p.soHocPhan() + " học phần"));
 
-        VBox xemNhanhBox = new VBox(6);
-        Label t = Functions.nhanNho("Xem nhanh thời khóa biểu");
-        xemNhanhBox.getChildren().add(t);
         TimetableGridPanel grid = null;
+        List<String> biLoai = List.of();
         try {
             PlanDetail d = client.getPlan(p.id());
             grid = new TimetableGridPanel();
             grid.setTieuDe(p.ten());
             grid.setSlots(d.slots());
-            grid.setPrefHeight(280);
-            xemNhanhBox.getChildren().add(grid);
+            grid.setPrefHeight(560);
+            biLoai = d.biLoai() == null ? List.of() : d.biLoai();
         } catch (ApiException ex) {
-            xemNhanhBox.getChildren().add(Functions.moTa("Không tải được chi tiết lịch."));
+            // keep grid null; báo lỗi bên dưới
         }
         final TimetableGridPanel gridRef = grid;
+
+        card.getChildren().addAll(tieuDe, meta, chiSo);
+        if (grid != null) {
+            card.getChildren().add(grid);
+            if (!biLoai.isEmpty()) {
+                card.getChildren().add(Functions.nhanCanhBao("Không xếp được học phần: " + String.join(", ", biLoai)));
+            } else {
+                card.getChildren().add(Functions.nhanHopLe("Đã xếp đủ tất cả học phần đã chọn · Không trùng giờ"));
+            }
+        } else {
+            card.getChildren().add(Functions.moTa("Không tải được chi tiết lịch."));
+        }
 
         HBox actions = new HBox(8);
         Button doi = Functions.nutPhu("Đổi tên");
@@ -137,10 +151,12 @@ public class SavedPlansPanel extends ScrollPane {
         Button xuat = Functions.nutPhu("Xuất PNG");
         doi.setOnAction(e -> doiTen(p));
         xoa.setOnAction(e -> xoa(p));
-        xuat.setOnAction(e -> Functions.xuatPng(gridRef, frame.window(), p.ten()));
+        xuat.setOnAction(e -> {
+            if (gridRef != null) Functions.xuatPng(gridRef, frame.window(), p.ten());
+        });
         actions.getChildren().addAll(doi, xoa, xuat);
 
-        card.getChildren().addAll(top, meta, chiSo, xemNhanhBox, actions);
+        card.getChildren().add(actions);
         return card;
     }
 
