@@ -79,6 +79,14 @@ public final class ClientApplicationFrame extends BorderPane {
         loginPanel.registrationSucceeded();
     }
 
+    public void resetToLogin() {
+        // Return to the shared login screen after logout so the next login is routed
+        // by role (USER/ADMIN) through RoleRouter instead of reusing the user-only flow.
+        loginPanel.setRequestInProgress(false);
+        loginPanel.showStatus("", false);
+        setCenter(loginPanel);
+    }
+
     private void handleLoginResponse(int requestId, Response response, Throwable failure) {
         if (failure != null) {
             loginPanel.setRequestInProgress(false);

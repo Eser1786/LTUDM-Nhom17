@@ -226,10 +226,16 @@ public class MainFrame extends BorderPane {
         trangThai.username = null;
         trangThai.role = null;
         trangThai.password = null;
-        // Use the same authenticated login flow as the first-time login so the client
-        // actually authenticates with the backend before loading data. The previous
-        // BiConsumer variant skipped client.login(), leaving the session logged out and
-        // sauDangNhap()'s data load failing, which is why the sidebar/topbar never came back.
+
+        // If this frame lives inside the shared ClientApplicationFrame, hand control back
+        // to its login screen. That login flow authenticates first and routes by role via
+        // RoleRouter, so an admin account logs into AdminFrame instead of the user UI.
+        if (getParent() instanceof ClientApplicationFrame parentFrame) {
+            parentFrame.resetToLogin();
+            return;
+        }
+
+        // Fallback for frames used standalone (e.g. tests): keep the in-place user login.
         LoginPanel loginPanel = new LoginPanel(trangThai, this::sauDangNhap);
         cards.put(CARD_LOGIN, loginPanel);
         centerStack.getChildren().setAll(loginPanel);

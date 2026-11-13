@@ -472,6 +472,7 @@ public class TcpTkbClient implements TkbClient {
         String moTa = String.format("%d ngày học · %d phút trống · %d%% tiết buổi sáng",
                 stats.soNgayHoc(), stats.phutTrong(), stats.tyLeSang());
         String ten = pdto.getName() != null && !pdto.getName().isBlank() ? pdto.getName() : String.valueOf((char) ('A' + Math.min(rank - 1, 25)));
+        System.out.println("[DEBUG] planDtoToScheduleOption rank=" + rank + " biLoai=" + biLoai);
         return new ScheduleOption(rank, ten, pdto.getScore(), stats, moTa, slots, biLoai, List.of());
     }
 

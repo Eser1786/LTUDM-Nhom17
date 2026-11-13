@@ -214,6 +214,7 @@ public class TimetableSolver {
         }
 
         progressReport.accept(100);
+        System.out.println("[DEBUG] solve droppedCourses=" + droppedCourses.size() + " " + droppedCourses);
         return new SolveOutcome(topPlans, droppedCourses, false);
     }
 
