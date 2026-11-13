@@ -3,6 +3,16 @@
 
 ## Thái Anh (Backend):
 
+### CẦN LÀM:
+- update lại file python để gọi được từ terminal, file java khác
+
+- thêm tải pdf về và tự động import vào bằng url
+
+
+
+
+
+
 ### Docker
 
 ```bash
