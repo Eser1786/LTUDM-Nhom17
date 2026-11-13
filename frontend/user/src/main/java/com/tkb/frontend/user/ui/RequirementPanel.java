@@ -153,9 +153,9 @@ public class RequirementPanel extends ScrollPane {
         bang.setMaxWidth(Double.MAX_VALUE);
         ScrollPane cuon = new ScrollPane(bang);
         cuon.setFitToWidth(true);
-        cuon.setMinHeight(220);
-        cuon.setPrefHeight(220);
-        cuon.setMaxHeight(220);
+        cuon.setMinHeight(260);
+        cuon.setPrefHeight(260);
+        cuon.setMaxHeight(260);
         cuon.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         VBox.setVgrow(cuon, Priority.ALWAYS);
 
