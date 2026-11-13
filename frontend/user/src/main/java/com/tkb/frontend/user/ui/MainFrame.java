@@ -226,11 +226,11 @@ public class MainFrame extends BorderPane {
         trangThai.username = null;
         trangThai.role = null;
         trangThai.password = null;
-        LoginPanel loginPanel = new LoginPanel(trangThai, (u, p) -> {
-            trangThai.username = u;
-            trangThai.password = p;
-            sauDangNhap();
-        });
+        // Use the same authenticated login flow as the first-time login so the client
+        // actually authenticates with the backend before loading data. The previous
+        // BiConsumer variant skipped client.login(), leaving the session logged out and
+        // sauDangNhap()'s data load failing, which is why the sidebar/topbar never came back.
+        LoginPanel loginPanel = new LoginPanel(trangThai, this::sauDangNhap);
         cards.put(CARD_LOGIN, loginPanel);
         centerStack.getChildren().setAll(loginPanel);
         setTop(null);
