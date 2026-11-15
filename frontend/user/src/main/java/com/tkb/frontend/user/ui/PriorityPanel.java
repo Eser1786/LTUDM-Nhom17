@@ -117,6 +117,13 @@ public class PriorityPanel extends VBox {
         cotPhai.getChildren().addAll(Functions.vach(), theNutMacDinh(), ghiChu());
     }
 
+    private void doiThuTuPriority(int from, int to) {
+        if (from < 0 || to < 0 || from >= priorityItems.size() || to >= priorityItems.size() || from == to) return;
+        PriorityItem moved = priorityItems.remove(from);
+        priorityItems.add(Math.max(0, Math.min(to, priorityItems.size())), moved);
+        veCotPhai();
+    }
+
     private VBox theTieuChi(PriorityItem item, int index, double weight) {
         VBox card = Functions.the(12);
         card.setUserData(item);
@@ -134,7 +141,15 @@ public class PriorityPanel extends VBox {
 
         Label title = Functions.tieuDeThe(item.title());
         Label badge = Functions.nhanXam("Hạng #" + (index + 1) + " (TS: " + String.format("%.1f", weight) + ")");
-        top.getChildren().addAll(dragIcon, toggle, title, Functions.khoangTrong(), badge);
+
+        Button up = Functions.nutPhu("▲");
+        up.setDisable(index == 0);
+        up.setOnAction(e -> doiThuTuPriority(index, index - 1));
+        Button down = Functions.nutPhu("▼");
+        down.setDisable(index == priorityItems.size() - 1);
+        down.setOnAction(e -> doiThuTuPriority(index, index + 1));
+
+        top.getChildren().addAll(dragIcon, toggle, title, Functions.khoangTrong(), badge, up, down);
 
         Label mo = Functions.moTa(item.description());
         VBox body = new VBox(8, top, mo);

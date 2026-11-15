@@ -82,7 +82,7 @@ public class RequirementPanel extends ScrollPane {
         HBox.setHgrow(left, Priority.ALWAYS);
         VBox listCard = new VBox(12);
         listCard.getChildren().addAll(theBoLoc(), theBang());
-        left.getChildren().addAll(listCard, daChonPanel());
+        left.getChildren().addAll(listCard,daChonPanel());
 
         Button btnToiUu = Functions.nutChinh("Tối ưu thời khóa biểu");
         btnToiUu.setMaxWidth(Double.MAX_VALUE);
@@ -121,6 +121,7 @@ public class RequirementPanel extends ScrollPane {
         txtTimKiem.textProperty().addListener((o, a, b) -> {
             trangHienTai = 0;
             veBang();
+            capNhatMonDaChon();
         });
         return card;
     }
@@ -135,7 +136,7 @@ public class RequirementPanel extends ScrollPane {
         hang.setMaxWidth(Double.MAX_VALUE);
         hang.setStyle("-fx-background-color: #F1F5F9; -fx-background-radius: 8;");
         String[] cot = {"Chọn", "Mã môn", "Tên môn", "Tín chỉ", "Chi tiết"};
-        double[] rongCot = {8, 16, 46, 16, 14};
+        double[] rongCot = {14, 16, 40, 16, 14};
         for (int i = 0; i < cot.length; i++) {
             Label l = new Label(cot[i]);
             l.setFont(Functions.F_NHO);
@@ -153,8 +154,7 @@ public class RequirementPanel extends ScrollPane {
         bang.setMaxWidth(Double.MAX_VALUE);
         ScrollPane cuon = new ScrollPane(bang);
         cuon.setFitToWidth(true);
-        cuon.setMinHeight(260);
-        cuon.setPrefHeight(260);
+        cuon.setMinHeight(20);
         cuon.setMaxHeight(260);
         cuon.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         VBox.setVgrow(cuon, Priority.ALWAYS);
@@ -169,14 +169,14 @@ public class RequirementPanel extends ScrollPane {
     private VBox daChonPanel() {
         VBox card = Functions.the(14);
         card.setMinHeight(160);
-        card.setPrefHeight(200);
+        card.setMaxHeight(400);
+        
         HBox tit = new HBox(8, Functions.tieuDeThe("Môn đã chọn"), Functions.khoangTrong());
         tit.setAlignment(Pos.CENTER_LEFT);
         daChonBox.setFillWidth(true);
-        daChonBox.setPrefHeight(110);
+        daChonBox.setPrefHeight(400);
         ScrollPane cuon = new ScrollPane(daChonBox);
         cuon.setFitToWidth(true);
-        cuon.setPrefHeight(130);
         cuon.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         card.getChildren().addAll(tit, cuon);
         capNhatMonDaChon();
@@ -282,6 +282,10 @@ public class RequirementPanel extends ScrollPane {
 
     private void capNhatMonDaChon() {
         daChonBox.getChildren().clear();
+        if (txtTimKiem.getText() == null || txtTimKiem.getText().trim().isBlank()) {
+            daChonBox.setPrefHeight(400);
+        }
+        else daChonBox.setPrefHeight(160);
         List<String> monChon = st.uuTienMon;
         if (monChon.isEmpty()) {
             daChonBox.getChildren().add(Functions.moTa("Chưa có môn nào được chọn."));
