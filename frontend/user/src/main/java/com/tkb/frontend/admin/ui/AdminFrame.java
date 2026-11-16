@@ -34,6 +34,7 @@ public class AdminFrame extends BorderPane {
     private final AdminCoursesPane coursesPane;
     private final AdminSectionsPane sectionsPane;
     private final AdminUsersPane usersPane;
+    private final AdminJobsPane jobsPane;
 
     private static Map<String, String> createPages() {
         Map<String, String> pages = new LinkedHashMap<>();
@@ -60,12 +61,14 @@ public class AdminFrame extends BorderPane {
         coursesPane = new AdminCoursesPane(requests);
         sectionsPane = new AdminSectionsPane(requests);
         usersPane = new AdminUsersPane(requests);
+        jobsPane = new AdminJobsPane(requests);
         pageContents.put("overview", dashboardPane);
         pageContents.put("import", importPane);
         pageContents.put("semesters", semestersPane);
         pageContents.put("courses", coursesPane);
         pageContents.put("sections", sectionsPane);
         pageContents.put("users", usersPane);
+        pageContents.put("jobs", jobsPane);
         for (String page : PAGES.keySet()) {
             pageContents.putIfAbsent(page, placeholderMessage);
         }
@@ -156,6 +159,7 @@ public class AdminFrame extends BorderPane {
             case "courses" -> coursesPane.onShown();
             case "sections" -> sectionsPane.onShown();
             case "users" -> usersPane.onShown();
+            case "jobs" -> jobsPane.onShown();
             default -> {
             }
         }
@@ -169,6 +173,7 @@ public class AdminFrame extends BorderPane {
             case "courses" -> "Tìm kiếm, thêm, chỉnh sửa và xóa học phần trong danh mục.";
             case "sections" -> "Quản lý nhóm lớp, lịch học và trạng thái mở/tắt theo học kỳ.";
             case "users" -> "Tìm kiếm, phân trang và quản lý tài khoản, vai trò, mật khẩu.";
+            case "jobs" -> "Theo dõi tiến trình các công việc tính toán và nhập liệu đang xử lý.";
             default -> "Khung trang đã sẵn sàng. Chức năng sẽ được bổ sung ở các hạng mục Admin.";
         };
     }

@@ -58,6 +58,9 @@ final class AdminRequestClient {
                 throw new IllegalStateException(
                         "Không thể xóa học phần này vì đang có nhóm lớp hoặc phương án đã lưu sử dụng.");
             }
+            if (error != null && "JOB_NOT_FOUND".equals(error.getCode())) {
+                throw new IllegalStateException("Tiến trình không tồn tại hoặc đã hoàn tất/kết thúc trước đó.");
+            }
             throw new IllegalStateException(error == null || error.getMessage() == null
                     || error.getMessage().isBlank()
                     ? "Máy chủ từ chối yêu cầu " + command.name() + "."

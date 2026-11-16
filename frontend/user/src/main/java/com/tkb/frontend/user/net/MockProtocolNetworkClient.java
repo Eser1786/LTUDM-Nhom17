@@ -26,6 +26,7 @@ public final class MockProtocolNetworkClient implements NetworkClient {
     private final CopyOnWriteArrayList<Consumer<Response>> pushListeners = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<Map<String, Object>> mockSemesters = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<Map<String, Object>> mockAdminCourses = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<Map<String, Object>> mockJobs = new CopyOnWriteArrayList<>();
 
     public MockProtocolNetworkClient() {
         this("USER");
@@ -69,6 +70,15 @@ public final class MockProtocolNetworkClient implements NetworkClient {
                 "percent", 50,
                 "message", "Đang xử lý yêu cầu",
                 "startedAt", "2026-10-31T09:30:00");
+        mockJobs.add(new LinkedHashMap<>(job));
+        mockJobs.add(new LinkedHashMap<>(Map.of(
+                "jobId", "mock-job-2",
+                "jobType", "IMPORT",
+                "username", "admin",
+                "status", "QUEUED",
+                "percent", 0,
+                "message", "Chờ xử lý tệp PDF",
+                "startedAt", "2026-10-31T09:35:00")));
         Map<String, Object> user = Map.of(
                 "userId", 2L,
                 "username", "student",
@@ -134,8 +144,24 @@ public final class MockProtocolNetworkClient implements NetworkClient {
         registerSuccessResponse(Command.IMPORT_CHUNK, Map.of("received", 1));
         registerSuccessResponse(Command.IMPORT_COMMIT, Map.of("jobId", "mock-import-job-1"));
         registerSuccessResponse(Command.IMPORT_ABORT, Map.of());
-        registerSuccessResponse(Command.ADMIN_LIST_JOBS, Map.of("jobs", List.of(job)));
-        registerSuccessResponse(Command.ADMIN_CANCEL_JOB, Map.of());
+        registerResponder(Command.ADMIN_LIST_JOBS, request -> {
+            List<Map<String, Object>> active = mockJobs.stream()
+                    .filter(j -> "QUEUED".equals(j.get("status")) || "RUNNING".equals(j.get("status")))
+                    .toList();
+            return Response.success(request.getId(), Map.of("jobs", active));
+        });
+        registerResponder(Command.ADMIN_CANCEL_JOB, request -> {
+            String jobId = request.getString("jobId");
+            if (jobId != null) {
+                for (Map<String, Object> j : mockJobs) {
+                    if (jobId.equals(j.get("jobId"))) {
+                        j.put("status", "CANCELLED");
+                        j.put("message", "Đã bị hủy bởi quản trị viên");
+                    }
+                }
+            }
+            return Response.successEmpty(request.getId());
+        });
         registerSuccessResponse(Command.ADMIN_GET_STATS, Map.of(
                 "onlineUsers", 1,
                 "activeJobs", 1,
