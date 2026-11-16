@@ -213,7 +213,7 @@ final class AdminSemestersPane extends VBox {
                         return;
                     }
                     setStatus("Đã đổi học kỳ hiện tại. Đang cập nhật danh sách...", false);
-                    loadSemesters();
+                    loadSemesters(onSemestersChanged);
                 }));
     }
 
