@@ -33,6 +33,7 @@ public class AdminFrame extends BorderPane {
     private final AdminSemestersPane semestersPane;
     private final AdminCoursesPane coursesPane;
     private final AdminSectionsPane sectionsPane;
+    private final AdminUsersPane usersPane;
 
     private static Map<String, String> createPages() {
         Map<String, String> pages = new LinkedHashMap<>();
@@ -58,11 +59,13 @@ public class AdminFrame extends BorderPane {
         semestersPane = new AdminSemestersPane(requests, importPane::refreshSemesters);
         coursesPane = new AdminCoursesPane(requests);
         sectionsPane = new AdminSectionsPane(requests);
+        usersPane = new AdminUsersPane(requests);
         pageContents.put("overview", dashboardPane);
         pageContents.put("import", importPane);
         pageContents.put("semesters", semestersPane);
         pageContents.put("courses", coursesPane);
         pageContents.put("sections", sectionsPane);
+        pageContents.put("users", usersPane);
         for (String page : PAGES.keySet()) {
             pageContents.putIfAbsent(page, placeholderMessage);
         }
@@ -152,6 +155,7 @@ public class AdminFrame extends BorderPane {
             case "semesters" -> semestersPane.onShown();
             case "courses" -> coursesPane.onShown();
             case "sections" -> sectionsPane.onShown();
+            case "users" -> usersPane.onShown();
             default -> {
             }
         }
@@ -164,6 +168,7 @@ public class AdminFrame extends BorderPane {
             case "semesters" -> "Tạo học kỳ và chọn học kỳ hiện hành cho hệ thống.";
             case "courses" -> "Tìm kiếm, thêm, chỉnh sửa và xóa học phần trong danh mục.";
             case "sections" -> "Quản lý nhóm lớp, lịch học và trạng thái mở/tắt theo học kỳ.";
+            case "users" -> "Tìm kiếm, phân trang và quản lý tài khoản, vai trò, mật khẩu.";
             default -> "Khung trang đã sẵn sàng. Chức năng sẽ được bổ sung ở các hạng mục Admin.";
         };
     }
