@@ -48,6 +48,7 @@ public class PdfImportService {
 
     /** Thoi gian het han cua phien upload do: 10 phut (B9.6) */
     public static final long UPLOAD_TIMEOUT_MS = 10L * 60L * 1000L;
+    private static final int TUAN_HOC_COLUMN_LENGTH = 512;
 
     private final CatalogCache catalogCache;
     private final Map<String, UploadSession> uploads = new ConcurrentHashMap<>();
@@ -289,6 +290,7 @@ public class PdfImportService {
                 }
                 command.add("--csv-dir");
                 command.add(existingCsv.getParent() != null ? existingCsv.getParent().toString() : "csv");
+                command.add("--csv-only");
                 ProcessBuilder pb = new ProcessBuilder(command);
                 pb.directory(Path.of("").toAbsolutePath().normalize().toFile());
                 pb.redirectErrorStream(true);
@@ -397,11 +399,7 @@ public class PdfImportService {
 
         // Neu co loi nghiem trong hoac la che do dryRun -> thong ke so luong insert/update du kien ma khong ghi DB
         try (Connection conn = DatabaseConfig.getConnection()) {
-            try (Statement ensureSchema = conn.createStatement()) {
-                ensureSchema.execute("ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR(255) NULL");
-            } catch (SQLException ignored) {
-                // Nếu cột đã đúng kích thước hoặc chưa tồn tại trong schema cũ, bỏ qua.
-            }
+            ensureWeekColumnCapacity(conn);
 
             Set<String> existingCourses = loadExistingCourseCodes(conn);
             Set<String> existingSectionKeys = loadExistingSectionKeys(conn, semesterCode);
@@ -526,6 +524,39 @@ public class PdfImportService {
         }
 
         return report;
+    }
+
+    private static void ensureWeekColumnCapacity(Connection conn) throws SQLException {
+        String columnLengthSql = """
+                SELECT CHARACTER_MAXIMUM_LENGTH
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = 'lich_hoc'
+                  AND COLUMN_NAME = 'tuan_hoc'
+                """;
+        boolean columnExists;
+        long currentLength = 0;
+        try (PreparedStatement ps = conn.prepareStatement(columnLengthSql);
+             ResultSet rs = ps.executeQuery()) {
+            columnExists = rs.next();
+            if (columnExists) {
+                currentLength = rs.getLong(1);
+            }
+        }
+
+        if (!columnExists) {
+            try (Statement statement = conn.createStatement()) {
+                statement.execute(
+                        "ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR("
+                                + TUAN_HOC_COLUMN_LENGTH + ") NULL");
+            }
+        } else if (currentLength > 0 && currentLength < TUAN_HOC_COLUMN_LENGTH) {
+            try (Statement statement = conn.createStatement()) {
+                statement.execute(
+                        "ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR("
+                                + TUAN_HOC_COLUMN_LENGTH + ") NULL");
+            }
+        }
     }
 
     private Set<String> loadExistingCourseCodes(Connection conn) throws SQLException {

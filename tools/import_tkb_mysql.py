@@ -379,17 +379,17 @@ def ensure_schema_columns_and_constraints(cursor) -> None:
         )
     if "tuan_hoc" not in existing_cols:
         cursor.execute(
-            "ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR(255) NULL AFTER loai"
+            "ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR(512) NULL AFTER loai"
         )
     else:
-        # Tuong thich DB cu: neu tuan_hoc nho hon 255 ky tu thi mo rong.
+        # Tuong thich DB cu: neu tuan_hoc nho hon 512 ky tu thi mo rong.
         col_map = {row[0]: row for row in rows}
         tuan_hoc_row = col_map.get("tuan_hoc")
         if tuan_hoc_row is not None:
             col_type = str(tuan_hoc_row[1]).lower()  # vd: 'varchar(30)'
             m = re.search(r"varchar\((\d+)\)", col_type)
-            if m and int(m.group(1)) < 255:
-                cursor.execute("ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR(255) NULL")
+            if m and int(m.group(1)) < 512:
+                cursor.execute("ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR(512) NULL")
     if "tuan_mask" not in existing_cols:
         cursor.execute(
             "ALTER TABLE lich_hoc ADD COLUMN tuan_mask BIGINT NOT NULL DEFAULT 32767 AFTER tuan_hoc"

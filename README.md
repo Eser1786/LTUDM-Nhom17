@@ -186,7 +186,7 @@ Script thực hiện:
 
 ## 6. Trạng thái tiến độ hiện tại
 
-- [x] **Hạ tầng Docker & Schema CSDL (`B1.1`, `B1.2`):** Hoàn thành `docker-compose.yml` và `01-schema.sql` (8 bảng, hỗ trợ nhiều học kỳ, phân biệt LT/TH và lưu chuỗi tuần học `VARCHAR(64)`).
+- [x] **Hạ tầng Docker & Schema CSDL (`B1.1`, `B1.2`):** Hoàn thành `docker-compose.yml` và `01-schema.sql` (8 bảng, hỗ trợ nhiều học kỳ, phân biệt LT/TH và lưu chuỗi tuần học `VARCHAR(512)`).
 - [x] **Công cụ xử lý dữ liệu (`tools/`):** Hoàn thành `processing_data.py` và `import_tkb_mysql.py`, đã nạp thành công 3.881 dòng dữ liệu học kỳ `2026-2027-1` vào MySQL trong Docker.
 - [x] **Module `common` (`B2.1` – `B2.4`):** Đã hoàn thiện 12 file mã nguồn (`FrameCodec`, `CryptoUtil`, `Command`, `ErrorCode`, `Request`, `Response`, `SlotDto`, `SectionDto`, `PlanDto`, `JobDto`, `UserDto`, `ImportReport`).
 - [ ] **Bước tiếp theo (`B1.4` – `B1.6`):** Cấu hình `HikariCP` Connection Pool và viết các lớp `DAO` (`SemesterDao`, `CourseDao`, `SectionDao`, `UserDao`, `PlanDao`) trong module `backend`.

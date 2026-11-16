@@ -464,15 +464,15 @@ def import_dataframe_to_mysql(df: pd.DataFrame, ma_hoc_ky: str) -> None:
         if "loai" not in existing_cols:
             cursor.execute("ALTER TABLE lich_hoc ADD COLUMN loai ENUM('LT','TH') NOT NULL DEFAULT 'LT' AFTER to_th")
         if "tuan_hoc" not in existing_cols:
-            cursor.execute("ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR(255) NULL AFTER loai")
+            cursor.execute("ALTER TABLE lich_hoc ADD COLUMN tuan_hoc VARCHAR(512) NULL AFTER loai")
         else:
             col_map = {row[0]: row for row in rows}
             tuan_hoc_row = col_map.get("tuan_hoc")
             if tuan_hoc_row is not None:
                 col_type = str(tuan_hoc_row[1]).lower()  # vd: 'varchar(30)'
                 m = re.search(r"varchar\((\d+)\)", col_type)
-                if m and int(m.group(1)) < 255:
-                    cursor.execute("ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR(255) NULL")
+                if m and int(m.group(1)) < 512:
+                    cursor.execute("ALTER TABLE lich_hoc MODIFY COLUMN tuan_hoc VARCHAR(512) NULL")
         if "tuan_mask" not in existing_cols:
             cursor.execute("ALTER TABLE lich_hoc ADD COLUMN tuan_mask BIGINT NOT NULL DEFAULT 32767 AFTER tuan_hoc")
         try:

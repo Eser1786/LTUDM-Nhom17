@@ -30,6 +30,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
@@ -46,6 +48,8 @@ final class AdminImportPane extends ScrollPane {
 
     private final AdminRequestClient requests;
     private final ComboBox<AdminSemesterOption> semesterSelector = new ComboBox<>();
+    private final ComboBox<Integer> sourceYearSelector = new ComboBox<>();
+    private final ComboBox<Integer> sourceTermSelector = new ComboBox<>();
     private final Label fileLabel = new Label("Chưa chọn tệp PDF");
     private final Label statusLabel = new Label();
     private final Label reportSummary = new Label();
@@ -111,6 +115,30 @@ final class AdminImportPane extends ScrollPane {
 
         Label semesterHint = new Label("Chọn học kỳ mà dữ liệu thời khóa biểu sẽ được nhập vào.");
         styleHint(semesterHint);
+        Label sourceTitle = new Label("Nguồn PDF");
+        styleFieldTitle(sourceTitle);
+        int currentYear = Year.now().getValue();
+        List<Integer> sourceYears = new ArrayList<>();
+        for (int year = Math.max(2000, currentYear - 10);
+                year <= Math.min(2099, currentYear + 2); year++) {
+            sourceYears.add(year);
+        }
+        sourceYearSelector.setItems(FXCollections.observableArrayList(sourceYears));
+        sourceYearSelector.setValue(currentYear);
+        sourceYearSelector.setMaxWidth(Double.MAX_VALUE);
+        sourceYearSelector.valueProperty().addListener((observable, oldValue, newValue) -> updateControls());
+        sourceTermSelector.setItems(FXCollections.observableArrayList(1, 2, 3));
+        sourceTermSelector.setValue(1);
+        sourceTermSelector.setMaxWidth(Double.MAX_VALUE);
+        sourceTermSelector.valueProperty().addListener((observable, oldValue, newValue) -> updateControls());
+        HBox sourceRow = new HBox(12,
+                new Label("Năm"), sourceYearSelector,
+                new Label("Học kỳ"), sourceTermSelector);
+        sourceRow.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(sourceYearSelector, Priority.ALWAYS);
+        HBox.setHgrow(sourceTermSelector, Priority.ALWAYS);
+        Label sourceHint = new Label("Chọn năm và học kỳ của thư mục PDF nguồn trên SGU.");
+        styleHint(sourceHint);
         Label fileTitle = new Label("Tệp PDF");
         styleFieldTitle(fileTitle);
         fileLabel.setTextFill(Color.web("#82747E"));
@@ -151,6 +179,9 @@ final class AdminImportPane extends ScrollPane {
                 semesterTitle,
                 semesterRow,
                 semesterHint,
+                sourceTitle,
+                sourceRow,
+                sourceHint,
                 new Separator(),
                 fileTitle,
                 fileRow,
@@ -291,7 +322,9 @@ final class AdminImportPane extends ScrollPane {
 
     private void autoDownloadPdfs() {
         AdminSemesterOption semester = semesterSelector.getValue();
-        if (semester == null) {
+        Integer sourceYear = sourceYearSelector.getValue();
+        Integer sourceTerm = sourceTermSelector.getValue();
+        if (semester == null || sourceYear == null || sourceTerm == null) {
             showError("Hãy chọn học kỳ trước khi tải PDF tự động.");
             return;
         }
@@ -302,27 +335,41 @@ final class AdminImportPane extends ScrollPane {
         Path projectRoot = findProjectRoot();
         Path outputDir = projectRoot.resolve("pdf").resolve(semester.code()).normalize();
         Path scriptPath = projectRoot.resolve("tools").resolve("pdf_download.py").normalize();
-        Path pythonBin = projectRoot.resolve(".venv").resolve("bin").resolve("python").normalize();
+        Path windowsPythonBin = projectRoot.resolve(".venv").resolve("Scripts")
+                .resolve("python.exe").normalize();
+        Path unixPythonBin = projectRoot.resolve(".venv").resolve("bin")
+                .resolve("python").normalize();
         if (!Files.exists(scriptPath)) {
             showError("Không tìm thấy script tải PDF trong tools/pdf_download.py.");
             return;
         }
-        final String pythonCommand = Files.exists(pythonBin) ? pythonBin.toString() : "python3";
+        String systemPython = System.getProperty("os.name").toLowerCase(java.util.Locale.ROOT)
+                .startsWith("windows") ? "python" : "python3";
+        final String pythonCommand = Files.exists(windowsPythonBin) ? windowsPythonBin.toString()
+                : Files.exists(unixPythonBin) ? unixPythonBin.toString() : systemPython;
 
         uploading = true;
         progress.setProgress(0.1);
-        showStatus("Đang tải dữ liệu PDF cho học kỳ " + semester.code() + "...");
+        showStatus("Đang tải PDF nguồn học kỳ " + sourceTerm + " năm " + sourceYear
+                + " để nhập vào " + semester.code() + "...");
         updateControls();
 
         CompletableFuture.runAsync(() -> {
+            Path stagingDir = null;
             try {
+                Files.createDirectories(outputDir.getParent());
+                stagingDir = Files.createTempDirectory(outputDir.getParent(), ".pdf-download-");
                 List<String> command = new ArrayList<>();
                 command.add(pythonCommand);
                 command.add(scriptPath.toString());
                 command.add("--semester");
                 command.add(semester.code());
+                command.add("--source-year");
+                command.add(Integer.toString(sourceYear));
+                command.add("--source-term");
+                command.add(Integer.toString(sourceTerm));
                 command.add("--output-dir");
-                command.add(outputDir.toString());
+                command.add(stagingDir.toString());
                 ProcessBuilder process = new ProcessBuilder(command);
                 process.directory(projectRoot.toFile());
                 process.redirectErrorStream(true);
@@ -339,13 +386,13 @@ final class AdminImportPane extends ScrollPane {
                 if (exitCode != 0) {
                     throw new IllegalStateException("Script PDF trả về mã lỗi " + exitCode + ".\n" + output);
                 }
-                File[] downloaded = outputDir.toFile().listFiles((dir, name) -> name.toLowerCase(java.util.Locale.ROOT).endsWith(".pdf"));
+                File[] downloaded = stagingDir.toFile().listFiles((dir, name) ->
+                        name.toLowerCase(java.util.Locale.ROOT).endsWith(".pdf"));
                 if (downloaded == null || downloaded.length == 0) {
-                    throw new IllegalStateException("Không có file PDF nào được tải về cho học kỳ " + semester.code() + ".");
+                    throw new IllegalStateException("Học kỳ đó không khả dụng: không tải được PDF nào.");
                 }
                 java.util.Arrays.sort(downloaded, Comparator.comparing(File::getName));
-                File chosenPdf = downloaded[0];
-                long size = Files.size(chosenPdf.toPath());
+                long size = Files.size(downloaded[0].toPath());
 
                 Path csvDir = projectRoot.resolve("csv").resolve(semester.code()).normalize();
                 Path csvOutput = csvDir.resolve("thoi_khoa_bieu.csv");
@@ -355,25 +402,37 @@ final class AdminImportPane extends ScrollPane {
                 csvCommand.add("--semester");
                 csvCommand.add(semester.code());
                 csvCommand.add("--pdf-dir");
-                csvCommand.add(outputDir.toString());
+                csvCommand.add(stagingDir.toString());
                 csvCommand.add("--csv-dir");
                 csvCommand.add(csvDir.toString());
+                csvCommand.add("--csv-only");
                 Process csvProcess = new ProcessBuilder(csvCommand)
                         .directory(projectRoot.toFile())
                         .redirectErrorStream(true)
                         .start();
+                StringBuilder csvProcessOutput = new StringBuilder();
                 try (var csvReader = new java.io.BufferedReader(
                         new java.io.InputStreamReader(csvProcess.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {
                     String line;
                     while ((line = csvReader.readLine()) != null) {
-                        // Drain output until the process exits.
+                        csvProcessOutput.append(line).append(System.lineSeparator());
                     }
                 }
                 int csvExitCode = csvProcess.waitFor();
                 if (csvExitCode != 0 || !Files.exists(csvOutput) || Files.size(csvOutput) == 0) {
-                    throw new IllegalStateException("Không thể tạo CSV thời khóa biểu từ các PDF đã tải về.");
+                    String details = csvProcessOutput.toString().strip();
+                    throw new IllegalStateException(
+                            "Không thể tạo CSV thời khóa biểu từ các PDF đã tải về (mã thoát "
+                                    + csvExitCode + ")."
+                                    + (details.isEmpty() ? "" : System.lineSeparator() + details));
                 }
 
+                Files.createDirectories(outputDir);
+                for (File file : downloaded) {
+                    Files.move(file.toPath(), outputDir.resolve(file.getName()),
+                            StandardCopyOption.REPLACE_EXISTING);
+                }
+                File chosenPdf = outputDir.resolve(downloaded[0].getName()).toFile();
                 Platform.runLater(() -> {
                     selectedPdf = chosenPdf;
                     fileLabel.setText(chosenPdf.getName() + " (" + formatFileSize(size) + ")");
@@ -384,6 +443,14 @@ final class AdminImportPane extends ScrollPane {
                 });
             } catch (Exception ex) {
                 throw new CompletionException(ex);
+            } finally {
+                if (stagingDir != null) {
+                    try {
+                        deleteDirectory(stagingDir);
+                    } catch (IOException ex) {
+                        throw new CompletionException(ex);
+                    }
+                }
             }
         }).whenComplete((ignored, failure) -> Platform.runLater(() -> {
             uploading = false;
@@ -392,6 +459,19 @@ final class AdminImportPane extends ScrollPane {
             }
             updateControls();
         }));
+    }
+
+    private static void deleteDirectory(Path directory) throws IOException {
+        if (!Files.exists(directory)) {
+            return;
+        }
+        List<Path> paths;
+        try (var walk = Files.walk(directory)) {
+            paths = walk.sorted(Comparator.reverseOrder()).toList();
+        }
+        for (Path path : paths) {
+            Files.deleteIfExists(path);
+        }
     }
 
     private static Path findProjectRoot() {
@@ -727,8 +807,11 @@ final class AdminImportPane extends ScrollPane {
         boolean staged = uploadId != null;
         boolean busy = uploading || aborting || submittingJob;
         semesterSelector.setDisable(loadingSemesters || busy || staged);
+        sourceYearSelector.setDisable(busy || staged);
+        sourceTermSelector.setDisable(busy || staged);
         chooseButton.setDisable(busy || staged);
         autoDownloadButton.setDisable(!semestersLoaded || semesterSelector.getValue() == null
+                || sourceYearSelector.getValue() == null || sourceTermSelector.getValue() == null
                 || loadingSemesters || busy || staged);
         uploadButton.setDisable(!requests.isAvailable() || !semestersLoaded
                 || semesterSelector.getValue() == null || selectedPdf == null
