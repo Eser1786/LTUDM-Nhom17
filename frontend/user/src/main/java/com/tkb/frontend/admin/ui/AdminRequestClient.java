@@ -54,6 +54,10 @@ final class AdminRequestClient {
             if (error != null && "SEMESTER_EXISTS".equals(error.getCode())) {
                 throw new IllegalStateException("Mã học kỳ này đã tồn tại. Hãy nhập mã khác.");
             }
+            if (error != null && "COURSE_IN_USE".equals(error.getCode())) {
+                throw new IllegalStateException(
+                        "Không thể xóa học phần này vì đang có nhóm lớp hoặc phương án đã lưu sử dụng.");
+            }
             throw new IllegalStateException(error == null || error.getMessage() == null
                     || error.getMessage().isBlank()
                     ? "Máy chủ từ chối yêu cầu " + command.name() + "."

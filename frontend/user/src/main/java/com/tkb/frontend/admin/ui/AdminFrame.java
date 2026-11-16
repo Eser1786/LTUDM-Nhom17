@@ -31,6 +31,7 @@ public class AdminFrame extends BorderPane {
     private final AdminDashboardPane dashboardPane;
     private final AdminImportPane importPane;
     private final AdminSemestersPane semestersPane;
+    private final AdminCoursesPane coursesPane;
 
     private static Map<String, String> createPages() {
         Map<String, String> pages = new LinkedHashMap<>();
@@ -54,9 +55,11 @@ public class AdminFrame extends BorderPane {
         dashboardPane = new AdminDashboardPane(requests);
         importPane = new AdminImportPane(requests);
         semestersPane = new AdminSemestersPane(requests, importPane::refreshSemesters);
+        coursesPane = new AdminCoursesPane(requests);
         pageContents.put("overview", dashboardPane);
         pageContents.put("import", importPane);
         pageContents.put("semesters", semestersPane);
+        pageContents.put("courses", coursesPane);
         for (String page : PAGES.keySet()) {
             pageContents.putIfAbsent(page, placeholderMessage);
         }
@@ -144,6 +147,7 @@ public class AdminFrame extends BorderPane {
             case "overview" -> dashboardPane.onShown();
             case "import" -> importPane.onShown();
             case "semesters" -> semestersPane.onShown();
+            case "courses" -> coursesPane.onShown();
             default -> {
             }
         }
@@ -154,6 +158,7 @@ public class AdminFrame extends BorderPane {
             case "overview" -> "Theo dõi nhanh tình trạng hoạt động của hệ thống.";
             case "import" -> "Tải PDF, kiểm tra dữ liệu trước khi ghi và xem rõ lỗi theo STT.";
             case "semesters" -> "Tạo học kỳ và chọn học kỳ hiện hành cho hệ thống.";
+            case "courses" -> "Tìm kiếm, thêm, chỉnh sửa và xóa học phần trong danh mục.";
             default -> "Khung trang đã sẵn sàng. Chức năng sẽ được bổ sung ở các hạng mục Admin.";
         };
     }

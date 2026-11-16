@@ -25,6 +25,7 @@ public final class MockProtocolNetworkClient implements NetworkClient {
     private final Map<Command, Function<Request, Response>> responders = new ConcurrentHashMap<>();
     private final CopyOnWriteArrayList<Consumer<Response>> pushListeners = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<Map<String, Object>> mockSemesters = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<Map<String, Object>> mockAdminCourses = new CopyOnWriteArrayList<>();
 
     public MockProtocolNetworkClient() {
         this("USER");
@@ -84,6 +85,7 @@ public final class MockProtocolNetworkClient implements NetworkClient {
                 "credits", 3,
                 "sectionCount", 2,
                 "activeSectionCount", 1);
+        mockAdminCourses.add(new LinkedHashMap<>(adminCourse));
         registerSuccessResponse(Command.REGISTER, Map.of());
         registerSuccessResponse(Command.LOGOUT, Map.of());
         registerSuccessResponse(Command.GET_SECTIONS, Map.of("sections", List.of(section)));
@@ -120,9 +122,9 @@ public final class MockProtocolNetworkClient implements NetworkClient {
         registerSuccessResponse(Command.ADMIN_DELETE_USER, Map.of());
         registerResponder(Command.ADMIN_CREATE_SEMESTER, this::createMockSemester);
         registerResponder(Command.ADMIN_SET_CURRENT_SEMESTER, this::setMockCurrentSemester);
-        registerSuccessResponse(Command.ADMIN_LIST_COURSES, Map.of("courses", List.of(adminCourse)));
-        registerSuccessResponse(Command.ADMIN_UPSERT_COURSE, Map.of());
-        registerSuccessResponse(Command.ADMIN_DELETE_COURSE, Map.of());
+        registerResponder(Command.ADMIN_LIST_COURSES, this::listMockAdminCourses);
+        registerResponder(Command.ADMIN_UPSERT_COURSE, this::upsertMockCourse);
+        registerResponder(Command.ADMIN_DELETE_COURSE, this::deleteMockCourse);
         registerSuccessResponse(Command.ADMIN_UPSERT_SECTION, Map.of("id", 40L));
         registerSuccessResponse(Command.ADMIN_SET_SECTION_ACTIVE, Map.of());
         registerSuccessResponse(Command.ADMIN_DELETE_SECTION, Map.of());
@@ -188,6 +190,79 @@ public final class MockProtocolNetworkClient implements NetworkClient {
                     "current", code.equals(semester.get("code"))));
         }
         return Response.successEmpty(request.getId());
+    }
+
+    private Response listMockAdminCourses(Request request) {
+        String keyword = request.getString("keyword");
+        String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
+        List<Map<String, Object>> courses = mockAdminCourses.stream()
+                .filter(course -> normalizedKeyword.isEmpty()
+                        || course.get("courseCode").toString().toLowerCase(Locale.ROOT)
+                                .contains(normalizedKeyword)
+                        || course.get("name").toString().toLowerCase(Locale.ROOT)
+                                .contains(normalizedKeyword))
+                .map(course -> objectMapper.convertValue(
+                        course, new TypeReference<Map<String, Object>>() {}))
+                .toList();
+        return Response.success(request.getId(), Map.of("courses", courses));
+    }
+
+    private synchronized Response upsertMockCourse(Request request) {
+        String courseCode = request.getString("courseCode");
+        String name = request.getString("name");
+        Integer credits = request.getInt("credits");
+        if (courseCode == null || name == null) {
+            return Response.error(request.getId(), ErrorCode.VALIDATION_FAILED);
+        }
+        courseCode = courseCode.trim();
+        if (!courseCode.matches("^[A-Za-z0-9]{1,10}$")
+                || name.isBlank() || name.trim().length() > 150
+                || credits == null || credits < 0 || credits > 20) {
+            return Response.error(request.getId(), ErrorCode.VALIDATION_FAILED);
+        }
+
+        int existingIndex = -1;
+        for (int index = 0; index < mockAdminCourses.size(); index++) {
+            if (courseCode.equals(mockAdminCourses.get(index).get("courseCode"))) {
+                existingIndex = index;
+                break;
+            }
+        }
+        Map<String, Object> existing = existingIndex < 0
+                ? Map.of("sectionCount", 0, "activeSectionCount", 0)
+                : mockAdminCourses.get(existingIndex);
+        Map<String, Object> updated = new LinkedHashMap<>();
+        updated.put("courseCode", courseCode);
+        updated.put("name", name.trim());
+        updated.put("credits", credits);
+        updated.put("sectionCount", existing.get("sectionCount"));
+        updated.put("activeSectionCount", existing.get("activeSectionCount"));
+        if (existingIndex < 0) {
+            mockAdminCourses.add(updated);
+        } else {
+            mockAdminCourses.set(existingIndex, updated);
+        }
+        return Response.successEmpty(request.getId());
+    }
+
+    private synchronized Response deleteMockCourse(Request request) {
+        String courseCode = request.getString("courseCode");
+        if (courseCode == null || courseCode.isBlank()) {
+            return Response.error(request.getId(), ErrorCode.VALIDATION_FAILED);
+        }
+        courseCode = courseCode.trim();
+        for (int index = 0; index < mockAdminCourses.size(); index++) {
+            Map<String, Object> course = mockAdminCourses.get(index);
+            if (!courseCode.equals(course.get("courseCode"))) {
+                continue;
+            }
+            if (course.get("sectionCount") instanceof Number count && count.intValue() > 0) {
+                return Response.error(request.getId(), ErrorCode.COURSE_IN_USE);
+            }
+            mockAdminCourses.remove(index);
+            return Response.successEmpty(request.getId());
+        }
+        return Response.error(request.getId(), ErrorCode.NOT_FOUND);
     }
 
     public void registerResponder(Command command, Function<Request, Response> responder) {
