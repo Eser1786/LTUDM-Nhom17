@@ -155,6 +155,11 @@ final class AdminUsersPane extends VBox {
         }
 
         String keyword = searchField.getText() == null ? "" : searchField.getText().trim();
+        if (keyword.length() > 50) {
+            showError("Từ khóa tìm kiếm không được vượt quá 50 ký tự.");
+            searchField.requestFocus();
+            return;
+        }
         setLoading(true);
         setStatus("Đang tải danh sách người dùng...", false);
         requests.send(Command.ADMIN_LIST_USERS, Map.of(

@@ -338,6 +338,11 @@ final class AdminCoursesPane extends VBox {
             return;
         }
         String keyword = searchField.getText() == null ? "" : searchField.getText().trim();
+        if (keyword.length() > 150) {
+            showError("Từ khóa tìm kiếm không được vượt quá 150 ký tự.");
+            searchField.requestFocus();
+            return;
+        }
         setLoading(true);
         setStatus("Đang tải danh sách học phần...", false);
         requests.send(Command.ADMIN_LIST_COURSES, Map.of("keyword", keyword))

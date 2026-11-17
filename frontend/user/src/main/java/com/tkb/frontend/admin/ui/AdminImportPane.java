@@ -309,6 +309,10 @@ final class AdminImportPane extends ScrollPane {
                 showError("Kích thước PDF phải lớn hơn 0 và không vượt quá 20 MiB.");
                 return;
             }
+            if (!hasPdfSignature(file.toPath())) {
+                showError("Tệp được chọn không có chữ ký PDF hợp lệ.");
+                return;
+            }
             selectedPdf = file;
             fileLabel.setText(file.getName() + " (" + formatFileSize(size) + ")");
             progress.setProgress(0);
@@ -534,6 +538,9 @@ final class AdminImportPane extends ScrollPane {
             if (bytes.length == 0 || bytes.length > MAX_PDF_SIZE_BYTES) {
                 throw new IllegalArgumentException("Kích thước PDF phải lớn hơn 0 và không vượt quá 20 MiB.");
             }
+            if (!hasPdfSignature(bytes)) {
+                throw new IllegalArgumentException("Tệp được chọn không có chữ ký PDF hợp lệ.");
+            }
             Map<String, Object> begin = requests.send(Command.IMPORT_BEGIN, Map.of(
                     "fileName", file.getName(),
                     "sizeBytes", bytes.length,
@@ -582,6 +589,30 @@ final class AdminImportPane extends ScrollPane {
             }
             throw new CompletionException(ex);
         }
+    }
+
+    private static boolean hasPdfSignature(Path file) throws IOException {
+        try (var input = Files.newInputStream(file)) {
+            return hasPdfSignature(input.readNBytes(1024));
+        }
+    }
+
+    private static boolean hasPdfSignature(byte[] bytes) {
+        byte[] signature = {'%', 'P', 'D', 'F', '-'};
+        int searchLimit = Math.min(bytes.length - signature.length, 1024);
+        for (int offset = 0; offset <= searchLimit; offset++) {
+            boolean matches = true;
+            for (int index = 0; index < signature.length; index++) {
+                if (bytes[offset + index] != signature[index]) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void startImport(boolean dryRun) {
@@ -699,13 +730,18 @@ final class AdminImportPane extends ScrollPane {
         if (!"DONE".equals(status)) {
             previewReady = false;
             Object errorObject = data.get("error");
-            String message = errorObject instanceof Map<?, ?> error
-                    && error.get("message") instanceof String errorMessage
-                    && !errorMessage.isBlank()
-                    ? errorMessage
-                    : ("CANCELLED".equals(status)
-                            ? "Công việc nhập PDF đã bị hủy."
-                            : "Công việc nhập PDF thất bại với trạng thái " + status + ".");
+            String message;
+            if ("CANCELLED".equals(status)) {
+                message = "Công việc nhập PDF đã bị hủy.";
+            } else if (errorObject instanceof Map<?, ?> error) {
+                Object rawCode = error.get("code");
+                Object rawMessage = error.get("message");
+                message = AdminErrorMessages.from(
+                        rawCode instanceof String code ? code : null,
+                        rawMessage instanceof String errorMessage ? errorMessage : null);
+            } else {
+                message = "Không thể xử lý PDF trên máy chủ. Vui lòng kiểm tra báo cáo và thử lại.";
+            }
             finishJobFailure(message);
             return;
         }
