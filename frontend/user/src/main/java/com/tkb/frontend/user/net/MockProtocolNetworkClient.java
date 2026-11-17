@@ -9,6 +9,7 @@ import com.tkb.common.protocol.ErrorCode;
 import com.tkb.common.protocol.Request;
 import com.tkb.common.protocol.Response;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ public final class MockProtocolNetworkClient implements NetworkClient {
     private final CopyOnWriteArrayList<Map<String, Object>> mockSemesters = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<Map<String, Object>> mockAdminCourses = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<Map<String, Object>> mockJobs = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<Map<String, Object>> mockSessions = new CopyOnWriteArrayList<>();
 
     public MockProtocolNetworkClient() {
         this("USER");
@@ -79,6 +81,16 @@ public final class MockProtocolNetworkClient implements NetworkClient {
                 "percent", 0,
                 "message", "Chờ xử lý tệp PDF",
                 "startedAt", "2026-10-31T09:35:00")));
+        mockSessions.add(new LinkedHashMap<>(Map.of(
+                "sessionId", "mock-session-1",
+                "username", "student",
+                "remoteAddress", "/127.0.0.1:54321",
+                "connectedAt", "2026-10-31T09:30:00")));
+        mockSessions.add(new LinkedHashMap<>(Map.of(
+                "sessionId", "mock-session-2",
+                "username", "(chưa đăng nhập)",
+                "remoteAddress", "/192.168.1.15:61200",
+                "connectedAt", "2026-10-31T09:40:00")));
         Map<String, Object> user = Map.of(
                 "userId", 2L,
                 "username", "student",
@@ -170,13 +182,17 @@ public final class MockProtocolNetworkClient implements NetworkClient {
                 "totalPlans", 8,
                 "totalSections", 42,
                 "uptimeSeconds", 3600));
-        registerSuccessResponse(Command.ADMIN_LIST_SESSIONS, Map.of("sessions", List.of(
-                Map.of(
-                        "sessionId", "mock-session-1",
-                        "username", "student",
-                        "remoteAddress", "127.0.0.1",
-                        "connectedAt", "2026-10-31T09:30:00"))));
-        registerSuccessResponse(Command.ADMIN_KICK_SESSION, Map.of());
+        registerResponder(Command.ADMIN_LIST_SESSIONS, request -> {
+            List<Map<String, Object>> list = new ArrayList<>(mockSessions);
+            return Response.success(request.getId(), Map.of("sessions", list));
+        });
+        registerResponder(Command.ADMIN_KICK_SESSION, request -> {
+            String sessionId = request.getString("sessionId");
+            if (sessionId != null) {
+                mockSessions.removeIf(s -> sessionId.equals(s.get("sessionId")));
+            }
+            return Response.successEmpty(request.getId());
+        });
     }
 
     private Response listMockSemesters(Request request) {

@@ -61,6 +61,9 @@ final class AdminRequestClient {
             if (error != null && "JOB_NOT_FOUND".equals(error.getCode())) {
                 throw new IllegalStateException("Tiến trình không tồn tại hoặc đã hoàn tất/kết thúc trước đó.");
             }
+            if (error != null && "CANNOT_MODIFY_SELF".equals(error.getCode())) {
+                throw new IllegalStateException("Bạn không thể tự ngắt phiên kết nối hoặc sửa đổi tài khoản của chính mình.");
+            }
             throw new IllegalStateException(error == null || error.getMessage() == null
                     || error.getMessage().isBlank()
                     ? "Máy chủ từ chối yêu cầu " + command.name() + "."

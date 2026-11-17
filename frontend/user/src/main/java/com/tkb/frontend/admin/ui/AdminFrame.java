@@ -35,6 +35,7 @@ public class AdminFrame extends BorderPane {
     private final AdminSectionsPane sectionsPane;
     private final AdminUsersPane usersPane;
     private final AdminJobsPane jobsPane;
+    private final AdminSessionsPane sessionsPane;
 
     private static Map<String, String> createPages() {
         Map<String, String> pages = new LinkedHashMap<>();
@@ -62,6 +63,7 @@ public class AdminFrame extends BorderPane {
         sectionsPane = new AdminSectionsPane(requests);
         usersPane = new AdminUsersPane(requests);
         jobsPane = new AdminJobsPane(requests);
+        sessionsPane = new AdminSessionsPane(requests);
         pageContents.put("overview", dashboardPane);
         pageContents.put("import", importPane);
         pageContents.put("semesters", semestersPane);
@@ -69,6 +71,7 @@ public class AdminFrame extends BorderPane {
         pageContents.put("sections", sectionsPane);
         pageContents.put("users", usersPane);
         pageContents.put("jobs", jobsPane);
+        pageContents.put("sessions", sessionsPane);
         for (String page : PAGES.keySet()) {
             pageContents.putIfAbsent(page, placeholderMessage);
         }
@@ -160,6 +163,7 @@ public class AdminFrame extends BorderPane {
             case "sections" -> sectionsPane.onShown();
             case "users" -> usersPane.onShown();
             case "jobs" -> jobsPane.onShown();
+            case "sessions" -> sessionsPane.onShown();
             default -> {
             }
         }
@@ -174,6 +178,7 @@ public class AdminFrame extends BorderPane {
             case "sections" -> "Quản lý nhóm lớp, lịch học và trạng thái mở/tắt theo học kỳ.";
             case "users" -> "Tìm kiếm, phân trang và quản lý tài khoản, vai trò, mật khẩu.";
             case "jobs" -> "Theo dõi tiến trình các công việc tính toán và nhập liệu đang xử lý.";
+            case "sessions" -> "Theo dõi các kết nối TCP và ngắt kết nối phiên khi cần thiết.";
             default -> "Khung trang đã sẵn sàng. Chức năng sẽ được bổ sung ở các hạng mục Admin.";
         };
     }
