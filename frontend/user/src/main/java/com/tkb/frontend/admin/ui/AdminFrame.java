@@ -1,6 +1,11 @@
 package com.tkb.frontend.admin.ui;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import com.tkb.frontend.user.net.NetworkClient;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -12,10 +17,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class AdminFrame extends BorderPane {
     private static final Map<String, String> PAGES = createPages();
@@ -78,8 +79,15 @@ public class AdminFrame extends BorderPane {
 
         setPrefSize(1360, 860);
         setStyle("-fx-background-color: #FBF8FA;");
-        workspaceContent.setPadding(new Insets(36, 42, 42, 42));
+        workspaceContent.setPadding(new Insets(28, 28, 28, 28));
         workspaceContent.setFillWidth(true);
+
+        pageTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 27));
+        pageTitle.setTextFill(Color.BLACK);
+
+        pageDescription.setFont(Font.font("Segoe UI", 14));
+        pageDescription.setTextFill(Color.web("#888888"));
+        
         placeholderMessage.setWrapText(true);
         placeholderMessage.setFont(Font.font("Segoe UI", 14));
         placeholderMessage.setTextFill(Color.web("#82747E"));
@@ -99,10 +107,10 @@ public class AdminFrame extends BorderPane {
         sidebar.setPadding(new Insets(24, 14, 20, 14));
         sidebar.setStyle("-fx-background-color: linear-gradient(to bottom, #49243F, #B9688A);");
 
-        Label brand = new Label("TKB  /  QUẢN TRỊ");
+        Label brand = new Label("THỜI KHÓA BIỂU");
         brand.setTextFill(Color.WHITE);
-        brand.setFont(Font.font("Segoe UI", FontWeight.BOLD, 17));
-        brand.setPadding(new Insets(0, 10, 22, 10));
+        brand.setFont(Font.font("Segoe UI", FontWeight.BOLD, 21));
+        brand.setPadding(new Insets(0, 10, 36, 10));
         sidebar.getChildren().add(brand);
 
         PAGES.forEach((key, title) -> {
@@ -124,22 +132,35 @@ public class AdminFrame extends BorderPane {
     }
 
     private VBox createTopBar() {
-        Label breadcrumb = new Label("HỆ THỐNG  /  QUẢN TRỊ");
-        breadcrumb.setTextFill(Color.web("#927F8B"));
-        breadcrumb.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
+        Label title = new Label("ADMIN");
+        title.setTextFill(Color.web("#B9688A"));
+        title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 38));
+
+        Label subtitle = new Label("Hệ thống quản trị");
+        subtitle.setTextFill(Color.web("#888888"));
+        subtitle.setFont(Font.font("Segoe UI", 14));
+
         Label user = new Label("Quản trị viên");
-        user.setTextFill(Color.web("#503A4A"));
-        user.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+        user.setTextFill(Color.BLACK);
+        user.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+        user.setAlignment(Pos.CENTER);
+        user.setPadding(new Insets(16, 25, 16, 25));
+        user.setStyle(
+            "-fx-background-color: #EACFE0;" +
+            "-fx-background-radius: 12;"
+        );
+
+        javafx.scene.layout.HBox left = new javafx.scene.layout.HBox(12, title, subtitle);
+        left.setAlignment(Pos.CENTER_LEFT);
 
         BorderPane bar = new BorderPane();
-        bar.setLeft(breadcrumb);
+        bar.setLeft(left);
         bar.setRight(user);
-        BorderPane.setAlignment(breadcrumb, Pos.CENTER_LEFT);
-        BorderPane.setAlignment(user, Pos.CENTER_RIGHT);
+
         VBox top = new VBox(bar);
-        top.setPadding(new Insets(20, 38, 20, 38));
-        top.setStyle("-fx-background-color: white; "
-                + "-fx-border-color: transparent transparent #F0E7EC transparent;");
+        top.setPadding(new Insets(10, 16, 10, 16));
+        top.setStyle("-fx-background-color: #FBF8FA;");
+
         return top;
     }
 

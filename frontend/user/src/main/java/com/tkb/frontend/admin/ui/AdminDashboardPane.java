@@ -1,6 +1,9 @@
 package com.tkb.frontend.admin.ui;
 
+import java.util.Map;
+
 import com.tkb.common.protocol.Command;
+
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -15,8 +18,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
-import java.util.Map;
-
 final class AdminDashboardPane extends VBox {
     private final AdminRequestClient requests;
     private final Label statusLabel = new Label();
@@ -27,31 +28,35 @@ final class AdminDashboardPane extends VBox {
     private final Button refreshButton = new Button("Làm mới");
 
     AdminDashboardPane(AdminRequestClient requests) {
-        super(20);
+        super(24);
         this.requests = requests;
-        setPadding(new Insets(36, 42, 42, 42));
+        setPadding(new Insets(24, 48, 24, 48));
         setFillWidth(true);
 
+        setStyle(
+            "-fx-background-color: #F8F6FC;" +
+            "-fx-background-radius: 4;"
+        );
+
         Label heading = new Label("Tình hình hệ thống");
-        heading.setFont(Font.font("Segoe UI", FontWeight.BOLD, 17));
-        heading.setTextFill(Color.web("#493343"));
+        heading.setFont(Font.font("Segoe UI", FontWeight.BOLD, 21));
+        heading.setTextFill(Color.BLACK);
 
         refreshButton.setOnAction(event -> loadStats());
         refreshButton.setStyle("-fx-background-color: #8D456B; -fx-text-fill: white; "
                 + "-fx-background-radius: 8; -fx-padding: 9 18 9 18; -fx-cursor: hand;");
-        Label note = new Label("Các chỉ số hiện tại từ máy chủ");
-        note.setTextFill(Color.web("#82747E"));
-        note.setFont(Font.font("Segoe UI", 12));
         BorderPane toolbar = new BorderPane();
-        toolbar.setLeft(note);
+        toolbar.setLeft(heading);
         toolbar.setRight(refreshButton);
-        BorderPane.setAlignment(note, Pos.CENTER_LEFT);
+
+        BorderPane.setAlignment(heading, Pos.CENTER_LEFT);
+        BorderPane.setAlignment(refreshButton, Pos.CENTER_RIGHT);
 
         statusLabel.setFont(Font.font("Segoe UI", 12));
         statusLabel.setWrapText(true);
         statusLabel.setTextFill(Color.web("#82747E"));
 
-        getChildren().setAll(new VBox(toolbar), heading, createMetricsGrid(), statusLabel);
+        getChildren().setAll(toolbar, createMetricsGrid(), statusLabel);
     }
 
     void onShown() {
@@ -60,8 +65,8 @@ final class AdminDashboardPane extends VBox {
 
     private GridPane createMetricsGrid() {
         GridPane grid = new GridPane();
-        grid.setHgap(16);
-        grid.setVgap(16);
+        grid.setHgap(60);
+        grid.setVgap(58);
         grid.setMaxWidth(Double.MAX_VALUE);
         for (int column = 0; column < 2; column++) {
             ColumnConstraints constraints = new ColumnConstraints();
@@ -78,19 +83,26 @@ final class AdminDashboardPane extends VBox {
 
     private VBox metricCard(String title, Label value, String detail, String accent) {
         Label titleLabel = new Label(title);
-        titleLabel.setTextFill(Color.web("#756572"));
-        titleLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+        titleLabel.setTextFill(Color.BLACK);
+        titleLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
+
         Label detailLabel = new Label(detail);
-        detailLabel.setTextFill(Color.web("#9B8C98"));
-        detailLabel.setFont(Font.font("Segoe UI", 11));
-        VBox card = new VBox(12, titleLabel, value, detailLabel);
-        card.setMinHeight(150);
+        detailLabel.setTextFill(Color.web("#777777"));
+        detailLabel.setFont(Font.font("Segoe UI", 10));
+
+        VBox card = new VBox(14, titleLabel, value, detailLabel);
+
+        card.setMinHeight(164);
         card.setMaxWidth(Double.MAX_VALUE);
-        card.setPadding(new Insets(22));
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 14; "
-                + "-fx-border-color: #F0E7EC; -fx-border-radius: 14; "
-                + "-fx-border-width: 1 1 1 4; -fx-border-insets: 0 0 0 0;");
+        card.setPadding(new Insets(22, 40, 22, 40));
+
+        card.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 12;"
+        );
+
         value.setTextFill(Color.web(accent));
+
         GridPane.setHgrow(card, Priority.ALWAYS);
         return card;
     }
