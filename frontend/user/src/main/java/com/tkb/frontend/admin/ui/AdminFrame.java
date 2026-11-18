@@ -5,6 +5,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.tkb.frontend.user.net.NetworkClient;
+import com.tkb.common.protocol.Command;
+import com.tkb.common.protocol.Request;
+import com.tkb.frontend.user.ui.ClientApplicationFrame;
+
+import javafx.application.Platform;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -20,7 +27,9 @@ import javafx.scene.text.FontWeight;
 
 public class AdminFrame extends BorderPane {
     private static final Map<String, String> PAGES = createPages();
+    private static final AtomicInteger LOGOUT_REQUEST_IDS =new AtomicInteger(1000000);
 
+    private final NetworkClient networkClient;
     private final Map<String, Button> navigation = new LinkedHashMap<>();
     private final Map<String, Node> pageContents = new LinkedHashMap<>();
     private final VBox workspaceContent = new VBox(20);
@@ -56,6 +65,8 @@ public class AdminFrame extends BorderPane {
     }
 
     public AdminFrame(NetworkClient networkClient) {
+        this.networkClient = networkClient;
+
         AdminRequestClient requests = new AdminRequestClient(networkClient);
         dashboardPane = new AdminDashboardPane(requests);
         importPane = new AdminImportPane(requests);
@@ -126,10 +137,55 @@ public class AdminFrame extends BorderPane {
         Label account = new Label("ADMIN");
         account.setTextFill(Color.web("#FFE1EC"));
         account.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+
         VBox.setVgrow(account, Priority.ALWAYS);
         sidebar.getChildren().add(account);
+
+        Button logoutButton = new Button("Đăng xuất");
+
+        logoutButton.setMaxWidth(Double.MAX_VALUE);
+        logoutButton.setPrefHeight(42);
+        logoutButton.setAlignment(Pos.CENTER);
+
+        logoutButton.setStyle(
+                "-fx-background-color: #A52F55;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-size: 14px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-cursor: hand;"
+        );
+
+        logoutButton.setOnAction(event -> dangXuat());
+
+        sidebar.getChildren().add(logoutButton);
         return sidebar;
     }
+
+    private void dangXuat() {
+    if (networkClient != null) {
+        try {
+            int requestId = LOGOUT_REQUEST_IDS.getAndIncrement();
+
+            networkClient.send(
+                    new Request(requestId, Command.LOGOUT, Map.of())
+            ).whenComplete((response, error) ->
+                    Platform.runLater(this::quayVeDangNhap)
+            );
+
+            return;
+        } catch (RuntimeException ignored) {
+        }
+    }
+
+    quayVeDangNhap();
+}
+
+private void quayVeDangNhap() {
+    if (getParent() instanceof ClientApplicationFrame parentFrame) {
+        parentFrame.resetToLogin();
+    }
+}
 
     private VBox createTopBar() {
         Label title = new Label("ADMIN");
