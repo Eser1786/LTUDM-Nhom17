@@ -42,7 +42,6 @@ public class AdminFrame extends BorderPane {
     private final AdminImportPane importPane;
     private final AdminSemestersPane semestersPane;
     private final AdminCoursesPane coursesPane;
-    private final AdminSectionsPane sectionsPane;
     private final AdminUsersPane usersPane;
     private final AdminJobsPane jobsPane;
     private final AdminSessionsPane sessionsPane;
@@ -53,7 +52,6 @@ public class AdminFrame extends BorderPane {
         pages.put("import", "Nhập dữ liệu");
         pages.put("semesters", "Học kỳ");
         pages.put("courses", "Học phần");
-        pages.put("sections", "Nhóm lớp");
         pages.put("users", "Người dùng");
         pages.put("jobs", "Giám sát công việc");
         pages.put("sessions", "Phiên online");
@@ -72,7 +70,6 @@ public class AdminFrame extends BorderPane {
         importPane = new AdminImportPane(requests);
         semestersPane = new AdminSemestersPane(requests, importPane::refreshSemesters);
         coursesPane = new AdminCoursesPane(requests);
-        sectionsPane = new AdminSectionsPane(requests);
         usersPane = new AdminUsersPane(requests);
         jobsPane = new AdminJobsPane(requests);
         sessionsPane = new AdminSessionsPane(requests);
@@ -80,7 +77,6 @@ public class AdminFrame extends BorderPane {
         pageContents.put("import", importPane);
         pageContents.put("semesters", semestersPane);
         pageContents.put("courses", coursesPane);
-        pageContents.put("sections", sectionsPane);
         pageContents.put("users", usersPane);
         pageContents.put("jobs", jobsPane);
         pageContents.put("sessions", sessionsPane);
@@ -237,7 +233,6 @@ private void quayVeDangNhap() {
             case "import" -> importPane.onShown();
             case "semesters" -> semestersPane.onShown();
             case "courses" -> coursesPane.onShown();
-            case "sections" -> sectionsPane.onShown();
             case "users" -> usersPane.onShown();
             case "jobs" -> jobsPane.onShown();
             case "sessions" -> sessionsPane.onShown();
@@ -252,7 +247,6 @@ private void quayVeDangNhap() {
             case "import" -> "Tải PDF, kiểm tra dữ liệu trước khi ghi và xem rõ lỗi theo STT.";
             case "semesters" -> "Tạo học kỳ và chọn học kỳ hiện hành cho hệ thống.";
             case "courses" -> "Tìm kiếm, thêm, chỉnh sửa và xóa học phần trong danh mục.";
-            case "sections" -> "Quản lý nhóm lớp, lịch học và trạng thái mở/tắt theo học kỳ.";
             case "users" -> "Tìm kiếm, phân trang và quản lý tài khoản, vai trò, mật khẩu.";
             case "jobs" -> "Theo dõi tiến trình các công việc tính toán và nhập liệu đang xử lý.";
             case "sessions" -> "Theo dõi các kết nối TCP và ngắt kết nối phiên khi cần thiết.";
