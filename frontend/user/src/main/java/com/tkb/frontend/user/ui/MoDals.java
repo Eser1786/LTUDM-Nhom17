@@ -1,6 +1,7 @@
 package com.tkb.frontend.user.ui;
 
 import com.tkb.frontend.user.model.Types.PlanDetail;
+import com.tkb.frontend.user.model.Types.SavedPlan;
 import com.tkb.frontend.user.net.ApiException;
 import com.tkb.frontend.user.net.TkbClient;
 import javafx.geometry.Insets;
@@ -16,6 +17,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.Window;
+import java.util.List;
 
 /** Các hộp thoại dùng chung: lưu, đổi tên, xác nhận xóa và xem nhanh thời khóa biểu. */
 public final class MoDals {
@@ -76,6 +78,18 @@ public final class MoDals {
                 return;
             }
             try {
+                // Kiem tra ten da ton tai (client-side) de phan hoi ngay lap tuc.
+                try {
+                    List<SavedPlan> ds = client.listPlans(maHocKy);
+                    for (SavedPlan sp : ds) {
+                        if (sp.ten() != null && sp.ten().trim().equalsIgnoreCase(ten)) {
+                            loi.setText("Tên thời khóa biểu đã tồn tại. Vui lòng chọn tên khác.");
+                            return;
+                        }
+                    }
+                } catch (ApiException ignored) {
+                    // Neu khong lay duoc danh sach, de backend kiem tra.
+                }
                 client.savePlan(maHocKy, ten, sectionIds);
                 stage.close();
                 if (sauKhiLuu != null) sauKhiLuu.run();
