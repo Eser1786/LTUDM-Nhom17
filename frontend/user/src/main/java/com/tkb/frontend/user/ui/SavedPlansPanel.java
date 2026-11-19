@@ -12,19 +12,24 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 /** Màn hình Thời khóa biểu đã lưu: card lịch, xem nhanh, mở, đổi tên, xóa và so sánh 2 lịch. */
-public class SavedPlansPanel extends ScrollPane {
+public class SavedPlansPanel extends VBox {
     private final TkbClient client;
     private final MainFrame frame;
     private final MainFrame.AppUiState st;
     private final TextField txtTimKiem = Functions.oNhap();
     private final VBox danhSach = new VBox(12);
     private final VBox khung = new VBox(14);
+    private final VBox pinnedBar = new VBox(8);
+    private final ScrollPane scrollPane = new ScrollPane();
+    private SavedPlan pinnedPlan;
+    private TimetableGridPanel pinnedGrid;
     private List<SavedPlan> tatCa = List.of();
 
     public SavedPlansPanel(TkbClient client, MainFrame frame) {
@@ -50,9 +55,20 @@ public class SavedPlansPanel extends ScrollPane {
         thanhCongCu.getChildren().add(row);
 
         khung.getChildren().addAll(header, thanhCongCu, danhSach);
-        setContent(khung);
-        setFitToWidth(true);
+
+        pinnedBar.setVisible(false);
+        pinnedBar.setManaged(false);
+        pinnedBar.setPadding(new Insets(10, 26, 6, 26));
+        pinnedBar.setStyle("-fx-background-color: #EFF6FF; -fx-border-color: #BFDBFE; -fx-border-width: 0 0 1 0;");
+
+        scrollPane.setContent(khung);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: #F6F8FB;");
+
+        setSpacing(0);
         setStyle("-fx-background-color: #F6F8FB;");
+        getChildren().addAll(pinnedBar, scrollPane);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
         txtTimKiem.textProperty().addListener((o, a, b) -> veDanhSach());
     }
 
@@ -149,15 +165,53 @@ public class SavedPlansPanel extends ScrollPane {
         Button doi = Functions.nutPhu("Đổi tên");
         Button xoa = Functions.nutXoa("Xóa");
         Button xuat = Functions.nutPhu("Xuất PNG");
+        Button ghim = Functions.nutPhu("📌 Ghim");
         doi.setOnAction(e -> doiTen(p));
         xoa.setOnAction(e -> xoa(p));
         xuat.setOnAction(e -> {
             if (gridRef != null) Functions.xuatPng(gridRef, frame.window(), p.ten());
         });
-        actions.getChildren().addAll(doi, xoa, xuat);
+        ghim.setOnAction(e -> ghimPlan(p, gridRef));
+        actions.getChildren().addAll(doi, xoa, ghim, xuat);
 
         card.getChildren().add(actions);
         return card;
+    }
+
+    private void ghimPlan(SavedPlan p, TimetableGridPanel gridRef) {
+        if (pinnedPlan != null && pinnedPlan.id() == p.id()) {
+            pinnedPlan = null;
+            pinnedGrid = null;
+            pinnedBar.getChildren().clear();
+            pinnedBar.setVisible(false);
+            pinnedBar.setManaged(false);
+            return;
+        }
+        try {
+            PlanDetail d = client.getPlan(p.id());
+            pinnedPlan = p;
+            pinnedGrid = new TimetableGridPanel();
+            pinnedGrid.setTieuDe(p.ten());
+            pinnedGrid.setSlots(d.slots());
+            pinnedGrid.setMinHeight(300);
+            pinnedGrid.setPrefHeight(360);
+            pinnedGrid.setMaxHeight(420);
+
+            pinnedBar.getChildren().clear();
+            HBox tieuDe = new HBox(10,
+                    Functions.tieuDeThe("📌 Đang ghim: " + p.ten()),
+                    Functions.nhanChinh(Math.round(p.diem()) + "/100"));
+            tieuDe.setAlignment(Pos.CENTER_LEFT);
+            Button boGhim = Functions.nutPhu("Bỏ ghim");
+            boGhim.setOnAction(e -> ghimPlan(p, gridRef));
+            HBox nut = new HBox(10, Functions.khoangTrong(), boGhim);
+            nut.setAlignment(Pos.CENTER_RIGHT);
+            pinnedBar.getChildren().addAll(tieuDe, pinnedGrid, nut);
+            pinnedBar.setVisible(true);
+            pinnedBar.setManaged(true);
+        } catch (ApiException ex) {
+            Functions.loi(frame.window(), ex);
+        }
     }
 
     private void doiTen(SavedPlan p) {

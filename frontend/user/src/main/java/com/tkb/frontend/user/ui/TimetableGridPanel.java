@@ -32,7 +32,6 @@ public class TimetableGridPanel extends VBox {
     private static final int TONG_GIO = THOI_GIAN.size();
 
     private final GridPane grid = new GridPane();
-    private final ScrollPane scroll = new ScrollPane();
     private final List<SectionSlot> slots = new ArrayList<>();
     private String tieuDe = "Thời khóa biểu";
 
@@ -48,16 +47,12 @@ public class TimetableGridPanel extends VBox {
     public TimetableGridPanel() {
         setSpacing(10);
         setPadding(new Insets(4));
-        scroll.setContent(grid);
-        scroll.setFitToWidth(true);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
-        VBox.setVgrow(scroll, Priority.ALWAYS);
-        getChildren().add(scroll);
+        grid.setMaxWidth(Double.MAX_VALUE);
+        getChildren().add(grid);
         veMacDinh();
         veLich();
     }
+
 
     public void setTieuDe(String tieuDe) {
         this.tieuDe = tieuDe;

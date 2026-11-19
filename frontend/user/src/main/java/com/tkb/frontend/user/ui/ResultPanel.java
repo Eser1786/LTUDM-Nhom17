@@ -12,6 +12,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -21,12 +23,16 @@ import java.util.Map;
 import java.util.Comparator;
 
 /** Màn hình Kết quả đề xuất: ba card phương án A/B/C, lưới thời khóa biểu và điểm đáp ứng tiêu chí. */
-public class ResultPanel extends ScrollPane {
+public class ResultPanel extends VBox {
     private final TkbClient client;
     private final MainFrame frame;
     private final MainFrame.AppUiState st;
     private final VBox chiTiet = new VBox(14);
     private final VBox khung = new VBox(16);
+    private final VBox pinnedBar = new VBox(8);
+    private final ScrollPane scrollPane = new ScrollPane();
+    private ScheduleOption pinnedOption;
+    private TimetableGridPanel pinnedGrid;
     private JobResult ketQua;
 
     public ResultPanel(TkbClient client, MainFrame frame) {
@@ -44,9 +50,53 @@ public class ResultPanel extends ScrollPane {
                         + "Chọn một phương án để xem lịch chi tiết."));
 
         khung.getChildren().addAll(header, chiTiet);
-        setContent(khung);
-        setFitToWidth(true);
+
+        pinnedBar.setVisible(false);
+        pinnedBar.setManaged(false);
+        pinnedBar.setPadding(new Insets(10, 26, 6, 26));
+        pinnedBar.setStyle("-fx-background-color: #EFF6FF; -fx-border-color: #BFDBFE; -fx-border-width: 0 0 1 0;");
+
+        scrollPane.setContent(khung);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: #F6F8FB;");
+
+        setSpacing(0);
         setStyle("-fx-background-color: #F6F8FB;");
+        getChildren().addAll(pinnedBar, scrollPane);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+    }
+
+    private void ghimTkb(ScheduleOption o) {
+        if (pinnedOption != null && pinnedOption.ten().equals(o.ten())) {
+            // bo ghim
+            pinnedOption = null;
+            pinnedGrid = null;
+            pinnedBar.getChildren().clear();
+            pinnedBar.setVisible(false);
+            pinnedBar.setManaged(false);
+            return;
+        }
+        pinnedOption = o;
+        pinnedGrid = new TimetableGridPanel();
+        pinnedGrid.setTieuDe("Ghim: " + o.ten());
+        pinnedGrid.setSlots(o.slots());
+        pinnedGrid.setMinHeight(420);
+        pinnedGrid.setPrefHeight(420);
+        pinnedGrid.setMaxHeight(460);
+        VBox.setVgrow(pinnedGrid, Priority.NEVER);
+
+        pinnedBar.getChildren().clear();
+        HBox tieuDe = new HBox(10,
+                Functions.tieuDeThe("📌 Đang ghim: Phương án " + o.ten()),
+                Functions.nhanChinh("Điểm " + Math.round(o.diem()) + "/100"));
+        tieuDe.setAlignment(Pos.CENTER_LEFT);
+        Button boGhim = Functions.nutPhu("Bỏ ghim");
+        boGhim.setOnAction(e -> ghimTkb(o));
+        HBox nut = new HBox(10, Functions.khoangTrong(), boGhim);
+        nut.setAlignment(Pos.CENTER_RIGHT);
+        pinnedBar.getChildren().addAll(tieuDe, pinnedGrid, nut);
+        pinnedBar.setVisible(true);
+        pinnedBar.setManaged(true);
     }
 
     private void resetKhung() {
@@ -96,7 +146,7 @@ public class ResultPanel extends ScrollPane {
     private void veTatCaLich(List<ScheduleOption> options) {
         chiTiet.getChildren().clear();
         for (ScheduleOption o : options) {
-            VBox theLuoi = Functions.the(14);
+            VBox theLuoi = Functions.the(10);
             HBox tieuDe = new HBox(10,
                     Functions.tieuDeThe("Thời khóa biểu phương án " + o.ten()),
                     Functions.nhanChinh("Điểm " + Math.round(o.diem()) + "/100"));
@@ -106,7 +156,7 @@ public class ResultPanel extends ScrollPane {
             TimetableGridPanel grid = new TimetableGridPanel();
             grid.setTieuDe("Phương án " + o.ten());
             grid.setSlots(o.slots());
-            grid.setPrefHeight(560);
+            grid.setPrefHeight(400);
             theLuoi.getChildren().add(grid);
 
             String biLoaiText = o.biLoai() == null || o.biLoai().isEmpty()
@@ -120,8 +170,10 @@ public class ResultPanel extends ScrollPane {
 
             Button xuat = Functions.nutPhu("Xuất PNG");
             xuat.setOnAction(e -> Functions.xuatPng(grid, frame.window(), "Phương án " + o.ten()));
+            Button ghim = Functions.nutPhu("📌 Ghim");
+            ghim.setOnAction(e -> ghimTkb(o));
             HBox nut = new HBox(10, Functions.khoangTrong(),
-                    xuat, nutLuu("Lưu thời khóa biểu", o));
+                    ghim, xuat, nutLuu("Lưu thời khóa biểu", o));
             nut.setAlignment(Pos.CENTER_RIGHT);
             theLuoi.getChildren().add(nut);
 
