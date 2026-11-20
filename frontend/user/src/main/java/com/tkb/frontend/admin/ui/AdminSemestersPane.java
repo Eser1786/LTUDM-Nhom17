@@ -109,8 +109,12 @@ final class AdminSemestersPane extends VBox {
                         confirmSetCurrent(getTableView().getItems().get(getIndex()));
                     }
                 });
+
                 setCurrentButton.setStyle("-fx-background-color: #F4EAF0; -fx-text-fill: #75405E; "
                         + "-fx-background-radius: 7; -fx-padding: 6 10 6 10; -fx-cursor: hand;");
+
+                setAlignment(Pos.CENTER);
+                setPadding(Insets.EMPTY);
             }
 
             @Override
@@ -127,7 +131,16 @@ final class AdminSemestersPane extends VBox {
         });
         actionColumn.setPrefWidth(150);
 
-        semesterTable.getColumns().setAll(codeColumn, nameColumn, currentColumn, actionColumn);
+        codeColumn.setStyle("-fx-alignment: CENTER;");
+        nameColumn.setStyle("-fx-alignment: CENTER-LEFT;");
+        currentColumn.setStyle("-fx-alignment: CENTER;");
+
+        semesterTable.getColumns().setAll(
+                codeColumn,
+                nameColumn,
+                currentColumn,
+                actionColumn
+        );
         semesterTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         AdminTableStyle.apply(semesterTable);
         semesterTable.setPlaceholder(new Label("Chưa có học kỳ."));

@@ -133,7 +133,8 @@ final class AdminCoursesPane extends VBox {
                 new javafx.beans.property.ReadOnlyStringWrapper(
                         cell.getValue().courseCode()));
         codeColumn.setPrefWidth(140);
-
+TableColumn<AdminCourseOption, String> activeSectionsColumn =
+        new TableColumn<>("Nhóm đang mở");
         TableColumn<AdminCourseOption, String> nameColumn =
                 new TableColumn<>("Tên học phần");
 
@@ -158,25 +159,21 @@ final class AdminCoursesPane extends VBox {
                         Integer.toString(cell.getValue().sectionCount())));
         sectionsColumn.setPrefWidth(120);
 
-        TableColumn<AdminCourseOption, String> activeSectionsColumn =
-                new TableColumn<>("Nhóm đang mở");
-
-        activeSectionsColumn.setCellValueFactory(cell ->
-                new javafx.beans.property.ReadOnlyStringWrapper(
-                        Integer.toString(cell.getValue().activeSectionCount())));
-        activeSectionsColumn.setPrefWidth(120);
-
         TableColumn<AdminCourseOption, Void> actionColumn =
                 createActionColumn();
 
         actionColumn.setPrefWidth(140);
+
+        codeColumn.setStyle("-fx-alignment: CENTER;");
+        nameColumn.setStyle("-fx-alignment: CENTER-LEFT;");
+        creditsColumn.setStyle("-fx-alignment: CENTER;");
+        sectionsColumn.setStyle("-fx-alignment: CENTER;");
 
         courseTable.getColumns().setAll(
                 codeColumn,
                 nameColumn,
                 creditsColumn,
                 sectionsColumn,
-                activeSectionsColumn,
                 actionColumn
         );
 
@@ -229,6 +226,7 @@ final class AdminCoursesPane extends VBox {
                 });
 
                 setAlignment(Pos.CENTER);
+                setPadding(Insets.EMPTY);
             }
 
             @Override
@@ -298,7 +296,6 @@ final class AdminCoursesPane extends VBox {
             AdminCourseOption course,
             List<SectionDto> sections) {
 
-        // Tieu de thong tin hoc phan
         Label courseTitle = new Label(
                 course.courseCode() + " - " + course.name());
         courseTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 17));
@@ -321,7 +318,6 @@ final class AdminCoursesPane extends VBox {
                         + "-fx-border-radius: 10;"
         );
 
-        // Khu vuc chua cac card nhom lop
         VBox sectionList = new VBox(14);
         sectionList.setPadding(new Insets(4, 2, 12, 2));
         sectionList.setFillWidth(true);
@@ -352,7 +348,6 @@ final class AdminCoursesPane extends VBox {
             }
         }
 
-        // Khu vuc noi dung co thanh cuon
         VBox content = new VBox(16, courseHeader, sectionList);
         content.setPadding(new Insets(16));
         content.setStyle("-fx-background-color: #F8F7FC;");
@@ -381,7 +376,6 @@ final class AdminCoursesPane extends VBox {
 
     private VBox createSectionCard(SectionDto section, int index) {
 
-        // Tieu de nhom lop
         Label title = new Label(
                 "NHÓM LỚP " + index + " - " + section.getGroupNo());
 
@@ -411,19 +405,14 @@ final class AdminCoursesPane extends VBox {
         HBox heading = new HBox(10, title, status);
         heading.setAlignment(Pos.CENTER_LEFT);
 
-        // Thong tin nhom lop
         VBox information = new VBox(9);
 
         information.getChildren().addAll(
                 createDetailRow("Mã học phần", section.getCourseCode()),
                 createDetailRow("Loại nhóm", section.getType()),
-                createDetailRow("Lớp", valueOrDash(section.getClassName())),
-                createDetailRow("Giảng viên", valueOrDash(section.getLecturer())),
-                createDetailRow("Mã giảng viên", valueOrDash(section.getLecturerCode())),
-                createDetailRow("Sức chứa", Integer.toString(section.getCapacity()))
+                createDetailRow("Giảng viên", valueOrDash(section.getLecturer()))
         );
 
-        // Tieu de lich hoc
         Label scheduleTitle = new Label("LỊCH HỌC VÀ PHÒNG");
         scheduleTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
         scheduleTitle.setTextFill(Color.web("#75405E"));
@@ -559,7 +548,11 @@ final class AdminCoursesPane extends VBox {
                         List<AdminCourseOption> courses =
                                 AdminCourseOption.fromResponse(data);
 
-                        courseTable.getItems().setAll(courses);
+                        List<AdminCourseOption> filteredCourses = courses.stream()
+                                .filter(course -> course.sectionCount() > 0)
+                                .toList();
+
+                        courseTable.getItems().setAll(filteredCourses);
 
                         setStatus(
                                 "Đã tải " + courses.size() + " học phần.",

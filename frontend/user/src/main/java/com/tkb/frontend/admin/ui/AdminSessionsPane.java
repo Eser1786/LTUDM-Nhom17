@@ -157,6 +157,7 @@ final class AdminSessionsPane extends VBox {
             private final Label badge = new Label();
             {
                 setAlignment(Pos.CENTER_LEFT);
+                setPadding(Insets.EMPTY);
             }
             @Override
             protected void updateItem(Void item, boolean empty) {
@@ -187,8 +188,17 @@ final class AdminSessionsPane extends VBox {
                 () -> loading || !requests.isAvailable()));
         actionColumn.setPrefWidth(130);
 
+        idColumn.setStyle("-fx-alignment: CENTER;");
+        addressColumn.setStyle("-fx-alignment: CENTER;");
+        connectedColumn.setStyle("-fx-alignment: CENTER;");
+
         sessionTable.getColumns().setAll(
-                idColumn, userColumn, addressColumn, connectedColumn, actionColumn);
+                idColumn,
+                userColumn,
+                addressColumn,
+                connectedColumn,
+                actionColumn
+        );
         sessionTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         sessionTable.setPlaceholder(new Label("Hiện không có phiên kết nối nào khác."));
         AdminTableStyle.apply(sessionTable);

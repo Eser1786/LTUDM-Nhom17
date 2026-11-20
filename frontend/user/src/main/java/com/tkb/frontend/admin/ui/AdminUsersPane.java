@@ -124,8 +124,22 @@ final class AdminUsersPane extends VBox {
                 () -> loading || !requests.isAvailable()));
         actionsColumn.setPrefWidth(440);
 
+        actionsColumn.setPrefWidth(440);
+
+        idColumn.setStyle("-fx-alignment: CENTER;");
+        usernameColumn.setStyle("-fx-alignment: CENTER-LEFT;");
+        roleColumn.setStyle("-fx-alignment: CENTER;");
+        onlineColumn.setStyle("-fx-alignment: CENTER;");
+        createdColumn.setStyle("-fx-alignment: CENTER;");
+
         userTable.getColumns().setAll(
-                idColumn, usernameColumn, roleColumn, onlineColumn, createdColumn, actionsColumn);
+                idColumn,
+                usernameColumn,
+                roleColumn,
+                onlineColumn,
+                createdColumn,
+                actionsColumn
+        );
         userTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         userTable.setPlaceholder(new Label("Không có người dùng phù hợp."));
         AdminTableStyle.apply(userTable);

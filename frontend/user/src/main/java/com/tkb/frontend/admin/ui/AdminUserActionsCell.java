@@ -1,8 +1,13 @@
 package com.tkb.frontend.admin.ui;
 
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableCell;
 import javafx.scene.layout.HBox;
+
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -37,6 +42,8 @@ final class AdminUserActionsCell extends TableCell<AdminUserOption, Void> {
 
     @Override
     protected void updateItem(Void item, boolean empty) {
+        setAlignment(Pos.CENTER);
+        setPadding(Insets.EMPTY);
         super.updateItem(item, empty);
         AdminUserOption user = getUserAtRow();
         if (empty || user == null) {

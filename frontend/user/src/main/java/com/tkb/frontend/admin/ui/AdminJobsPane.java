@@ -161,6 +161,7 @@ final class AdminJobsPane extends VBox {
             private final Label badge = new Label();
             {
                 setAlignment(Pos.CENTER_LEFT);
+                setPadding(Insets.EMPTY);
             }
             @Override
             protected void updateItem(Void item, boolean empty) {
@@ -186,6 +187,7 @@ final class AdminJobsPane extends VBox {
             private final Label badge = new Label();
             {
                 setAlignment(Pos.CENTER_LEFT);
+                setPadding(Insets.EMPTY);
             }
             @Override
             protected void updateItem(Void item, boolean empty) {
@@ -212,7 +214,7 @@ final class AdminJobsPane extends VBox {
                 bar.setMaxHeight(12);
                 pctLabel.setFont(Font.font("Segoe UI", 11));
                 pctLabel.setTextFill(Color.web("#5A4755"));
-                box.setAlignment(Pos.CENTER_LEFT);
+                box.setAlignment(Pos.CENTER);
             }
             @Override
             protected void updateItem(Void item, boolean empty) {
@@ -243,8 +245,22 @@ final class AdminJobsPane extends VBox {
                 () -> loading || !requests.isAvailable()));
         actionColumn.setPrefWidth(100);
 
+        // Can chinh noi dung cac cot
+        idColumn.setStyle("-fx-alignment: CENTER;");
+        userColumn.setStyle("-fx-alignment: CENTER-LEFT;");
+        startedColumn.setStyle("-fx-alignment: CENTER;");
+        messageColumn.setStyle("-fx-alignment: CENTER-LEFT;");
+
         jobTable.getColumns().setAll(
-                idColumn, typeColumn, userColumn, statusColumn, progressColumn, startedColumn, messageColumn, actionColumn);
+                idColumn,
+                typeColumn,
+                userColumn,
+                statusColumn,
+                progressColumn,
+                startedColumn,
+                messageColumn,
+                actionColumn
+        );
         jobTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         jobTable.setPlaceholder(new Label("Hiện không có tiến trình nào đang chạy hoặc chờ xử lý."));
         AdminTableStyle.apply(jobTable);
