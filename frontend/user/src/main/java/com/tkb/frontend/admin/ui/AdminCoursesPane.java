@@ -18,7 +18,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -293,115 +293,216 @@ final class AdminCoursesPane extends VBox {
         }));
     }
 
+    
     private void showDetailsDialog(
             AdminCourseOption course,
             List<SectionDto> sections) {
 
-        StringBuilder content = new StringBuilder();
+        // Tieu de thong tin hoc phan
+        Label courseTitle = new Label(
+                course.courseCode() + " - " + course.name());
+        courseTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 17));
+        courseTitle.setTextFill(Color.web("#75405E"));
+        courseTitle.setWrapText(true);
 
-        content.append("MÃ HỌC PHẦN: ")
-                .append(course.courseCode())
-                .append("\n");
+        Label courseInfo = new Label(
+                "Số tín chỉ: " + course.credits()
+                        + "     |     Tổng số nhóm lớp: " + sections.size());
 
-        content.append("TÊN HỌC PHẦN: ")
-                .append(course.name())
-                .append("\n");
+        courseInfo.setFont(Font.font("Segoe UI", 12));
+        courseInfo.setTextFill(Color.web("#82747E"));
 
-        content.append("SỐ TÍN CHỈ: ")
-                .append(course.credits())
-                .append("\n");
+        VBox courseHeader = new VBox(8, courseTitle, courseInfo);
+        courseHeader.setPadding(new Insets(16));
+        courseHeader.setStyle(
+                "-fx-background-color: #F4EAF0;"
+                        + "-fx-background-radius: 10;"
+                        + "-fx-border-color: #EAD5E0;"
+                        + "-fx-border-radius: 10;"
+        );
 
-        content.append("TỔNG SỐ NHÓM LỚP: ")
-                .append(sections.size())
-                .append("\n\n");
+        // Khu vuc chua cac card nhom lop
+        VBox sectionList = new VBox(14);
+        sectionList.setPadding(new Insets(4, 2, 12, 2));
+        sectionList.setFillWidth(true);
 
         if (sections.isEmpty()) {
-            content.append("Học phần chưa có nhóm lớp trong học kỳ này.");
-        }
+            Label emptyLabel = new Label(
+                    "Học phần chưa có nhóm lớp trong học kỳ này.");
 
-        for (int i = 0; i < sections.size(); i++) {
+            emptyLabel.setFont(Font.font("Segoe UI", 13));
+            emptyLabel.setTextFill(Color.web("#82747E"));
 
-            SectionDto section = sections.get(i);
+            VBox emptyCard = new VBox(emptyLabel);
+            emptyCard.setPadding(new Insets(20));
+            emptyCard.setStyle(
+                    "-fx-background-color: white;"
+                            + "-fx-background-radius: 10;"
+                            + "-fx-border-color: #F0E7EC;"
+                            + "-fx-border-radius: 10;"
+            );
 
-            content.append("========== NHÓM LỚP ")
-                    .append(i + 1)
-                    .append(" ==========\n");
+            sectionList.getChildren().add(emptyCard);
 
-            content.append("Mã môn: ")
-                    .append(section.getCourseCode())
-                    .append("\n");
-
-            content.append("Mã nhóm: ")
-                    .append(section.getGroupNo())
-                    .append("\n");
-
-            content.append("Loại nhóm: ")
-                    .append(section.getType())
-                    .append("\n");
-
-            content.append("Lớp: ")
-                    .append(valueOrDash(section.getClassName()))
-                    .append("\n");
-
-            content.append("Giảng viên: ")
-                    .append(valueOrDash(section.getLecturer()))
-                    .append("\n");
-
-            content.append("Mã giảng viên: ")
-                    .append(valueOrDash(section.getLecturerCode()))
-                    .append("\n");
-
-            content.append("Sức chứa: ")
-                    .append(section.getCapacity())
-                    .append("\n");
-
-            content.append("Trạng thái: ")
-                    .append(section.isActive() ? "Đang mở" : "Đã đóng")
-                    .append("\n");
-
-            content.append("Lịch học và phòng:\n");
-
-            if (section.getSlots() == null
-                    || section.getSlots().isEmpty()) {
-                content.append("  Chưa có lịch học\n");
-            } else {
-                for (SlotDto slot : section.getSlots()) {
-
-                    content.append("  ")
-                            .append(dayName(slot.getDayOfWeek()))
-                            .append(", tiết ")
-                            .append(slot.getStartPeriod())
-                            .append("-")
-                            .append(slot.getEndPeriod())
-                            .append(", phòng ")
-                            .append(valueOrDash(slot.getRoom()))
-                            .append(", tuần ")
-                            .append(valueOrDash(slot.getWeeks()))
-                            .append("\n");
-                }
+        } else {
+            for (int i = 0; i < sections.size(); i++) {
+                SectionDto section = sections.get(i);
+                sectionList.getChildren().add(
+                        createSectionCard(section, i + 1));
             }
-
-            content.append("\n");
         }
 
-        TextArea detailArea = new TextArea(content.toString());
-        detailArea.setEditable(false);
-        detailArea.setWrapText(true);
-        detailArea.setFont(Font.font("Segoe UI", 13));
-        detailArea.setPrefRowCount(25);
-        detailArea.setPrefColumnCount(65);
+        // Khu vuc noi dung co thanh cuon
+        VBox content = new VBox(16, courseHeader, sectionList);
+        content.setPadding(new Insets(16));
+        content.setStyle("-fx-background-color: #F8F7FC;");
+
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setStyle(
+                "-fx-background: #F8F7FC;"
+                        + "-fx-background-color: #F8F7FC;"
+                        + "-fx-border-color: transparent;"
+        );
 
         Dialog<ButtonType> dialog = new Dialog<>();
-
         dialog.setTitle("Chi tiết học phần");
-        dialog.setHeaderText(course.courseCode() + " - " + course.name());
+        dialog.setHeaderText("Thông tin chi tiết học phần");
 
-        dialog.getDialogPane().setContent(detailArea);
+        dialog.getDialogPane().setContent(scrollPane);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-        dialog.getDialogPane().setPrefSize(720, 600);
+        dialog.getDialogPane().setPrefSize(760, 650);
 
         dialog.showAndWait();
     }
+
+
+    private VBox createSectionCard(SectionDto section, int index) {
+
+        // Tieu de nhom lop
+        Label title = new Label(
+                "NHÓM LỚP " + index + " - " + section.getGroupNo());
+
+        title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+        title.setTextFill(Color.web("#8D456B"));
+
+        Label status = new Label(
+                section.isActive() ? "Đang mở" : "Đã đóng");
+
+        status.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
+        status.setPadding(new Insets(5, 12, 5, 12));
+
+        if (section.isActive()) {
+            status.setStyle(
+                    "-fx-background-color: #E8F5EC;"
+                            + "-fx-text-fill: #27834A;"
+                            + "-fx-background-radius: 20;"
+            );
+        } else {
+            status.setStyle(
+                    "-fx-background-color: #FCE8EC;"
+                            + "-fx-text-fill: #B4234D;"
+                            + "-fx-background-radius: 20;"
+            );
+        }
+
+        HBox heading = new HBox(10, title, status);
+        heading.setAlignment(Pos.CENTER_LEFT);
+
+        // Thong tin nhom lop
+        VBox information = new VBox(9);
+
+        information.getChildren().addAll(
+                createDetailRow("Mã học phần", section.getCourseCode()),
+                createDetailRow("Loại nhóm", section.getType()),
+                createDetailRow("Lớp", valueOrDash(section.getClassName())),
+                createDetailRow("Giảng viên", valueOrDash(section.getLecturer())),
+                createDetailRow("Mã giảng viên", valueOrDash(section.getLecturerCode())),
+                createDetailRow("Sức chứa", Integer.toString(section.getCapacity()))
+        );
+
+        // Tieu de lich hoc
+        Label scheduleTitle = new Label("LỊCH HỌC VÀ PHÒNG");
+        scheduleTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+        scheduleTitle.setTextFill(Color.web("#75405E"));
+
+        VBox scheduleList = new VBox(8);
+
+        if (section.getSlots() == null || section.getSlots().isEmpty()) {
+
+            Label noSchedule = new Label("Chưa có lịch học");
+            noSchedule.setFont(Font.font("Segoe UI", 12));
+            noSchedule.setTextFill(Color.web("#82747E"));
+
+            scheduleList.getChildren().add(noSchedule);
+
+        } else {
+            for (SlotDto slot : section.getSlots()) {
+
+                Label slotLabel = new Label(
+                        dayName(slot.getDayOfWeek())
+                                + "  |  Tiết " + slot.getStartPeriod()
+                                + " - " + slot.getEndPeriod()
+                                + "  |  Phòng " + valueOrDash(slot.getRoom())
+                                + "  |  Tuần " + valueOrDash(slot.getWeeks())
+                );
+
+                slotLabel.setFont(Font.font("Segoe UI", 12));
+                slotLabel.setTextFill(Color.web("#5A4755"));
+                slotLabel.setWrapText(true);
+                slotLabel.setPadding(new Insets(9, 12, 9, 12));
+                slotLabel.setMaxWidth(Double.MAX_VALUE);
+                slotLabel.setStyle(
+                        "-fx-background-color: #F8F3F6;"
+                                + "-fx-background-radius: 7;"
+                                + "-fx-border-color: #F0E7EC;"
+                                + "-fx-border-radius: 7;"
+                );
+
+                scheduleList.getChildren().add(slotLabel);
+            }
+        }
+
+        VBox card = new VBox(
+                14,
+                heading,
+                information,
+                scheduleTitle,
+                scheduleList
+        );
+
+        card.setPadding(new Insets(16));
+        card.setMaxWidth(Double.MAX_VALUE);
+        card.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-background-radius: 10;"
+                        + "-fx-border-color: #EAD5E0;"
+                        + "-fx-border-radius: 10;"
+        );
+
+        return card;
+    }
+
+    private HBox createDetailRow(String title, String value) {
+
+        Label titleLabel = new Label(title);
+        titleLabel.setFont(Font.font("Segoe UI", 12));
+        titleLabel.setTextFill(Color.web("#82747E"));
+        titleLabel.setMinWidth(125);
+
+        Label valueLabel = new Label(valueOrDash(value));
+        valueLabel.setFont(Font.font("Segoe UI", FontWeight.MEDIUM, 12));
+        valueLabel.setTextFill(Color.web("#493343"));
+        valueLabel.setWrapText(true);
+
+        HBox row = new HBox(12, titleLabel, valueLabel);
+        row.setAlignment(Pos.CENTER_LEFT);
+
+        return row;
+    }
+
 
     private String dayName(int day) {
         return switch (day) {
