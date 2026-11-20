@@ -128,6 +128,7 @@ final class AdminUsersPane extends VBox {
                 idColumn, usernameColumn, roleColumn, onlineColumn, createdColumn, actionsColumn);
         userTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         userTable.setPlaceholder(new Label("Không có người dùng phù hợp."));
+        AdminTableStyle.apply(userTable);
     }
 
     private void searchUsers() {

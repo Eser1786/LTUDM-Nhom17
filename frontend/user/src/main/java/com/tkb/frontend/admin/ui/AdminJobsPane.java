@@ -247,6 +247,7 @@ final class AdminJobsPane extends VBox {
                 idColumn, typeColumn, userColumn, statusColumn, progressColumn, startedColumn, messageColumn, actionColumn);
         jobTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         jobTable.setPlaceholder(new Label("Hiện không có tiến trình nào đang chạy hoặc chờ xử lý."));
+        AdminTableStyle.apply(jobTable);
     }
 
     private void configureAutoRefresh() {

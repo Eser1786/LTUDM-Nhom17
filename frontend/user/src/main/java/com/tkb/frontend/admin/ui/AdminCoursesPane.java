@@ -186,7 +186,11 @@ final class AdminCoursesPane extends VBox {
         courseTable.setPlaceholder(
                 new Label("Không có học phần phù hợp."));
 
-        courseTable.setPrefHeight(420);
+        AdminTableStyle.apply(courseTable);
+
+        courseTable.setPrefHeight(450);
+        courseTable.setMaxWidth(Double.MAX_VALUE);
+
         VBox.setVgrow(courseTable, Priority.ALWAYS);
 
         statusLabel.setWrapText(true);
@@ -195,12 +199,9 @@ final class AdminCoursesPane extends VBox {
 
         VBox card = new VBox(14, toolbar, courseTable, statusLabel);
 
-        card.setPadding(new Insets(22));
+        card.setPadding(new Insets(16));
         card.setStyle(
-                "-fx-background-color: white; " +
-                "-fx-background-radius: 14; " +
-                "-fx-border-color: #F0E7EC; " +
-                "-fx-border-radius: 14;"
+                "-fx-background-color: #F8F7FC;"
         );
 
         return card;

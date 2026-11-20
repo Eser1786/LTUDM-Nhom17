@@ -191,6 +191,7 @@ final class AdminSessionsPane extends VBox {
                 idColumn, userColumn, addressColumn, connectedColumn, actionColumn);
         sessionTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         sessionTable.setPlaceholder(new Label("Hiện không có phiên kết nối nào khác."));
+        AdminTableStyle.apply(sessionTable);
     }
 
     private void configureAutoRefresh() {

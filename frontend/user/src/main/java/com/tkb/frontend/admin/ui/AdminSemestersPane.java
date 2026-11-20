@@ -129,6 +129,7 @@ final class AdminSemestersPane extends VBox {
 
         semesterTable.getColumns().setAll(codeColumn, nameColumn, currentColumn, actionColumn);
         semesterTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        AdminTableStyle.apply(semesterTable);
         semesterTable.setPlaceholder(new Label("Chưa có học kỳ."));
         semesterTable.setPrefHeight(380);
         VBox.setVgrow(semesterTable, Priority.ALWAYS);
