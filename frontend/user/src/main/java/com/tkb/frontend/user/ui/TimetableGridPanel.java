@@ -195,7 +195,9 @@ public class TimetableGridPanel extends VBox {
 
     private String maNhom(SectionSlot item) {
         var s = item.section();
-        return "TH".equals(s.loai()) ? "TH" + s.nhom() + "." + s.toTh() : "LT" + s.nhom();
+        String nhom = s.nhom() == null ? "" : s.nhom().trim();
+        if (nhom.isEmpty()) return "";
+        return "Nhóm " + nhom;
     }
 
     private String phong(SectionSlot item) {
