@@ -1,5 +1,6 @@
 package com.tkb.frontend.user.ui;
 
+import com.tkb.frontend.user.model.Types.Course;
 import com.tkb.frontend.user.model.Types.Criteria;
 import com.tkb.frontend.user.model.Types.JobResult;
 import com.tkb.frontend.user.model.Types.OptionStats;
@@ -159,9 +160,25 @@ public class ResultPanel extends VBox {
             grid.setPrefHeight(400);
             theLuoi.getChildren().add(grid);
 
-            String biLoaiText = o.biLoai() == null || o.biLoai().isEmpty()
-                    ? ""
-                    : String.join(", ", o.biLoai());
+            List<String> biLoaiHienThi = new ArrayList<>();
+            if (o.biLoai() != null) {
+                for (String item : o.biLoai()) {
+                    String code = item == null ? "" : item.trim();
+                    String name = "";
+                    if (code.contains(" - ")) {
+                        String[] parts = code.split(" - ", 2);
+                        code = parts[0].trim();
+                        name = parts.length > 1 ? parts[1].trim() : "";
+                    }
+                    if (name.isBlank()) {
+                        for (Course c : st.courses) {
+                            if (c.maMh().equals(code)) { name = c.ten(); break; }
+                        }
+                    }
+                    biLoaiHienThi.add(name.isBlank() ? code : code + " - " + name);
+                }
+            }
+            String biLoaiText = biLoaiHienThi.isEmpty() ? "" : String.join(", ", biLoaiHienThi);
             if (!biLoaiText.isEmpty()) {
                 theLuoi.getChildren().add(Functions.nhanCanhBao("Không xếp được học phần: " + biLoaiText));
             } else {
