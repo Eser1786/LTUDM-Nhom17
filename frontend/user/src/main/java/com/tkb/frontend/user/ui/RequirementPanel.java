@@ -282,15 +282,30 @@ public class RequirementPanel extends ScrollPane {
 
     private void capNhatMonDaChon() {
         daChonBox.getChildren().clear();
-        if (txtTimKiem.getText() == null || txtTimKiem.getText().trim().isBlank()) {
-            daChonBox.setPrefHeight(400);
-        }
-        else daChonBox.setPrefHeight(160);
+
+        // Tự giãn theo nội dung + chừa thêm khoảng trống ở cuối khi có nhiều môn
+        daChonBox.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+        daChonBox.setPrefHeight(javafx.scene.layout.Region.USE_COMPUTED_SIZE);
+        daChonBox.setMaxHeight(javafx.scene.layout.Region.USE_COMPUTED_SIZE);
+        daChonBox.setSpacing(12);
+        daChonBox.setStyle(daChonBox.getStyle() + " -fx-padding: 0 0 28 0;");
+
+        // Bảng màu badge đậm (chữ trắng) xoay vòng để luôn rõ nét từ #1 trở đi
+        String[] mauBadge = {
+            "-fx-background-color: #DC2626; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 2 7 2 7;", // Đỏ
+            "-fx-background-color: #2563EB; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 2 7 2 7;", // Xanh dương
+            "-fx-background-color: #059669; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 2 7 2 7;", // Xanh ngọc/lá đậm
+            "-fx-background-color: #D97706; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 2 7 2 7;", // Hổ phách/cam đậm
+            "-fx-background-color: #7C3AED; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 2 7 2 7;", // Tím
+            "-fx-background-color: #0F766E; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 2 7 2 7;"  // Mòng két đậm
+        };
+
         List<String> monChon = st.uuTienMon;
         if (monChon.isEmpty()) {
             daChonBox.getChildren().add(Functions.moTa("Chưa có môn nào được chọn."));
             return;
         }
+
         for (int i = 0; i < monChon.size(); i++) {
             String ma = monChon.get(i);
             String ten = "";
@@ -308,8 +323,8 @@ public class RequirementPanel extends ScrollPane {
             HBox top = new HBox(8);
             top.setAlignment(Pos.CENTER_LEFT);
             Label badge = Functions.nhanXam("Ưu tiên #" + (i + 1));
-            if (i == 0) badge.setStyle("-fx-background-color: #DC2626; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 2 6 2 6;");
-            else if (i == 1) badge.setStyle("-fx-background-color: #2563EB; -fx-text-fill: white; -fx-background-radius: 6; -fx-padding: 2 6 2 6;");
+            badge.setStyle(mauBadge[i % mauBadge.length]);
+
             Label maLbl = new Label(ma);
             maLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #1D4ED8;");
             Label tenLbl = new Label(ten + " (" + tc + " TC)");
@@ -319,12 +334,12 @@ public class RequirementPanel extends ScrollPane {
             Button up = Functions.nutPhu("▲");
             up.setDisable(i == 0);
             int idx = i;
-            up.setOnAction(e -> { doiThuTu(idx, idx - 1); });
+            up.setOnAction(e -> doiThuTu(idx, idx - 1));
             Button down = Functions.nutPhu("▼");
             down.setDisable(i == monChon.size() - 1);
-            down.setOnAction(e -> { doiThuTu(idx, idx + 1); });
+            down.setOnAction(e -> doiThuTu(idx, idx + 1));
             Button del = Functions.nutPhu("✕");
-            del.setOnAction(e -> { boChonMon(ma); });
+            del.setOnAction(e -> boChonMon(ma));
             top.getChildren().addAll(up, down, del);
 
             // dropdowns
@@ -349,6 +364,8 @@ public class RequirementPanel extends ScrollPane {
             card.getChildren().addAll(top, dropRow);
             daChonBox.getChildren().add(card);
         }
+
+        daChonBox.requestLayout();
     }
 
     private void doiThuTu(int from, int to) {
