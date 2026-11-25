@@ -8,6 +8,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * B2.1 - FrameCodec: Doc va ghi khung goi tin TCP theo dac ta Protocol (Muc 2).
@@ -103,7 +108,8 @@ public final class FrameCodec {
      */
     public static void writeEncryptedJsonFrame(OutputStream out, String json, javax.crypto.SecretKey aesKey) throws IOException {
         byte[] plainBytes = json.getBytes(StandardCharsets.UTF_8);
-        byte[] encryptedPayload = CryptoUtil.encryptAesGcm(plainBytes, aesKey);
+        byte[] compressedBytes = compressIfNeeded(plainBytes); // 1. Nén dữ liệu gốc TRƯỚC
+        byte[] encryptedPayload = CryptoUtil.encryptAesGcm(compressedBytes, aesKey); // 2. Mã hóa SAU
         writeFrame(out, encryptedPayload);
     }
 
@@ -116,7 +122,56 @@ public final class FrameCodec {
         if (encryptedPayload == null || encryptedPayload.length == 0) {
             throw new EOFException("Client da dong ket noi");
         }
-        byte[] plainBytes = CryptoUtil.decryptAesGcm(encryptedPayload, aesKey);
+
+        byte[] compressedBytes = CryptoUtil.decryptAesGcm(encryptedPayload, aesKey); // 1. Giải mã TRƯỚC
+        byte[] plainBytes = decompressIfNeeded(compressedBytes); // 2. Giải nén SAU
+
         return new String(plainBytes, StandardCharsets.UTF_8);
+    }
+
+    private static final byte FLAG_RAW = 0x00;
+    private static final byte FLAG_GZIP = 0x01;
+    private static final int GZIP_THRESHOLD = 1024; // Chỉ nén khi dữ liệu > 1KB
+
+    private static byte[] compressIfNeeded(byte[] raw) throws IOException {
+        if (raw == null || raw.length < GZIP_THRESHOLD) {
+            byte[] out = new byte[1 + (raw == null ? 0 : raw.length)];
+            out[0] = FLAG_RAW;
+            if (raw != null && raw.length > 0) {
+                System.arraycopy(raw, 0, out, 1, raw.length);
+            }
+            return out;
+        }
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(raw.length / 4);
+        baos.write(FLAG_GZIP); // Byte đầu tiên đánh dấu gói tin đã nén GZIP
+        try (GZIPOutputStream gzip = new GZIPOutputStream(baos)) {
+            gzip.write(raw);
+        }
+        return baos.toByteArray();
+    }
+
+    private static byte[] decompressIfNeeded(byte[] data) throws IOException {
+        if (data == null || data.length == 0) {
+            return data;
+        }
+        byte flag = data[0];
+        if (flag == FLAG_RAW) {
+            byte[] raw = new byte[data.length - 1];
+            System.arraycopy(data, 1, raw, 0, raw.length);
+            return raw;
+        } else if (flag == FLAG_GZIP) {
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(data, 1, data.length - 1);
+                GZIPInputStream gzip = new GZIPInputStream(bais);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                byte[] buffer = new byte[8192];
+                int len;
+                while ((len = gzip.read(buffer)) != -1) {
+                    baos.write(buffer, 0, len);
+                }
+                return baos.toByteArray();
+            }
+        }
+        throw new IOException("Unknown frame compression flag: " + flag);
     }
 }
