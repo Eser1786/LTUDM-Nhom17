@@ -1,6 +1,7 @@
 package com.tkb.frontend.user.ui;
 
 import com.tkb.frontend.user.net.ApiException;
+import com.tkb.frontend.user.net.TkbClient;
 import com.tkb.frontend.user.ui.MainFrame.AppUiState;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -32,8 +33,15 @@ public class LoginPanel extends HBox {
     private Button nutDangNhap;
     private Button toggleMode;
     private TextField txtEmail;
+    private TextField txtGmail;
     private PasswordField txtMatKhau;
     private PasswordField txtXacNhan;
+    private TkbClient otpClient;
+
+    @FunctionalInterface
+    public interface RegisterHandler {
+        void onRegister(String username, String email, String password);
+    }
 
     public LoginPanel(AppUiState st, Runnable onLogin) {
         this(st, ignoreCredentials(onLogin), null, true);
@@ -46,14 +54,23 @@ public class LoginPanel extends HBox {
     public LoginPanel(
             BiConsumer<String, String> onLogin,
             BiConsumer<String, String> onRegister) {
+        this(null, onLogin,
+             onRegister == null ? null : (u, email, p) -> onRegister.accept(u, p),
+             false);
+    }
+
+    public LoginPanel(
+            BiConsumer<String, String> onLogin,
+            RegisterHandler onRegister) {
         this(null, onLogin, Objects.requireNonNull(onRegister, "onRegister"), false);
     }
 
     private LoginPanel(
             AppUiState st,
             BiConsumer<String, String> onLogin,
-            BiConsumer<String, String> onRegister,
+            RegisterHandler onRegister,
             boolean authenticate) {
+        this.otpClient = (st != null) ? st.client : null;
         Objects.requireNonNull(onLogin, "onLogin");
         setStyle("-fx-background-color: #F6F8FB;");
         setFillHeight(true);
@@ -105,6 +122,12 @@ public class LoginPanel extends HBox {
         txtEmail.setText("student");
         VBox nhomEmail = new VBox(4, Functions.nhanNho("Tên đăng nhập"), txtEmail);
 
+        TextField txtGmail = Functions.oNhap();
+        txtGmail.setPromptText("Ví dụ: sinhvien@gmail.com");
+        VBox nhomGmail = new VBox(4, Functions.nhanNho("Email nhận mã OTP"), txtGmail);
+        nhomGmail.setManaged(false);
+        nhomGmail.setVisible(false);
+
         PasswordField txtMatKhau = new PasswordField();
         txtMatKhau.setFont(Functions.F_CHU);
         txtMatKhau.setPromptText("Mật khẩu");
@@ -150,8 +173,13 @@ public class LoginPanel extends HBox {
         chkGhiNho.setSelected(true);
         Button lienKetQuen = new Button("Quên mật khẩu?");
         lienKetQuen.setStyle("-fx-background-color: transparent; -fx-text-fill: #1D4ED8; -fx-cursor: hand;");
-        lienKetQuen.setOnAction(e -> Functions.thongTin(st == null ? null : window(),
-                "Vui lòng liên hệ phòng Đào tạo để được cấp lại mật khẩu.\nEmail: daotao@univ.edu.vn"));
+        lienKetQuen.setOnAction(e -> {
+            if (otpClient == null) {
+                Functions.thongTin(window(), "Không thể kết nối máy chủ để lấy mã OTP.");
+                return;
+            }
+            ChangePasswordOtpDialog.hienThi(window(), otpClient, txtEmail.getText(), false);
+        });
         HBox rowGhiNho = new HBox(chkGhiNho, Functions.khoangTrong(), lienKetQuen);
         rowGhiNho.setAlignment(Pos.CENTER_LEFT);
 
@@ -168,17 +196,22 @@ public class LoginPanel extends HBox {
                 return;
             }
             if (registering) {
+                String email = txtGmail.getText() == null ? "" : txtGmail.getText().trim();
+                if (email.isEmpty() || !email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                    showStatus("Vui lòng nhập địa chỉ Email hợp lệ để nhận mã OTP.", true);
+                    return;
+                }
                 if (!password.equals(txtXacNhan.getText())) {
                     showStatus("Mật khẩu xác nhận không khớp.", true);
                     return;
                 }
+                setRequestInProgress(true);
+                statusLabel.setText("");
+                onRegister.onRegister(username, email, password);
+                return;
             }
             setRequestInProgress(true);
             statusLabel.setText("");
-            if (registering) {
-                onRegister.accept(username, password);
-                return;
-            }
             try {
                 if (authenticate) {
                     st.client.login(username, password);
@@ -202,6 +235,8 @@ public class LoginPanel extends HBox {
         toggleMode.setOnAction(event -> {
             registrationMode = !registrationMode;
             boolean registering = registrationMode;
+            nhomGmail.setVisible(registering);
+            nhomGmail.setManaged(registering);
             nhomXacNhan.setVisible(registering);
             nhomXacNhan.setManaged(registering);
             rowGhiNho.setVisible(!registering);
@@ -222,7 +257,7 @@ public class LoginPanel extends HBox {
 
         Label moPhong = Functions.nhanCanhBao("Kết nối máy chủ backend qua TCP · cổng 9000");
 
-        theForm.getChildren().addAll(tieuDeForm, moTaForm, Functions.vach(), nhomEmail, nhomKhau,
+        theForm.getChildren().addAll(tieuDeForm, moTaForm, Functions.vach(), nhomEmail, nhomGmail, nhomKhau,
                 nhomXacNhan, rowGhiNho, nutDangNhap, statusLabel, toggleMode, ghiChu, moPhong);
 
         phai.getChildren().add(theForm);
@@ -232,6 +267,7 @@ public class LoginPanel extends HBox {
         this.nutDangNhap = nutDangNhap;
         this.toggleMode = toggleMode;
         this.txtEmail = txtEmail;
+        this.txtGmail = txtGmail;
         this.txtMatKhau = txtMatKhau;
         this.txtXacNhan = txtXacNhan;
     }
@@ -240,6 +276,9 @@ public class LoginPanel extends HBox {
         nutDangNhap.setDisable(inProgress);
         toggleMode.setDisable(inProgress);
         txtEmail.setDisable(inProgress);
+        if (txtGmail != null) {
+            txtGmail.setDisable(inProgress);
+        }
         txtMatKhau.setDisable(inProgress);
         txtXacNhan.setDisable(inProgress);
     }
@@ -253,6 +292,9 @@ public class LoginPanel extends HBox {
         setRequestInProgress(false);
         if (registrationMode) {
             toggleMode.fire();
+        }
+        if (txtGmail != null) {
+            txtGmail.clear();
         }
         txtMatKhau.clear();
         txtXacNhan.clear();
@@ -318,5 +360,9 @@ public class LoginPanel extends HBox {
 
     private javafx.stage.Window window() {
         return getScene() == null ? null : getScene().getWindow();
+    }
+
+    public void setOtpClient(TkbClient client) {
+        this.otpClient = client;
     }
 }

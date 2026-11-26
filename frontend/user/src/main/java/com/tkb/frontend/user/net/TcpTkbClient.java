@@ -59,6 +59,14 @@ public class TcpTkbClient implements TkbClient {
     private volatile String username;
     private volatile String role;
 
+    private final java.util.concurrent.ScheduledExecutorService pingScheduler =
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "tkb-ping");
+                t.setDaemon(true);
+                return t;
+            });
+    private volatile java.util.concurrent.ScheduledFuture<?> pingTask;
+
     private final java.util.concurrent.atomic.AtomicLong idSeq = new java.util.concurrent.atomic.AtomicLong(1);
     private final Map<Integer, CompletableFuture<Response>> pending = new ConcurrentHashMap<>();
     private final Map<String, JobResult> jobResults = new ConcurrentHashMap<>();
@@ -104,6 +112,26 @@ public class TcpTkbClient implements TkbClient {
             readerThread = new Thread(this::readerLoop, "tkb-reader");
             readerThread.setDaemon(true);
             readerThread.start();
+            if (pingTask != null) {
+                pingTask.cancel(false);
+            }
+            pingTask = pingScheduler.scheduleAtFixedRate(() -> {
+                if (!connected || socket == null || socket.isClosed()) return;
+                try {
+                    int pingId = (int) idSeq.getAndIncrement();
+                    Request pingReq = new Request();
+                    pingReq.setId(pingId);
+                    pingReq.setCmd("PING");
+                    CompletableFuture<Response> f = new CompletableFuture<>();
+                    pending.put(pingId, f);
+                    synchronized (out) {
+                        FrameCodec.writeEncryptedJsonFrame(out, mapper.writeValueAsString(pingReq), aesKey);
+                    }
+                    f.get(5, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    closeQuietly();
+                }
+            }, 15, 15, TimeUnit.SECONDS);
         } catch (Exception e) {
             closeQuietly();
             throw new ApiException(ErrorCode.NETWORK_ERROR, "Khong the ket noi backend: " + e.getMessage());
@@ -126,8 +154,13 @@ public class TcpTkbClient implements TkbClient {
         } catch (Exception e) {
             // connection lost
         } finally {
-            connected = false;
+            closeQuietly();
         }
+    }
+
+    public void close() {
+        closeQuietly();
+        pingScheduler.shutdownNow();
     }
 
     private void handlePush(Response resp) {
@@ -172,11 +205,13 @@ public class TcpTkbClient implements TkbClient {
         if (data != null) req.setData(data);
         CompletableFuture<Response> future = new CompletableFuture<>();
         pending.put(id, future);
-        // write
         try {
-            FrameCodec.writeEncryptedJsonFrame(out, mapper.writeValueAsString(req), aesKey);
+            synchronized (out) {
+                FrameCodec.writeEncryptedJsonFrame(out, mapper.writeValueAsString(req), aesKey);
+            }
         } catch (Exception e) {
             pending.remove(id);
+            closeQuietly();
             throw new ApiException(ErrorCode.NETWORK_ERROR, "Gui yeu cau that bai: " + e.getMessage());
         }
         try {
@@ -189,6 +224,7 @@ public class TcpTkbClient implements TkbClient {
             throw e;
         } catch (Exception e) {
             pending.remove(id);
+            closeQuietly();
             throw new ApiException(ErrorCode.NETWORK_ERROR, "Cho phan hoi that bai: " + e.getMessage());
         }
     }
@@ -226,7 +262,16 @@ public class TcpTkbClient implements TkbClient {
 
     private void closeQuietly() {
         connected = false;
-        try { if (socket != null) socket.close(); } catch (Exception ignored) {}
+        if (pingTask != null) {
+            pingTask.cancel(false);
+        }
+        try {
+            if (socket != null) socket.close();
+        } catch (Exception ignored) {
+        }
+        ApiException err = new ApiException(ErrorCode.NETWORK_ERROR, "Mất kết nối tới máy chủ.");
+        pending.forEach((id, f) -> f.completeExceptionally(err));
+        pending.clear();
     }
 
     // ---------- TkbClient impl ----------
@@ -241,6 +286,27 @@ public class TcpTkbClient implements TkbClient {
         Map<String, Object> d = resp.getData();
         this.username = username;
         this.role = d != null ? String.valueOf(d.getOrDefault("role", "USER")) : "USER";
+    }
+
+    // === 7b. Thêm vào TcpTkbClient.java (ngay dưới hàm login) ===
+    @Override
+    public String requestPasswordOtp(String username) throws ApiException {
+        ensureConnected();
+        Map<String, Object> data = new HashMap<>();
+        data.put("username", username);
+        Response resp = sendRequest("REQUEST_PASSWORD_OTP", data);
+        Object msg = resp.getData() == null ? null : resp.getData().get("message");
+        return msg != null ? String.valueOf(msg) : "Mã OTP đã được tạo trên Server.";
+    }
+
+    @Override
+    public void resetPasswordWithOtp(String username, String otp, String newPassword) throws ApiException {
+        ensureConnected();
+        Map<String, Object> data = new HashMap<>();
+        data.put("username", username);
+        data.put("otp", otp);
+        data.put("newPassword", newPassword);
+        sendRequest("RESET_PASSWORD_WITH_OTP", data);
     }
 
     @Override

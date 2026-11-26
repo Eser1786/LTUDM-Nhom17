@@ -248,6 +248,8 @@ public class ClientSession implements Runnable {
             }
             case REGISTER -> handleRegister(req);
             case LOGIN -> handleLogin(req);
+            case REQUEST_PASSWORD_OTP -> handleRequestPasswordOtp(req);  
+            case RESET_PASSWORD_WITH_OTP -> handleResetPasswordWithOtp(req);
             case LOGOUT -> handleLogout(req);
             case GET_SECTIONS -> handleGetSections(req);
 
@@ -293,8 +295,9 @@ public class ClientSession implements Runnable {
 
     private Response handleRegister(Request req) throws Exception {
         String username = req.getString("username");
+        String email = req.getString("email");
         String password = req.getString("password");
-        AuthResult res = authService.register(username, password);
+        AuthResult res = authService.register(username, email, password);
         if (!res.ok()) {
             if (res.invalidField() != null) {
                 return Response.error(req.getId(), res.errorCode(), res.errorMessage(), Map.of("field", res.invalidField()));
@@ -320,6 +323,37 @@ public class ClientSession implements Runnable {
         data.put("username", res.user().getUsername());
         data.put("role", res.user().getRole());
         return Response.success(req.getId(), data);
+    }
+
+    private Response handleRequestPasswordOtp(Request req) throws Exception {
+        String username = req.getString("username");
+        AuthResult res = authService.requestPasswordResetOtp(username);
+        if (!res.ok()) {
+            if (res.invalidField() != null) {
+                return Response.error(req.getId(), res.errorCode(), res.errorMessage(), Map.of("field", res.invalidField()));
+            }
+            return Response.error(req.getId(), res.errorCode(), res.errorMessage());
+        }
+        server.log("Da cap ma OTP doi mat khau cho tai khoan '" + res.user().getUsername() + "'");
+        String msg = (res.errorMessage() != null && !res.errorMessage().isBlank())
+                ? res.errorMessage()
+                : "Mã OTP 6 số đã được tạo. Hiệu lực trong 5 phút.";
+        return Response.success(req.getId(), Map.of("message", msg));
+    }
+
+    private Response handleResetPasswordWithOtp(Request req) throws Exception {
+        String username = req.getString("username");
+        String otp = req.getString("otp");
+        String newPassword = req.getString("newPassword");
+        AuthResult res = authService.resetPasswordWithOtp(username, otp, newPassword);
+        if (!res.ok()) {
+            if (res.invalidField() != null) {
+                return Response.error(req.getId(), res.errorCode(), res.errorMessage(), Map.of("field", res.invalidField()));
+            }
+            return Response.error(req.getId(), res.errorCode(), res.errorMessage());
+        }
+        server.log("Tai khoan '" + res.user().getUsername() + "' da doi mat khau thanh cong qua OTP");
+        return Response.successEmpty(req.getId());
     }
 
     private Response handleLogout(Request req) {

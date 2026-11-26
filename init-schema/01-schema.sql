@@ -138,8 +138,25 @@ CREATE TABLE phuong_an_bi_loai (
   CONSTRAINT fk_pabl_hoc_phan  FOREIGN KEY (ma_mh) REFERENCES hoc_phan(ma_mh)
 ) ENGINE=InnoDB;
 
+CREATE TABLE password_reset_otps (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nguoi_dung_id  BIGINT UNSIGNED NOT NULL,
+  otp_code       VARCHAR(10)     NOT NULL,
+  het_han_luc    DATETIME        NOT NULL,
+  so_lan_sai     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  da_su_dung     BOOLEAN         NOT NULL DEFAULT FALSE,
+  ngay_tao       DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_otp_user (nguoi_dung_id, da_su_dung),
+  CONSTRAINT fk_otp_nguoi_dung FOREIGN KEY (nguoi_dung_id)
+    REFERENCES nguoi_dung(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+ALTER TABLE nguoi_dung ADD COLUMN email VARCHAR(150) NULL AFTER ten_dang_nhap;
+-- Ví dụ gắn email thật cho tài khoản student để test:
+
 -- ---------------------------------------------------------------
 -- 3. DỮ LIỆU KHỞI TẠO
 -- ---------------------------------------------------------------
 INSERT INTO hoc_ky (ma, ten, dang_dung)
-VALUES ('2026-2027-1', 'Học kỳ 1 - Năm học 2026-2027', TRUE);
+VALUES ('2026-2027-2', 'Học kỳ 2 - Năm học 2026-2027', TRUE);

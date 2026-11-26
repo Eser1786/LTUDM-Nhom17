@@ -61,6 +61,22 @@ public final class ProtocolTkbClient implements TkbClient {
         setAuthenticatedUser(username, role);
     }
 
+    // === 7c. Thêm vào ProtocolTkbClient.java (ngay dưới hàm login) ===
+    @Override
+    public String requestPasswordOtp(String username) throws ApiException {
+        Response response = send(Command.REQUEST_PASSWORD_OTP, Map.of("username", username));
+        return value(response.getData(), "message", "Mã OTP đã được tạo trên Server.");
+    }
+
+    @Override
+    public void resetPasswordWithOtp(String username, String otp, String newPassword) throws ApiException {
+        send(Command.RESET_PASSWORD_WITH_OTP, Map.of(
+                "username", username,
+                "otp", otp,
+                "newPassword", newPassword
+        ));
+    }
+
     @Override
     public void logout() throws ApiException {
         send(Command.LOGOUT, Map.of());

@@ -74,6 +74,10 @@ final class AdminErrorMessages {
             case CANNOT_MODIFY_SELF ->
                     "Quản trị viên không thể tự đổi vai trò, tự xóa tài khoản hoặc tự ngắt phiên của mình.";
             case INTERNAL_ERROR -> UNKNOWN_ERROR;
+                case OTP_EXPIRED -> throw new UnsupportedOperationException("Unimplemented case: " + code);
+                case OTP_INVALID -> throw new UnsupportedOperationException("Unimplemented case: " + code);
+                case OTP_TOO_MANY_ATTEMPTS -> throw new UnsupportedOperationException("Unimplemented case: " + code);
+                default -> throw new IllegalArgumentException("Unexpected value: " + code);
         };
     }
 }

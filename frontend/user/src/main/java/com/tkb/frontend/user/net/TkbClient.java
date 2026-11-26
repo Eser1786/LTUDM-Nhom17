@@ -60,4 +60,12 @@ public interface TkbClient {
 
     /** RENAME_PLAN - nem NAME_TAKEN neu ten da duoc dung. */
     void renamePlan(long planId, String tenMoi) throws ApiException;
+
+    
+    // === 7a. Thêm vào interface TkbClient.java ===
+    /** Yêu cầu Server sinh mã OTP đổi mật khẩu. */
+    String requestPasswordOtp(String username) throws ApiException;
+
+    /** Xác thực OTP và cập nhật mật khẩu mới. */
+    void resetPasswordWithOtp(String username, String otp, String newPassword) throws ApiException;
 }

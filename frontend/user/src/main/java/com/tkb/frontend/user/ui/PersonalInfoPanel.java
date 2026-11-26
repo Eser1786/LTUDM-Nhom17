@@ -68,6 +68,17 @@ public class PersonalInfoPanel extends VBox {
         nut.setAlignment(Pos.CENTER_RIGHT);
         card.getChildren().add(nut);
 
+        Button doiMatKhauOtp = Functions.nutPhu("Đổi mật khẩu qua OTP");
+        doiMatKhauOtp.setOnAction(e -> ChangePasswordOtpDialog.hienThi(
+                getScene() == null ? null : getScene().getWindow(),
+                frame.trangThai().client,
+                frame.trangThai().username,
+                true
+        ));
+
+        HBox btn = new HBox(10, Functions.khoangTrong(), doiMatKhauOtp, luu);
+        btn.setAlignment(Pos.CENTER_RIGHT);
+
         Button quayLai = Functions.nutPhu("Quay lại");
         quayLai.setOnAction(e -> frame.denTrang(MainFrame.CARD_OVERVIEW));
         HBox nut2 = new HBox(10, Functions.khoangTrong(), quayLai);

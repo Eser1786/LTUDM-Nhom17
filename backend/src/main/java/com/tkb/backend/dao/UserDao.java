@@ -27,7 +27,7 @@ public class UserDao {
     /**
      * Ban ghi noi bo chua day du mat_khau_hash de Server kiem tra BCrypt khi LOGIN.
      */
-    public record UserAuthRecord(long id, String username, String passwordHash, String role, String createdAt) {
+    public record UserAuthRecord(long id, String username, String email, String passwordHash, String role, String createdAt) {
         public UserDto toDto(boolean online) {
             return new UserDto(id, username, role, createdAt, online);
         }
@@ -37,7 +37,7 @@ public class UserDao {
      * Tim tai khoan theo ten_dang_nhap (phuc vu LOGIN va REGISTER).
      */
     public UserAuthRecord findByUsername(String username) throws SQLException {
-        String sql = "SELECT id, ten_dang_nhap, mat_khau_hash, vai_tro, ngay_tao FROM nguoi_dung WHERE ten_dang_nhap = ?";
+        String sql = "SELECT id, ten_dang_nhap, email, mat_khau_hash, vai_tro, ngay_tao FROM nguoi_dung WHERE ten_dang_nhap = ?";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
@@ -54,7 +54,7 @@ public class UserDao {
      * Tim tai khoan theo ID.
      */
     public UserAuthRecord findById(long userId) throws SQLException {
-        String sql = "SELECT id, ten_dang_nhap, mat_khau_hash, vai_tro, ngay_tao FROM nguoi_dung WHERE id = ?";
+        String sql = "SELECT id, ten_dang_nhap, email, mat_khau_hash, vai_tro, ngay_tao FROM nguoi_dung WHERE id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
@@ -71,13 +71,14 @@ public class UserDao {
      * Tao tai khoan nguoi dung moi (REGISTER hoac khoi tao ADMIN dau tien - B4.3).
      * @return ID cua nguoi dung vua tao
      */
-    public long createUser(String username, String passwordHash, String role) throws SQLException {
-        String sql = "INSERT INTO nguoi_dung (ten_dang_nhap, mat_khau_hash, vai_tro) VALUES (?, ?, ?)";
+    public long createUser(String username, String email, String passwordHash, String role) throws SQLException {
+        String sql = "INSERT INTO nguoi_dung (ten_dang_nhap, email, mat_khau_hash, vai_tro) VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, username);
-            ps.setString(2, passwordHash);
-            ps.setString(3, (role != null && role.equalsIgnoreCase("ADMIN")) ? "ADMIN" : "USER");
+            ps.setString(2, email);
+            ps.setString(3, passwordHash);
+            ps.setString(4, (role != null && role.equalsIgnoreCase("ADMIN")) ? "ADMIN" : "USER");
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -86,6 +87,10 @@ public class UserDao {
                 throw new SQLException("Khong lay duoc ID nguoi dung sau khi INSERT");
             }
         }
+    }
+    
+    public long createUser(String username, String passwordHash, String role) throws SQLException {
+        return createUser(username, null, passwordHash, role);
     }
 
     /**
@@ -99,7 +104,7 @@ public class UserDao {
     public List<UserDto> listUsers(String keyword, int page, int size, Set<Long> onlineUserIds) throws SQLException {
         boolean hasKeyword = keyword != null && !keyword.isBlank();
         StringBuilder sql = new StringBuilder(
-                "SELECT id, ten_dang_nhap, mat_khau_hash, vai_tro, ngay_tao FROM nguoi_dung"
+                "SELECT id, ten_dang_nhap, email, mat_khau_hash, vai_tro, ngay_tao FROM nguoi_dung"
         );
         if (hasKeyword) {
             sql.append(" WHERE ten_dang_nhap LIKE ?");
@@ -187,10 +192,11 @@ public class UserDao {
     private UserAuthRecord mapRecord(ResultSet rs) throws SQLException {
         long id = rs.getLong("id");
         String username = rs.getString("ten_dang_nhap");
+        String email = rs.getString("email");
         String passwordHash = rs.getString("mat_khau_hash");
         String role = rs.getString("vai_tro");
         Timestamp ts = rs.getTimestamp("ngay_tao");
         String createdAt = (ts != null) ? ts.toLocalDateTime().format(ISO_FORMATTER) : "";
-        return new UserAuthRecord(id, username, passwordHash, role, createdAt);
+        return new UserAuthRecord(id, username, email, passwordHash, role, createdAt);
     }
 }

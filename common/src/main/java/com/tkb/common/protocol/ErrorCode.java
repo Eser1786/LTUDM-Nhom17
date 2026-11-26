@@ -30,6 +30,9 @@ public enum ErrorCode {
     CHUNK_OUT_OF_ORDER("Gói dữ liệu tải lên không đúng thứ tự."),
     MISSING_CHUNKS("File tải lên còn thiếu dữ liệu."),
     CANNOT_MODIFY_SELF("Quản trị viên không thể tự đổi vai trò, tự xóa hoặc tự ngắt phiên của chính mình."),
+    OTP_INVALID("Mã OTP không chính xác."),
+    OTP_EXPIRED("Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng yêu cầu mã mới."),
+    OTP_TOO_MANY_ATTEMPTS("Bạn đã nhập sai mã OTP quá nhiều lần. Vui lòng yêu cầu mã mới."),
     INTERNAL_ERROR("Lỗi hệ thống phía máy chủ, vui lòng thử lại sau.");
 
     private final String defaultMessage;

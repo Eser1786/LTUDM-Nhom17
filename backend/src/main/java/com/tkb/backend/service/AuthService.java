@@ -1,10 +1,14 @@
 package com.tkb.backend.service;
 
+import com.tkb.backend.dao.OtpDao;
+import com.tkb.backend.dao.OtpDao.OtpRecord;
 import com.tkb.backend.dao.UserDao;
 import com.tkb.backend.dao.UserDao.UserAuthRecord;
 import com.tkb.common.dto.UserDto;
 import com.tkb.common.protocol.ErrorCode;
+import java.security.SecureRandom;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
@@ -22,6 +26,7 @@ public class AuthService {
 
     /** Quy tac Muc 9 Protocol: username tu 3 den 30 ky tu, chi gom chu cai, chu so va dau gach duoi */
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_]{3,30}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final int MIN_PASSWORD_LEN = 8;
     private static final int MAX_PASSWORD_LEN = 64;
     private static final int BCRYPT_LOG_ROUNDS = 10;
@@ -29,6 +34,13 @@ public class AuthService {
     /** B4.4 (Diem cong): Gioi han dang nhap sai tối đa 5 lan lien tiep -> khoa tam 60 giay */
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final long LOCKOUT_DURATION_MS = 60_000L;
+
+    /** Otp thay đổi mật khẩu */
+    private static final int OTP_EXPIRY_MINUTES = 5;
+    private static final int MAX_OTP_ATTEMPTS = 5;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private final OtpDao otpDao = new OtpDao();
+    private final EmailOtpService emailOtpService = new EmailOtpService();
 
     private final UserDao userDao;
     private final Map<String, FailedLoginTracker> failedTrackers = new ConcurrentHashMap<>();
@@ -43,6 +55,10 @@ public class AuthService {
     public record AuthResult(boolean ok, UserDto user, ErrorCode errorCode, String errorMessage, String invalidField) {
         public static AuthResult success(UserDto user) {
             return new AuthResult(true, user, null, null, null);
+        }
+
+        public static AuthResult success(UserDto user, String message) {
+            return new AuthResult(true, user, null, message, null);
         }
 
         public static AuthResult fail(ErrorCode code, String message) {
@@ -99,10 +115,19 @@ public class AuthService {
      * B4.1 & B4.2 - Dang ky tai khoan moi (REGISTER).
      */
     public AuthResult register(String username, String password) throws SQLException {
+        return register(username, null, password);
+    }
+
+    public AuthResult register(String username, String email, String password) throws SQLException {
         String cleanUser = (username != null) ? username.trim() : "";
+        String cleanEmail = (email != null && !email.isBlank()) ? email.trim() : null;
+
         AuthResult validation = validateCredentialsFormat(cleanUser, password, "password");
         if (!validation.ok()) {
             return validation;
+        }
+        if (cleanEmail != null && !EMAIL_PATTERN.matcher(cleanEmail).matches()) {
+            return AuthResult.validationFail("email", "Địa chỉ Email không đúng định dạng.");
         }
 
         synchronized (this) {
@@ -111,7 +136,7 @@ public class AuthService {
                 return AuthResult.fail(ErrorCode.USERNAME_TAKEN, "Tên đăng nhập '" + cleanUser + "' đã được sử dụng.");
             }
             String passwordHash = hashPassword(password);
-            long newUserId = userDao.createUser(cleanUser, passwordHash, UserDto.ROLE_USER);
+            long newUserId = userDao.createUser(cleanUser, cleanEmail, passwordHash, UserDto.ROLE_USER);
             UserDto dto = new UserDto(newUserId, cleanUser, UserDto.ROLE_USER, "", false);
             return AuthResult.success(dto);
         }
@@ -224,5 +249,95 @@ public class AuthService {
         boolean isLocked() {
             return lockedUntilMs > System.currentTimeMillis();
         }
+    }
+
+    public AuthResult requestPasswordResetOtp(String username) throws SQLException {
+        if (username == null || username.isBlank()) {
+            return AuthResult.validationFail("username", "Vui lòng nhập tên đăng nhập.");
+        }
+        String cleanUser = username.trim();
+        UserAuthRecord user = userDao.findByUsername(cleanUser);
+        if (user == null) {
+            return AuthResult.fail(ErrorCode.NOT_FOUND, "Không tìm thấy tài khoản '" + cleanUser + "'.");
+        }
+
+        String otpCode = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES);
+        otpDao.saveNewOtp(user.id(), otpCode, expiresAt);
+
+        System.out.printf("[OTP-SERVICE] Tai khoan: '%s' | Ma OTP: %s%n", cleanUser, otpCode);
+
+        String targetEmail = user.email();
+        if (emailOtpService.hasValidTarget(targetEmail)) {
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    emailOtpService.sendOtpEmail(cleanUser, targetEmail, otpCode, OTP_EXPIRY_MINUTES);
+                } catch (Exception e) {
+                    System.err.println("[OTP-SERVICE] Gui Gmail that bai, chuyen sang dung OTP Console: " + e.getMessage());
+                }
+            });
+            return AuthResult.success(
+                    user.toDto(false),
+                    "Mã OTP 6 số đang được gửi tới Gmail của bạn (hiệu lực 5 phút)."
+            );
+        }
+
+        return AuthResult.success(
+                user.toDto(false),
+                "Mã OTP 6 số đã được tạo (xem trên Console Server). Hiệu lực trong 5 phút."
+        );
+    }
+
+    public AuthResult resetPasswordWithOtp(String username, String otpInput, String newPassword) throws SQLException {
+        if (username == null || username.isBlank()) {
+            return AuthResult.validationFail("username", "Vui lòng nhập tên đăng nhập.");
+        }
+        if (otpInput == null || !otpInput.trim().matches("^\\d{6}$")) {
+            return AuthResult.validationFail("otp", "Mã OTP phải gồm đúng 6 chữ số.");
+        }
+        AuthResult passCheck = validatePasswordFormat(newPassword, "newPassword");
+        if (!passCheck.ok()) {
+            return passCheck;
+        }
+
+        String cleanUser = username.trim();
+        UserAuthRecord user = userDao.findByUsername(cleanUser);
+        if (user == null) {
+            return AuthResult.fail(ErrorCode.NOT_FOUND, "Không tìm thấy tài khoản '" + cleanUser + "'.");
+        }
+
+        OtpRecord record = otpDao.findLatestActiveOtp(user.id());
+        if (record == null || LocalDateTime.now().isAfter(record.expiresAt())) {
+            if (record != null) {
+                otpDao.markOtpUsed(record.id());
+            }
+            return AuthResult.fail(ErrorCode.OTP_EXPIRED, ErrorCode.OTP_EXPIRED.getDefaultMessage());
+        }
+
+        if (record.failedAttempts() >= MAX_OTP_ATTEMPTS) {
+            otpDao.markOtpUsed(record.id());
+            return AuthResult.fail(ErrorCode.OTP_TOO_MANY_ATTEMPTS, ErrorCode.OTP_TOO_MANY_ATTEMPTS.getDefaultMessage());
+        }
+
+        if (!record.otpCode().equals(otpInput.trim())) {
+            int nextAttempts = record.failedAttempts() + 1;
+            boolean lockedOut = nextAttempts >= MAX_OTP_ATTEMPTS;
+            otpDao.incrementFailedAttempts(record.id(), lockedOut);
+            if (lockedOut) {
+                return AuthResult.fail(ErrorCode.OTP_TOO_MANY_ATTEMPTS, ErrorCode.OTP_TOO_MANY_ATTEMPTS.getDefaultMessage());
+            }
+            return AuthResult.fail(
+                    ErrorCode.OTP_INVALID,
+                    "Mã OTP không chính xác (còn " + (MAX_OTP_ATTEMPTS - nextAttempts) + " lần thử)."
+            );
+        }
+
+        // OTP hợp lệ -> Cập nhật mật khẩu mới và vô hiệu hóa OTP
+        String newHash = hashPassword(newPassword);
+        userDao.updatePasswordHash(user.id(), newHash);
+        otpDao.markOtpUsed(record.id());
+        failedTrackers.remove(cleanUser.toLowerCase()); // Mở khóa brute-force login nếu có
+
+        return AuthResult.success(user.toDto(false));
     }
 }

@@ -14,6 +14,8 @@ public enum Command {
     PING(RequiredRole.NONE),
     REGISTER(RequiredRole.NONE),
     LOGIN(RequiredRole.NONE),
+    REQUEST_PASSWORD_OTP(RequiredRole.NONE),
+    RESET_PASSWORD_WITH_OTP(RequiredRole.NONE),
     LOGOUT(RequiredRole.USER),
     GET_SECTIONS(RequiredRole.USER),
 

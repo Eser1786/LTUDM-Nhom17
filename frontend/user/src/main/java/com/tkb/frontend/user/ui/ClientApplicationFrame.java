@@ -28,7 +28,8 @@ public final class ClientApplicationFrame extends BorderPane {
     public ClientApplicationFrame(NetworkClient networkClient, TkbClient userClient) {
         this.networkClient = Objects.requireNonNull(networkClient, "networkClient");
         this.userClient = Objects.requireNonNull(userClient, "userClient");
-        this.loginPanel = new LoginPanel(this::login, this::register);
+        this.loginPanel = new LoginPanel(this::login, (LoginPanel.RegisterHandler) this::register);
+        this.loginPanel.setOtpClient(this.userClient);
         setCenter(loginPanel);
     }
 
@@ -45,10 +46,10 @@ public final class ClientApplicationFrame extends BorderPane {
         }
     }
 
-    private void register(String username, String password) {
+    private void register(String username, String email, String password) {
         int requestId = nextRequestId.getAndIncrement();
         Request request = new Request(requestId, Command.REGISTER,
-                Map.of("username", username, "password", password));
+                Map.of("username", username, "email", email, "password", password));
         try {
             networkClient.send(request).whenComplete((response, failure) ->
                     Platform.runLater(() -> handleRegisterResponse(requestId, response, failure)));
