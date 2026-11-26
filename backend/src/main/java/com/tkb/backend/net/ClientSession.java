@@ -54,7 +54,7 @@ import javax.crypto.SecretKey;
  * B3.1, B3.2, B3.3, B3.4, B5.2, B8.1, B8.2, B9.1 -> B9.9 - ClientSession:
  * Xu ly toan bo vong doi cua 1 ket noi Client tren 1 luong rieng:
  *   1. Bat tay 3 buoc: HELLO (RSA PublicKey) -> KEY_EXCHANGE (RSA-OAEP) -> READY (AES-256-GCM).
- *   2. Timeout 5 phut khong co goi tin nao thi tu dong dong ket noi.
+ *   2. Timeout 45 giay khong co goi tin nao (Heartbeat) thi tu dong dong ket noi.
  *   3. Giai ma Request AES-GCM, kiem tra quyen (-, U, A), dieu phoi (Dispatch) tat ca 32 lenh.
  *   4. Ho tro day du cac tham so mo rong cua 2 Khung keo tha uu tien trong lenh OPTIMIZE va SAVE_PLAN.
  *
@@ -63,8 +63,8 @@ import javax.crypto.SecretKey;
  */
 public class ClientSession implements Runnable {
 
-    /** Timeout 5 phut khong co goi tin nao (B3.3 - Muc 11 Protocol) */
-    public static final int SOCKET_TIMEOUT_MS = 5 * 60 * 1000;
+    /** Timeout 45 giay khong co goi tin nao (tuong duong 3 nhip Ping 15s) */
+    public static final int SOCKET_TIMEOUT_MS = 45 * 1000;
 
     private static final Pattern SEMESTER_CODE_PATTERN = Pattern.compile("^\\d{4}-\\d{4}-\\d$");
     private static final Pattern COURSE_CODE_PATTERN = Pattern.compile("^[A-Za-z0-9]{1,10}$");
@@ -90,6 +90,7 @@ public class ClientSession implements Runnable {
     private OutputStream socketOut;
     private volatile UserDto authenticatedUser;
     private volatile boolean running = true;
+    private volatile long lastActiveAt;
 
     public ClientSession(
             String sessionId,
@@ -120,6 +121,7 @@ public class ClientSession implements Runnable {
         this.solver = solver;
         this.jobManager = jobManager;
         this.pdfImportService = pdfImportService;
+        this.lastActiveAt = System.currentTimeMillis();
     }
 
     @Override
@@ -136,10 +138,12 @@ public class ClientSession implements Runnable {
             if (!performHandshake(in, out)) {
                 return;
             }
+            this.lastActiveAt = System.currentTimeMillis();
 
             // 2. Vong lap doc va xu ly cac goi Request da ma hoa AES-256-GCM
             while (running && !s.isClosed()) {
                 String decryptedJson = FrameCodec.readEncryptedJsonFrame(in, aesSessionKey);
+                this.lastActiveAt = System.currentTimeMillis();
                 Response response = processEncryptedRequestJson(decryptedJson);
                 if (response != null) {
                     sendResponse(response);
@@ -149,7 +153,7 @@ public class ClientSession implements Runnable {
         } catch (EOFException e) {
             server.log("Client [" + sessionId + "] da dong ket noi.");
         } catch (SocketTimeoutException e) {
-            server.log("Phien [" + sessionId + "] qua han 5 phut khong hoat dong -> Dong ket noi.");
+            server.log("Phien [" + sessionId + "] qua han 45 giay khong nhan duoc Heartbeat -> Dong ket noi.");
         } catch (IOException e) {
             if (running) {
                 server.log("Ket noi [" + sessionId + "] ket thuc: " + e.getMessage());
@@ -238,7 +242,10 @@ public class ClientSession implements Runnable {
 
     private Response dispatchCommand(Command command, Request req) throws Exception {
         return switch (command) {
-            case PING -> Response.successEmpty(req.getId());
+            case PING -> {
+                this.lastActiveAt = System.currentTimeMillis();
+                yield Response.success(req.getId(), Map.of("status", "PONG", "serverTime", this.lastActiveAt));
+            }
             case REGISTER -> handleRegister(req);
             case LOGIN -> handleLogin(req);
             case LOGOUT -> handleLogout(req);
@@ -358,7 +365,7 @@ public class ClientSession implements Runnable {
     // =========================================================================
 
     private Response handleListSemesters(Request req) throws Exception {
-        List<Map<String, Object>> semesters = catalogDao.listSemesters();
+       List<Map<String, Object>> semesters = catalogDao.listSemesters();
         return Response.successSingle(req.getId(), "semesters", semesters);
     }
 
@@ -993,7 +1000,7 @@ public class ClientSession implements Runnable {
     // CAC HAM TIEN ICH GUI GOI TIN & PARSE CRITERIA MO RONG
     // =========================================================================
 
-    public void sendResponse(Response response) {
+    public synchronized void sendResponse(Response response) {
         if (!running || socket.isClosed() || socketOut == null || aesSessionKey == null) {
             return;
         }
@@ -1130,5 +1137,9 @@ public class ClientSession implements Runnable {
 
     public String getConnectedAt() {
         return connectedAt;
+    }
+
+    public long getLastActiveAt() {
+        return lastActiveAt;
     }
 }

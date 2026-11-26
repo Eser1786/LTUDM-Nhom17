@@ -27,6 +27,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -35,7 +36,10 @@ public final class TcpNetworkClient implements NetworkClient, AutoCloseable {
     public static final int DEFAULT_PORT = 9000;
     private static final int CONNECT_TIMEOUT_MILLIS = 10_000;
     private static final int HANDSHAKE_TIMEOUT_MILLIS = 10_000;
-    private static final long KEEP_ALIVE_INTERVAL_SECONDS = 60;
+    /** Chu kỳ gửi Heartbeat PING: 15 giây/lần (phải nhỏ hơn SOCKET_TIMEOUT_MS = 45s của Server) */
+    private static final long KEEP_ALIVE_INTERVAL_SECONDS = 15;
+    /** Thời gian chờ phản hồi PONG tối đa: 5 giây */
+    private static final long PONG_TIMEOUT_SECONDS = 5;
     private static final int AES_FRAME_OVERHEAD = CryptoUtil.GCM_IV_LENGTH + CryptoUtil.GCM_TAG_BYTES;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -241,15 +245,22 @@ public final class TcpNetworkClient implements NetworkClient, AutoCloseable {
             return;
         }
 
-        responseFuture.whenComplete((response, failure) -> {
-            keepAlivePending.set(false);
-            if (failure != null) {
-                terminateConnection(connection, failure, true);
-            } else if (response == null || !Boolean.TRUE.equals(response.getOk())) {
-                terminateConnection(connection,
-                        new IOException("Server did not accept the keep-alive PING"), true);
-            }
-        });
+        // Bắt buộc nhận phản hồi PONG trong vòng 5 giây, nếu quá hạn coi như đứt kết nối (Half-open)
+        responseFuture
+                .orTimeout(PONG_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .whenComplete((response, failure) -> {
+                    keepAlivePending.set(false);
+                    pendingRequests.remove(requestId, pending);
+                    if (failure != null) {
+                        Throwable cause = (failure instanceof TimeoutException)
+                                ? new SocketTimeoutException("Heartbeat PONG timeout after " + PONG_TIMEOUT_SECONDS + "s")
+                                : failure;
+                        terminateConnection(connection, cause, true);
+                    } else if (response == null || !Boolean.TRUE.equals(response.getOk())) {
+                        terminateConnection(connection,
+                                new IOException("Server did not accept the keep-alive PING"), true);
+                    }
+                });
         queueRequest(connection, key, requestId, requestJson, pending);
     }
 

@@ -117,6 +117,8 @@ public class TkbServer {
         while (running && !serverSocket.isClosed()) {
             try {
                 Socket clientSocket = serverSocket.accept();
+                // Đặt thời gian chờ đọc tối đa là 45 giây (gấp 3 lần chu kỳ Ping 15 giây của Client)
+                clientSocket.setSoTimeout(15_000);
                 String sessionId = "s" + sessionSeq.getAndIncrement();
 
                 ClientSession session = new ClientSession(
